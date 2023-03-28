@@ -12,6 +12,8 @@ import InputGroup from "react-bootstrap/InputGroup";
 import SyncStage from "@opensesamemedia/syncstage-sdk-npm-package-development";
 
 const SyncStageDashboard = () => {
+  const [applicationSecretId, setApplicationSecretId] = useState(process.env.REACT_APP_SYNCSTAGE_SECRET_ID);
+  const [applicationSecretKey, setApplicationSecretKey] = useState(process.env.REACT_APP_SYNCSTAGE_SECRET_KEY);
   const [port, setPort] = useState(18080);
   const [syncStage, setSyncStage] = useState(null);
   const [initErrorCode, setInitErrorCode] = useState(undefined);
@@ -60,6 +62,24 @@ const SyncStageDashboard = () => {
         <Row>
           <Col>
             <InputGroup size="sm" className="mb-3">
+              <InputGroup.Text id="inputGroup-sizing-sm">applicationSecretId</InputGroup.Text>
+              <Form.Control
+                aria-label="applicationSecretId"
+                aria-describedby="inputGroup-sizing-sm"
+                value={applicationSecretId}
+                onChange={(e) => setApplicationSecretId(parseInt(e.target.value))}
+              />
+            </InputGroup>
+            <InputGroup size="sm" className="mb-3">
+              <InputGroup.Text id="inputGroup-sizing-sm">applicationSecretKey</InputGroup.Text>
+              <Form.Control
+                aria-label="applicationSecretKey"
+                aria-describedby="inputGroup-sizing-sm"
+                value={applicationSecretKey}
+                onChange={(e) => setApplicationSecretKey(parseInt(e.target.value))}
+              />
+            </InputGroup>
+            <InputGroup size="sm" className="mb-3">
               <InputGroup.Text id="inputGroup-sizing-sm">port</InputGroup.Text>
               <Form.Control
                 aria-label="port"
@@ -76,8 +96,8 @@ const SyncStageDashboard = () => {
                 const syncStage = new SyncStage(null, null, port);
                 setInitErrorCode(
                   await syncStage.init(
-                    process.env.REACT_APP_SYNCSTAGE_SECRET_ID,
-                    process.env.REACT_APP_SYNCSTAGE_SECRET_KEY
+                    applicationSecretId,
+                    applicationSecretKey                  
                   )
                 );
                 setSyncStage(syncStage);
