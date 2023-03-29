@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@opensesamemedia/syncstage-sdk-npm-package-development": "^0.0.22-development",
+    "@opensesamemedia/syncstage-sdk-npm-package-development": "^0.0.26-development",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
