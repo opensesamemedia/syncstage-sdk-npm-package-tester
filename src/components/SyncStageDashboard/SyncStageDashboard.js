@@ -12,8 +12,12 @@ import InputGroup from "react-bootstrap/InputGroup";
 import SyncStage from "@opensesamemedia/syncstage-sdk-npm-package-development";
 
 const SyncStageDashboard = () => {
-  const [applicationSecretId, setApplicationSecretId] = useState(process.env.REACT_APP_SYNCSTAGE_SECRET_ID);
-  const [applicationSecretKey, setApplicationSecretKey] = useState(process.env.REACT_APP_SYNCSTAGE_SECRET_KEY);
+  const [applicationSecretId, setApplicationSecretId] = useState(
+    process.env.REACT_APP_SYNCSTAGE_SECRET_ID
+  );
+  const [applicationSecretKey, setApplicationSecretKey] = useState(
+    process.env.REACT_APP_SYNCSTAGE_SECRET_KEY
+  );
   const [port, setPort] = useState(18080);
   const [syncStage, setSyncStage] = useState(null);
   const [initErrorCode, setInitErrorCode] = useState(undefined);
@@ -42,15 +46,11 @@ const SyncStageDashboard = () => {
     useState(undefined);
   const [mute, setMute] = useState(false);
 
-  const [receiverMeasurementsResponse, setReceiverMeasurementsResponse] = useState([
-    undefined,
-    undefined,
-  ]);
+  const [receiverMeasurementsResponse, setReceiverMeasurementsResponse] =
+    useState([undefined, undefined]);
 
-  const [transmitterMeasurementsResponse, setTransmitterMeasurementsResponse] = useState([
-    undefined,
-    undefined,
-  ]);
+  const [transmitterMeasurementsResponse, setTransmitterMeasurementsResponse] =
+    useState([undefined, undefined]);
 
   return (
     <SyncStageDashboardWrapper>
@@ -62,21 +62,25 @@ const SyncStageDashboard = () => {
         <Row>
           <Col>
             <InputGroup size="sm" className="mb-3">
-              <InputGroup.Text id="inputGroup-sizing-sm">applicationSecretId</InputGroup.Text>
+              <InputGroup.Text id="inputGroup-sizing-sm">
+                applicationSecretId
+              </InputGroup.Text>
               <Form.Control
                 aria-label="applicationSecretId"
                 aria-describedby="inputGroup-sizing-sm"
                 value={applicationSecretId}
-                onChange={(e) => setApplicationSecretId(parseInt(e.target.value))}
+                onChange={(e) => setApplicationSecretId(e.target.value)}
               />
             </InputGroup>
             <InputGroup size="sm" className="mb-3">
-              <InputGroup.Text id="inputGroup-sizing-sm">applicationSecretKey</InputGroup.Text>
+              <InputGroup.Text id="inputGroup-sizing-sm">
+                applicationSecretKey
+              </InputGroup.Text>
               <Form.Control
                 aria-label="applicationSecretKey"
                 aria-describedby="inputGroup-sizing-sm"
                 value={applicationSecretKey}
-                onChange={(e) => setApplicationSecretKey(parseInt(e.target.value))}
+                onChange={(e) => setApplicationSecretKey(e.target.value)}
               />
             </InputGroup>
             <InputGroup size="sm" className="mb-3">
@@ -97,7 +101,7 @@ const SyncStageDashboard = () => {
                 setInitErrorCode(
                   await syncStage.init(
                     applicationSecretId,
-                    applicationSecretKey                  
+                    applicationSecretKey
                   )
                 );
                 setSyncStage(syncStage);
@@ -359,18 +363,17 @@ const SyncStageDashboard = () => {
                 id="mute-switch"
                 label="Mute"
                 value={mute}
-                onChange={(e) => setMute(e.target.value)}
+                onChange={(e) => {
+                  setMute(e.target.checked);
+                }}
               />
             </Form>
-            
           </Col>
           <Col>
             <Button
               variant="primary"
               onClick={async () => {
-                const errorCode = await syncStage.toggleMicrophone(
-                  mute
-                );
+                const errorCode = await syncStage.toggleMicrophone(mute);
                 setToggleMicrophoneErrorCode(errorCode);
               }}
             >
@@ -378,20 +381,18 @@ const SyncStageDashboard = () => {
             </Button>
           </Col>
           <Col>
-            <p>
-            Toggle microphone error code: {toggleMicrophoneErrorCode}
-            </p>
+            <p>Toggle microphone error code: {toggleMicrophoneErrorCode}</p>
           </Col>
         </Row>
 
-        
         <h2>isMicrophoneMuted</h2>
         <Row>
           <Col>
             <Button
               variant="primary"
               onClick={async () => {
-                const [response, errorCode] = await syncStage.isMicrophoneMuted();
+                const [response, errorCode] =
+                  await syncStage.isMicrophoneMuted();
                 console.log(`${response} ${errorCode}`);
                 setIsMicrophoneMutedResponse([response, errorCode]);
               }}
@@ -426,10 +427,12 @@ const SyncStageDashboard = () => {
             <Button
               variant="primary"
               onClick={async () => {
-                const [response, errorCode] = await syncStage.getReceiverMeasurements(
-                  identifier
-                );
-                setReceiverMeasurementsResponse([JSON.stringify(response), errorCode]);
+                const [response, errorCode] =
+                  await syncStage.getReceiverMeasurements(identifier);
+                setReceiverMeasurementsResponse([
+                  JSON.stringify(response),
+                  errorCode,
+                ]);
               }}
             >
               Get receiver measurements
@@ -449,8 +452,12 @@ const SyncStageDashboard = () => {
             <Button
               variant="primary"
               onClick={async () => {
-                const [response, errorCode] = await syncStage.getTransmitterMeasurements();
-                setTransmitterMeasurementsResponse([JSON.stringify(response), errorCode]);
+                const [response, errorCode] =
+                  await syncStage.getTransmitterMeasurements();
+                setTransmitterMeasurementsResponse([
+                  JSON.stringify(response),
+                  errorCode,
+                ]);
               }}
             >
               Get transmitter measurements
