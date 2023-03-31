@@ -18,6 +18,7 @@ const AppWrapper = styled.div`
   .app-container {
     padding-top: 30vh;
     padding-left: 400px;
+    padding-right: 100px;
     width: 100%;
   }
 `;

@@ -8,7 +8,7 @@ import {
 import ListItemButton from "../StyledListItemButton";
 import AccountCircleOutlinedIcon from "@mui/icons-material/AccountCircleOutlined";
 import MenuBookOutlinedIcon from "@mui/icons-material/MenuBookOutlined";
-import BookmarksOutlinedIcon from "@mui/icons-material/BookmarksOutlined";
+import GroupsIcon from '@mui/icons-material/Groups';
 import AppContext from "../../AppContext";
 import { PathEnum } from "../../router/PathEnum";
 import theme from "../../ui/theme";
@@ -28,9 +28,9 @@ const Menu = () => {
     <MenuWrapper>
       <List>
         <ListItemButton
-          selected={currentStep === PathEnum.PROFILE}
+          selected={[PathEnum.PROFILE_NICKNAME, PathEnum.PROFILE_SECRET].includes(currentStep)}
           sx={selectedStyle}
-          onClick={() => {setCurrentStep(PathEnum.PROFILE)}}
+          onClick={() => {setCurrentStep(PathEnum.PROFILE_NICKNAME)}}
         >
           <ListItemIcon sx={{ color: "inherit" }}>
             <AccountCircleOutlinedIcon />
@@ -48,14 +48,14 @@ const Menu = () => {
           <ListItemText primary="Setup" />
         </ListItemButton>
         <ListItemButton
-          selected={currentStep === PathEnum.LOCATION}
+          selected={[PathEnum.SESSIONS_JOIN, PathEnum.SESSIONS_REGIONS, PathEnum.SESSIONS_SESSION].includes(currentStep)}
           sx={selectedStyle}
-          onClick={() => setCurrentStep(PathEnum.LOCATION)}
+          onClick={() => setCurrentStep(PathEnum.SESSIONS_JOIN)}
         >
           <ListItemIcon sx={{ color: "inherit" }}>
-            <BookmarksOutlinedIcon />
+            <GroupsIcon />
           </ListItemIcon>
-          <ListItemText primary="Location" />
+          <ListItemText primary="Sessions" />
         </ListItemButton>
       </List>
     </MenuWrapper>

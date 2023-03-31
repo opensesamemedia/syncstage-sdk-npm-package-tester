@@ -23,41 +23,48 @@ const App = () => {
   const [appSecretKey, setAppSecretKey] = useState(
     process.env.REACT_APP_SYNCSTAGE_SECRET_KEY
   );
-  const [username, setUsername] = useState("");
+  const [nickname, setNickname] = useState("");
   const [sessionCode, setSessionCode] = useState("");
-  const [zone, setZone] = useState("");
-  const [currentStep, setCurrentStep] = useState(PathEnum.PROFILE);
+  const [zoneId, setZoneId] = useState("");
+  
+  let startPath = PathEnum.PROFILE_NICKNAME;
 
+  if(Object.values(PathEnum).includes(window.location.pathname.substring(1))){
+    startPath = window.location.pathname.substring(1)  ;
+  }
+  
+  const [currentStep, setCurrentStep] = useState(startPath);
+  
   const sharedState = {
     syncStage,
     appSecretId,
     setAppSecretId,
     appSecretKey,
     setAppSecretKey,
-    username,
-    setUsername,
+    nickname,
+    setNickname,
     sessionCode,
     setSessionCode,
-    zone,
-    setZone,
+    zoneId,
+    setZoneId,
     currentStep,
     setCurrentStep,
   };
 
   const onProvisionSubmit = () => {
-    setCurrentStep(PathEnum.JOIN_SESSION);
+    setCurrentStep(PathEnum.SETUP);
   };
 
   const onJoinSession = () => {
-    setCurrentStep(PathEnum.SESSION);
+    setCurrentStep(PathEnum.SESSIONS_SESSION);
   };
 
   const onCreateSession = () => {
-    setCurrentStep(PathEnum.SESSION);
+    setCurrentStep(PathEnum.SESSIONS_SESSION);
   };
 
   const onLeaveSession = () => {
-    setCurrentStep(PathEnum.JOIN_SESSION);
+    setCurrentStep(PathEnum.SESSIONS_JOIN);
   };
 
   return (
