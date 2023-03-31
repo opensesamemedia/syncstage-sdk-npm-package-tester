@@ -9,6 +9,7 @@ import AppWrapper from "./App.styled";
 import { PathEnum } from "./router/PathEnum";
 import RoutesComponent from "./router/RoutesComponent";
 import Menu from "./components/Menu/Menu";
+import "./ui/animationStyles.css";
 
 import SyncStage from "@opensesamemedia/syncstage-sdk-npm-package-development";
 
@@ -26,15 +27,15 @@ const App = () => {
   const [nickname, setNickname] = useState("");
   const [sessionCode, setSessionCode] = useState("");
   const [zoneId, setZoneId] = useState("");
-  
+
   let startPath = PathEnum.PROFILE_NICKNAME;
 
-  if(Object.values(PathEnum).includes(window.location.pathname.substring(1))){
-    startPath = window.location.pathname.substring(1)  ;
+  if (Object.values(PathEnum).includes(window.location.pathname.substring(1))) {
+    startPath = window.location.pathname.substring(1);
   }
-  
+
   const [currentStep, setCurrentStep] = useState(startPath);
-  
+
   const sharedState = {
     syncStage,
     appSecretId,
@@ -67,13 +68,16 @@ const App = () => {
     setCurrentStep(PathEnum.SESSIONS_JOIN);
   };
 
+  const inSession = currentStep === PathEnum.SESSIONS_SESSION;
+  const profileConfigured = nickname && appSecretId && appSecretKey
+
   return (
     <AppContext.Provider value={sharedState}>
       <ThemeProvider theme={theme}>
         <GlobalStyle />
-        <AppWrapper>
+        <AppWrapper inSession={inSession}>
           <Router>
-            <Menu />
+            <Menu inSession={inSession} profileConfigured={profileConfigured} />
             <div className="gradient" />
             <div className="app-container">
               <RoutesComponent
@@ -81,6 +85,7 @@ const App = () => {
                 onJoinSession={onJoinSession}
                 onLeaveSession={onLeaveSession}
                 onCreateSession={onCreateSession}
+                inSession={inSession}
               />
             </div>
           </Router>

@@ -16,10 +16,10 @@ const AppWrapper = styled.div`
   }
 
   .app-container {
-    padding-top: 30vh;
-    padding-left: 400px;
-    padding-right: 100px;
-    width: 100%;
+    padding-top:  ${props => props.inSession ? "10vh" : "30vh"};;
+    padding-left: ${props => props.inSession ? "50px" : "400px"};
+    padding-right: ${props => props.inSession ? "50px" : "100px"};
+    width: ${props => props.inSession ? "100%" : "1200px"};
   }
 `;
 

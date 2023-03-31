@@ -9,7 +9,6 @@ import Button from "../../components/StyledButton";
 import AppContext from "../../AppContext";
 import { PathEnum } from "../../router/PathEnum";
 import theme from "../../ui/theme";
-import SearchIcon from "@mui/icons-material/Search";
 
 const Regions = ({ onCreateSession }) => {
   const { zoneId, setZoneId, setCurrentStep } = useContext(AppContext);
@@ -20,69 +19,70 @@ const Regions = ({ onCreateSession }) => {
   ]);
 
   return (
-    <Grid container direction="column" spacing={2}>
-      <Grid item>
-        <h2>Region</h2>
-      </Grid>
-      <Grid item>
-        <p>Select the closest location for all the session participants.</p>
-      </Grid>
-      <Grid item>
-        <FormControl fullWidth style={{ maxWidth: "400px" }}>
-          {zoneId === "" ? (
-            <InputLabel
-              id="region-select-label"
-              style={{
-                color: theme.text,
-              }}
-              shrink={false}
+      <Grid container direction="column" spacing={2}>
+        <Grid item>
+          <h2>Region</h2>
+        </Grid>
+        <Grid item>
+          <p>Select the closest location for all the session participants.</p>
+        </Grid>
+        <Grid item>
+          <FormControl fullWidth style={{ maxWidth: "400px" }}>
+            {zoneId === "" ? (
+              <InputLabel
+                id="region-select-label"
+                style={{
+                  color: theme.text,
+                }}
+                shrink={false}
+              >
+                Region
+              </InputLabel>
+            ) : (
+              <></>
+            )}
+
+            <Select
+              labelId="region-select-label"
+              value={zoneId}
+              onChange={(e) => setZoneId(e.target.value)}
             >
-              <SearchIcon /> Region
-            </InputLabel>
-          ) : (
-            <></>
-          )}
+              {zoneList.map((zone) => (
+                <MenuItem value={zone.zoneId}>{zone.zoneName}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
 
-          <Select
-            labelId="region-select-label"
-            value={zoneId}
-            onChange={(e) => setZoneId(e.target.value)}
-          >
-            {zoneList.map((zone) => (
-              <MenuItem value={zone.zoneId}>{zone.zoneName}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Grid>
+        <Grid
+          container
+          direction="column"
+          justifyContent="center"
+          alignItems="center"
+          style={{ maxWidth: "500px" }}
+        >
+          <Grid item style={{ height: "30px" }} />
 
-      <Grid
-        container
-        direction="column"
-        justifyContent="center"
-        alignItems="center"
-        style={{ maxWidth: "500px" }}
-      >
-        <Grid item style={{ height: "30px" }} />
-
-        <Grid item>
-          <ButtonContained disabled={zoneId === ""} onClick={onCreateSession}>
-            Start now
-          </ButtonContained>
+          <Grid item>
+            <ButtonContained disabled={zoneId === ""} onClick={onCreateSession}>
+              Start now
+            </ButtonContained>
+          </Grid>
+        </Grid>
+        <Grid item style={{ height: "80px" }} />
+        <Grid container justifyContent="flex-start">
+          <Grid item>
+            <Button
+              onClick={() => {
+                setCurrentStep(PathEnum.SESSIONS_JOIN);
+              }}
+            >
+              Previous
+            </Button>
+          </Grid>
         </Grid>
       </Grid>
-      <Grid item style={{ height: "80px" }} />
-      <Grid container justifyContent="flex-start">
-        <Grid item>
-          <Button
-            onClick={() => {
-              setCurrentStep(PathEnum.SESSIONS_JOIN);
-            }}
-          >
-            Previous
-          </Button>
-        </Grid>
-      </Grid>
-    </Grid>
+
   );
 };
 

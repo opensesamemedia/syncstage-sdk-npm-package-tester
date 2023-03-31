@@ -15,6 +15,7 @@ const RoutesComponent = ({
   onJoinSession,
   onCreateSession,
   onLeaveSession,
+  inSession,
 }) => {
   const { currentStep, setCurrentStep } = useContext(AppContext);
 
@@ -89,7 +90,7 @@ const RoutesComponent = ({
         path={PathEnum.SESSIONS_SESSION}
         element={
           currentStep === PathEnum.SESSIONS_SESSION ? (
-            <Session onLeaveSession={onLeaveSession} />
+            <Session onLeaveSession={onLeaveSession} inSession={inSession} />
           ) : (
             <Navigate to={`/${currentStep}`} replace />
           )
