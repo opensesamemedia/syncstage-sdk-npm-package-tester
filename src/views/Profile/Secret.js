@@ -55,7 +55,7 @@ const Secret = ({ onProvisionSubmit }) => {
         <Grid item>
           <ButtonContained
             disabled={appSecretId === "" || appSecretKey === ""}
-            onClick={onProvisionSubmit}
+            onClick={async () => {await onProvisionSubmit()}}
           >
             Next
           </ButtonContained>

@@ -1,7 +1,11 @@
 import AppContext from "./AppContext";
 import { BrowserRouter as Router } from "react-router-dom";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ThemeProvider } from "styled-components";
+import { SnackbarProvider } from 'notistack';
+import Backdrop from '@mui/material/Backdrop';
+import CircularProgress from '@mui/material/CircularProgress';
+import { errorCodeToSnackbar } from './utils';
 
 import GlobalStyle from "./ui/GlobalStyle";
 import theme from "./ui/theme";
@@ -11,13 +15,10 @@ import RoutesComponent from "./router/RoutesComponent";
 import Menu from "./components/Menu/Menu";
 import "./ui/animationStyles.css";
 
-import SyncStage from "@opensesamemedia/syncstage-sdk-npm-package-development";
+import SyncStage, { SyncStageSDKErrorCode } from "@opensesamemedia/syncstage-sdk-npm-package-development";
 
 const App = () => {
-  const [syncStage] = useState(
-    null
-    // new SyncStage(null, null)
-  );
+  const [syncStage, setSyncStage] = useState(null);
   const [appSecretId, setAppSecretId] = useState(
     process.env.REACT_APP_SYNCSTAGE_SECRET_ID
   );
@@ -25,16 +26,37 @@ const App = () => {
     process.env.REACT_APP_SYNCSTAGE_SECRET_KEY
   );
   const [nickname, setNickname] = useState("");
+  const [sessionId, setSessionId] = useState("");
   const [sessionCode, setSessionCode] = useState("");
   const [zoneId, setZoneId] = useState("");
 
-  let startPath = PathEnum.PROFILE_NICKNAME;
+  let startPath = PathEnum.SETUP;
 
   if (Object.values(PathEnum).includes(window.location.pathname.substring(1))) {
     startPath = window.location.pathname.substring(1);
   }
 
   const [currentStep, setCurrentStep] = useState(startPath);
+  const [backdropOpen, setBackdropOpen] = useState(false);
+
+  const [desktopConnected, setDesktopConnected] = useState(
+    syncStage ? syncStage.isDesktopAgentConnected() : false
+  );
+
+  const [desktopProvisioned, setDesktopProvisioned] = useState(false);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDesktopConnected(syncStage ? syncStage.isDesktopAgentConnected() : false);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [syncStage]);
+
+  useEffect(() => {
+    if(syncStage === null){
+      setSyncStage(new SyncStage(null, null))
+    }
+  },[syncStage]);
 
   const sharedState = {
     syncStage,
@@ -50,35 +72,74 @@ const App = () => {
     setZoneId,
     currentStep,
     setCurrentStep,
+    setBackdropOpen,
+    desktopConnected,
+    desktopProvisioned
   };
 
-  const onProvisionSubmit = () => {
-    setCurrentStep(PathEnum.SETUP);
+  const onProvisionSubmit = async () => {
+    setBackdropOpen(true);
+    const errorCode = await syncStage.init(appSecretId, appSecretKey)
+    errorCodeToSnackbar(errorCode, "Authorized");
+    setBackdropOpen(false);
+    if(errorCode === SyncStageSDKErrorCode.OK){
+      setCurrentStep(PathEnum.SESSIONS_JOIN);
+      setDesktopProvisioned(true);
+    }
   };
 
-  const onJoinSession = () => {
-    setCurrentStep(PathEnum.SESSIONS_SESSION);
+  const onJoinSession = async () => {
+    setBackdropOpen(true);
+    const [data, errorCode] = await syncStage.join(sessionCode, nickname, nickname)
+    errorCodeToSnackbar(errorCode, `Joined session ${sessionCode}`);
+    setBackdropOpen(false);
+    if(errorCode === SyncStageSDKErrorCode.OK){
+      setSessionId(data.sessionId);
+      setCurrentStep(PathEnum.SESSIONS_SESSION);
+    }
   };
 
-  const onCreateSession = () => {
-    setCurrentStep(PathEnum.SESSIONS_SESSION);
+  const onCreateSession = async () => {
+    setBackdropOpen(true);
+    const [data, errorCode] = await syncStage.createSession(zoneId, nickname)
+    errorCodeToSnackbar(errorCode, `Created session ${data.sessionCode}`);
+    setSessionCode(data.sessionCode);
+    setSessionId(data.sessionId);
+    setBackdropOpen(false);
+    if(errorCode === SyncStageSDKErrorCode.OK){
+      setCurrentStep(PathEnum.SESSIONS_SESSION);
+    }
   };
 
-  const onLeaveSession = () => {
+  const onLeaveSession = async () => {
+    setBackdropOpen(true);
+    const errorCode = await syncStage.init(appSecretId, appSecretKey)
+    errorCodeToSnackbar(errorCode);
+    setBackdropOpen(false);
     setCurrentStep(PathEnum.SESSIONS_JOIN);
   };
 
   const inSession = currentStep === PathEnum.SESSIONS_SESSION;
   const profileConfigured = nickname && appSecretId && appSecretKey
 
+  
+
   return (
     <AppContext.Provider value={sharedState}>
       <ThemeProvider theme={theme}>
         <GlobalStyle />
+        <SnackbarProvider />
         <AppWrapper inSession={inSession}>
           <Router>
             <Menu inSession={inSession} profileConfigured={profileConfigured} />
             <div className="gradient" />
+            <Backdrop
+              sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+              open={backdropOpen}
+              onClick={() => setBackdropOpen(false)}
+            >
+              <CircularProgress color="inherit" />
+            </Backdrop>
             <div className="app-container">
               <RoutesComponent
                 onProvisionSubmit={onProvisionSubmit}

@@ -4,6 +4,7 @@ import TextField from "../../components/StyledTextField";
 import ButtonContained from "../../components/StyledButtonContained";
 import AppContext from "../../AppContext";
 import { PathEnum } from "../../router/PathEnum";
+import Button from "../../components/StyledButton";
 
 const Nickname = () => {
   const {
@@ -29,7 +30,12 @@ const Nickname = () => {
         />
       </Grid>   
       <Grid item style={{height: '140px'}}/>
-      <Grid container justifyContent="flex-end">
+      <Grid container justifyContent="space-between">
+        <Grid item>
+          <Button onClick={() => setCurrentStep(PathEnum.SETUP)}>
+            Previous
+          </Button>
+        </Grid>
         <Grid item>
           <ButtonContained
             disabled={nickname === ""}

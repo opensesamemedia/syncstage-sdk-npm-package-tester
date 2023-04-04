@@ -70,7 +70,7 @@ const JoinSession = ({ onJoinSession }) => {
         <Grid item>
           <Button
             onClick={() => {
-              setCurrentStep(PathEnum.SETUP);
+              setCurrentStep(PathEnum.PROFILE_SECRET);
             }}
           >
             Previous

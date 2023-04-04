@@ -10,8 +10,8 @@ import { PathEnum } from "../../router/PathEnum";
 import theme from "../../ui/theme";
 import { mountedStyle, unmountedStyle } from "../../ui/AnimationStyles";
 
-const Menu = ({inSession, profileConfigured}) => {
-  const { currentStep, setCurrentStep } = useContext(AppContext);
+const Menu = ({ inSession, profileConfigured }) => {
+  const { currentStep, setCurrentStep, desktopConnected, desktopProvisioned } = useContext(AppContext);
 
   const selectedStyle = {
     "&.Mui-selected": {
@@ -26,25 +26,9 @@ const Menu = ({inSession, profileConfigured}) => {
       <MenuWrapper>
         <List>
           <ListItemButton
-            selected={[
-              PathEnum.PROFILE_NICKNAME,
-              PathEnum.PROFILE_SECRET,
-            ].includes(currentStep)}
-            sx={selectedStyle}
-            onClick={() => {
-              setCurrentStep(PathEnum.PROFILE_NICKNAME);
-            }}
-          >
-            <ListItemIcon sx={{ color: "inherit" }}>
-              <AccountCircleOutlinedIcon />
-            </ListItemIcon>
-            <ListItemText primary="Profile" />
-          </ListItemButton>
-          <ListItemButton
             selected={currentStep === PathEnum.SETUP}
             sx={selectedStyle}
             onClick={() => setCurrentStep(PathEnum.SETUP)}
-            disabled={!profileConfigured}
           >
             <ListItemIcon sx={{ color: "inherit" }}>
               <MenuBookOutlinedIcon />
@@ -53,14 +37,30 @@ const Menu = ({inSession, profileConfigured}) => {
           </ListItemButton>
           <ListItemButton
             selected={[
+              PathEnum.PROFILE_NICKNAME,
+              PathEnum.PROFILE_SECRET,
+            ].includes(currentStep)}
+            sx={selectedStyle}
+            onClick={() => {
+              setCurrentStep(PathEnum.PROFILE_NICKNAME);
+            }}
+            disabled={!desktopConnected}
+          >
+            <ListItemIcon sx={{ color: "inherit" }}>
+              <AccountCircleOutlinedIcon />
+            </ListItemIcon>
+            <ListItemText primary="Profile" />
+          </ListItemButton>
+
+          <ListItemButton
+            selected={[
               PathEnum.SESSIONS_JOIN,
               PathEnum.SESSIONS_REGIONS,
               PathEnum.SESSIONS_SESSION,
             ].includes(currentStep)}
             sx={selectedStyle}
             onClick={() => setCurrentStep(PathEnum.SESSIONS_JOIN)}
-            disabled={!profileConfigured}
-
+            disabled={!profileConfigured || !desktopProvisioned}
           >
             <ListItemIcon sx={{ color: "inherit" }}>
               <GroupsIcon />
