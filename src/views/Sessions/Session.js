@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { Grid, Box } from "@mui/material";
 import AppContext from "../../AppContext";
 import { mountedStyle, unmountedStyle } from "../../ui/AnimationStyles";
@@ -11,14 +11,36 @@ import { Mic } from "@mui/icons-material";
 import Button from "@mui/material/Button";
 import theme from "../../ui/theme";
 import InviteOthers from "../../components/UserCard/InviteOthers";
+import { errorCodeToSnackbar } from "../../utils";
+import { SyncStageSDKErrorCode } from "@opensesamemedia/syncstage-sdk-npm-package-development";
 
 const Session = ({ onLeaveSession, inSession }) => {
-  const {sessionCode} = useContext(AppContext);
+  const { sessionCode, sessionData, setSessionData, syncStage } =
+    useContext(AppContext);
   const [muted, setMuted] = useState(false);
 
-  const onMutedToggle = () => {
-    setMuted(!muted);
-  }
+  useEffect(() => {
+    async function executeAsync() {
+      if (syncStage !== null) {
+        // eslint-disable-next-line no-unused-vars
+        const [mutedState, errorCode] = await syncStage.isMicrophoneMuted();
+        if (errorCode === SyncStageSDKErrorCode.OK) {
+          setMuted(mutedState);
+        }
+      }
+    }
+    executeAsync();
+  }, [syncStage]);
+
+  const onMutedToggle = async () => {
+    const mutedState = !muted;
+    setMuted(mutedState);
+    const errorCode = await syncStage.toggleMicrophone(mutedState);
+    errorCodeToSnackbar(errorCode);
+    if (errorCode !== SyncStageSDKErrorCode.OK) {
+      setMuted(!mutedState);
+    }
+  };
 
   return (
     <div style={inSession ? mountedStyle : unmountedStyle}>
@@ -31,22 +53,21 @@ const Session = ({ onLeaveSession, inSession }) => {
         >
           <Grid item style={{ height: "70vh" }}>
             <Box display="grid" gridTemplateColumns="repeat(12, 1fr)" gap={8}>
-              <Box gridColumn="span 4">
-                <UserCard />
-              </Box>
-              <Box gridColumn="span 4">
-                <UserCard />{" "}
-              </Box>
-              <Box gridColumn="span 4">
-                <UserCard />{" "}
-              </Box>
-              <Box gridColumn="span 4">
-                <UserCard />{" "}
-              </Box>
-              <Box gridColumn="span 4">
-                <UserCard />{" "}
-              </Box>
-
+              {sessionData && sessionData.transmitter ? (
+                <Box gridColumn="span 4">
+                  <UserCard transmitter {...sessionData.transmitter} />
+                </Box>
+              ) : (
+                <></>
+              )}
+              {sessionData &&
+                sessionData.receivers.map((connection) => (
+                  <UserCard
+                    transmitter
+                    {...connection}
+                    key={connection.identifier}
+                  />
+                ))}
               <Box gridColumn="span 4">
                 <InviteOthers sessionCode={sessionCode} />{" "}
               </Box>
@@ -64,17 +85,19 @@ const Session = ({ onLeaveSession, inSession }) => {
             spacing={2}
           >
             <Grid item style={{ paddingRight: "32px" }}>
-              <Button style={{ color: theme.onSurfaceVariant }} onClick={async() => onLeaveSession()}>
+              <Button
+                style={{ color: theme.onSurfaceVariant }}
+                onClick={async () => onLeaveSession()}
+              >
                 <CallEndIcon />
               </Button>
             </Grid>
             <Grid item style={{ paddingRight: "32px" }}>
-              <Button style={{ color: theme.onSurfaceVariant }} onClick={onMutedToggle}>
-                {muted ? 
-                <MicOffIcon />
-                : <Mic/>
-              
-              }
+              <Button
+                style={{ color: theme.onSurfaceVariant }}
+                onClick={onMutedToggle}
+              >
+                {muted ? <MicOffIcon /> : <Mic />}
               </Button>
             </Grid>
             <Grid item>

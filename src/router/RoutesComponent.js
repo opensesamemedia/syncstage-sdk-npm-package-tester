@@ -17,7 +17,7 @@ const RoutesComponent = ({
   onLeaveSession,
   inSession,
 }) => {
-  const { currentStep, setCurrentStep } = useContext(AppContext);
+  const { currentStep } = useContext(AppContext);
 
   return (
     <Routes>

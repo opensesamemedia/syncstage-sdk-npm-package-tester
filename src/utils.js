@@ -15,8 +15,6 @@ syncStageErrorToMessageMap.set(parseInt(SyncStageSDKErrorCode.SESSION_NOT_JOINED
 syncStageErrorToMessageMap.set(parseInt(SyncStageSDKErrorCode.AUDIO_SERVER_NOT_REACHABLE), "Audio server not reachable");
 syncStageErrorToMessageMap.set(parseInt(SyncStageSDKErrorCode.DESKTOP_AGENT_COMMUNICATION_ERROR), "Desktop agent communication error. Please check if SyncStage desktop agent is running.");
 
-console.log(syncStageErrorToMessageMap)
-
 const errorCodeToSnackbar = (errorCode, msgOnOK) =>
   {
     if (errorCode !== SyncStageSDKErrorCode.OK){

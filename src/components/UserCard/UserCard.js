@@ -63,16 +63,17 @@ const StyledBadge = styled(Badge)(({ theme }) => ({
 }));
 
 const UserCard = ({
-  nickname,
+  displayName,
+  userId,
   identifier,
-  volume,
-  onVolumeChange,
-  ping,
-  jitter,
-  networkQuality,
   isMuted,
-  connected,
+  transmitter,
 }) => {
+  let nickname = displayName ?? userId;
+  if (transmitter) {
+    nickname = `${nickname} ${"(You)"}`;
+  }
+
   return (
     <UserCardBase>
       <Grid
@@ -91,7 +92,7 @@ const UserCard = ({
             <Avatar
               sx={{ bgcolor: theme.surfaceVariant, width: 62, height: 62 }}
             >
-              U
+              {nickname.charAt(0)}
             </Avatar>
           </StyledBadge>
         </Grid>
@@ -119,19 +120,33 @@ const UserCard = ({
                       margin: 0,
                     }}
                   >
-                    Username
+                    {nickname}
                   </p>
                 </Grid>
+                {transmitter ? (
+                  <></>
+                ) : (
+                  <Grid item>{isMuted ? <MicOffIcon /> : <MicIcon />}</Grid>
+                )}
+              </Grid>
+              {transmitter ? (
+                <Grid item style={{ height: "12px" }} />
+              ) : (
                 <Grid item>
-                  <MicIcon />
+                  <StyledSlider defaultValue={50} style={{ width: "70%" }} />
                 </Grid>
-              </Grid>
-              <Grid item>
-                <StyledSlider defaultValue={50} style={{ width: "70%" }} />
-              </Grid>
+              )}
+
               <Grid item>
                 <Divider color="white" style={{ width: "100%" }} light />
               </Grid>
+              {transmitter ? (
+                <Grid item>
+                  <p style={{marginTop: "6px", marginBottom: "6px"}}>Network type: </p>
+                </Grid>
+              ) : (
+                <></>
+              )}
               <Grid
                 container
                 direction="row"

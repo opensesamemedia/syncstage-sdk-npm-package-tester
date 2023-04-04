@@ -2,10 +2,10 @@ import AppContext from "./AppContext";
 import { BrowserRouter as Router } from "react-router-dom";
 import React, { useState, useEffect } from "react";
 import { ThemeProvider } from "styled-components";
-import { SnackbarProvider } from 'notistack';
-import Backdrop from '@mui/material/Backdrop';
-import CircularProgress from '@mui/material/CircularProgress';
-import { errorCodeToSnackbar } from './utils';
+import { SnackbarProvider } from "notistack";
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
+import { errorCodeToSnackbar } from "./utils";
 
 import GlobalStyle from "./ui/GlobalStyle";
 import theme from "./ui/theme";
@@ -15,7 +15,9 @@ import RoutesComponent from "./router/RoutesComponent";
 import Menu from "./components/Menu/Menu";
 import "./ui/animationStyles.css";
 
-import SyncStage, { SyncStageSDKErrorCode } from "@opensesamemedia/syncstage-sdk-npm-package-development";
+import SyncStage, {
+  SyncStageSDKErrorCode,
+} from "@opensesamemedia/syncstage-sdk-npm-package-development";
 
 const App = () => {
   const [syncStage, setSyncStage] = useState(null);
@@ -26,8 +28,8 @@ const App = () => {
     process.env.REACT_APP_SYNCSTAGE_SECRET_KEY
   );
   const [nickname, setNickname] = useState("");
-  const [sessionId, setSessionId] = useState("");
   const [sessionCode, setSessionCode] = useState("");
+  const [sessionData, setSessionData] = useState(null);
   const [zoneId, setZoneId] = useState("");
 
   let startPath = PathEnum.SETUP;
@@ -47,16 +49,18 @@ const App = () => {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setDesktopConnected(syncStage ? syncStage.isDesktopAgentConnected() : false);
+      setDesktopConnected(
+        syncStage ? syncStage.isDesktopAgentConnected() : false
+      );
     }, 1000);
     return () => clearInterval(interval);
   }, [syncStage]);
 
   useEffect(() => {
-    if(syncStage === null){
-      setSyncStage(new SyncStage(null, null))
+    if (syncStage === null) {
+      setSyncStage(new SyncStage(null, null));
     }
-  },[syncStage]);
+  }, [syncStage]);
 
   const sharedState = {
     syncStage,
@@ -68,61 +72,76 @@ const App = () => {
     setNickname,
     sessionCode,
     setSessionCode,
+    sessionData,
+    setSessionData,
     zoneId,
     setZoneId,
     currentStep,
     setCurrentStep,
     setBackdropOpen,
     desktopConnected,
-    desktopProvisioned
+    desktopProvisioned,
   };
 
   const onProvisionSubmit = async () => {
     setBackdropOpen(true);
-    const errorCode = await syncStage.init(appSecretId, appSecretKey)
+    const errorCode = await syncStage.init(appSecretId, appSecretKey);
     errorCodeToSnackbar(errorCode, "Authorized");
     setBackdropOpen(false);
-    if(errorCode === SyncStageSDKErrorCode.OK){
+    if (errorCode === SyncStageSDKErrorCode.OK) {
       setCurrentStep(PathEnum.SESSIONS_JOIN);
       setDesktopProvisioned(true);
+    } else {
+      setDesktopProvisioned(false);
     }
   };
 
   const onJoinSession = async () => {
     setBackdropOpen(true);
-    const [data, errorCode] = await syncStage.join(sessionCode, nickname, nickname)
+    const [data, errorCode] = await syncStage.join(
+      sessionCode,
+      nickname,
+      nickname
+    );
     errorCodeToSnackbar(errorCode, `Joined session ${sessionCode}`);
     setBackdropOpen(false);
-    if(errorCode === SyncStageSDKErrorCode.OK){
-      setSessionId(data.sessionId);
+    if (errorCode === SyncStageSDKErrorCode.OK) {
+      setSessionData(data);
       setCurrentStep(PathEnum.SESSIONS_SESSION);
     }
   };
 
   const onCreateSession = async () => {
     setBackdropOpen(true);
-    const [data, errorCode] = await syncStage.createSession(zoneId, nickname)
-    errorCodeToSnackbar(errorCode, `Created session ${data.sessionCode}`);
-    setSessionCode(data.sessionCode);
-    setSessionId(data.sessionId);
-    setBackdropOpen(false);
-    if(errorCode === SyncStageSDKErrorCode.OK){
-      setCurrentStep(PathEnum.SESSIONS_SESSION);
+    const [createData, errorCode] = await syncStage.createSession(zoneId, nickname);
+    errorCodeToSnackbar(errorCode, `Created session ${createData.sessionCode}`);
+    setSessionCode(createData.sessionCode);
+
+    if (errorCode === SyncStageSDKErrorCode.OK) {
+      const [joinData, errorCode] = await syncStage.join(
+        createData.sessionCode,
+        nickname,
+        nickname
+      );
+      errorCodeToSnackbar(errorCode);
+      if (errorCode === SyncStageSDKErrorCode.OK) {
+        setSessionData(joinData);
+        setCurrentStep(PathEnum.SESSIONS_SESSION);
+      }
     }
+    setBackdropOpen(false);
   };
 
   const onLeaveSession = async () => {
     setBackdropOpen(true);
-    const errorCode = await syncStage.init(appSecretId, appSecretKey)
+    const errorCode = await syncStage.leave();
     errorCodeToSnackbar(errorCode);
     setBackdropOpen(false);
     setCurrentStep(PathEnum.SESSIONS_JOIN);
   };
 
   const inSession = currentStep === PathEnum.SESSIONS_SESSION;
-  const profileConfigured = nickname && appSecretId && appSecretKey
-
-  
+  const profileConfigured = nickname && appSecretId && appSecretKey;
 
   return (
     <AppContext.Provider value={sharedState}>
@@ -134,7 +153,7 @@ const App = () => {
             <Menu inSession={inSession} profileConfigured={profileConfigured} />
             <div className="gradient" />
             <Backdrop
-              sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+              sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
               open={backdropOpen}
               onClick={() => setBackdropOpen(false)}
             >
