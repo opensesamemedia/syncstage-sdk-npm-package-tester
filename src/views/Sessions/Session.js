@@ -18,19 +18,56 @@ const Session = ({ onLeaveSession, inSession }) => {
   const { sessionCode, sessionData, setSessionData, syncStage } =
     useContext(AppContext);
   const [muted, setMuted] = useState(false);
+  const [connected, setConnected] = useState(true);
+  const [connectionsMap, setConnectionsMap] = useState({});
+
+  const [connectionsList, setConnectionsList] = useState([]);
 
   useEffect(() => {
     async function executeAsync() {
       if (syncStage !== null) {
         // eslint-disable-next-line no-unused-vars
         const [mutedState, errorCode] = await syncStage.isMicrophoneMuted();
+        errorCodeToSnackbar(errorCode);
         if (errorCode === SyncStageSDKErrorCode.OK) {
           setMuted(mutedState);
+        }
+
+        if (sessionData) {
+          sessionData.receivers.forEach(async (receiver) => {
+            const connection = connectionsMap[receiver.identifier];
+            if (!connection) {
+              const tempConnections = connectionsMap;
+              tempConnections[receiver.identifier] = receiver;
+              tempConnections[receiver.identifier].connected = false;
+
+              let [volumeValue, errorCode] = await syncStage.getReceiverVolume(
+                receiver.identifier
+              );
+              errorCodeToSnackbar(errorCode);
+
+              tempConnections[receiver.identifier].volume = volumeValue;
+
+              let measurements;
+              [measurements, errorCode] =
+                await syncStage.getReceiverMeasurements(receiver.identifier);
+              errorCodeToSnackbar(errorCode);
+              tempConnections[receiver.identifier].delay =
+                measurements.networkDelayMs;
+              tempConnections[receiver.identifier].jitter =
+                measurements.networkJitterMs;
+              tempConnections[receiver.identifier].quality =
+                measurements.quality;
+
+              setConnectionsMap(tempConnections);
+              setConnectionsList(Object.values(tempConnections));
+            }
+          });
         }
       }
     }
     executeAsync();
-  }, [syncStage]);
+  }, [sessionData, syncStage, connectionsMap]);
 
   const onMutedToggle = async () => {
     const mutedState = !muted;
@@ -55,18 +92,29 @@ const Session = ({ onLeaveSession, inSession }) => {
             <Box display="grid" gridTemplateColumns="repeat(12, 1fr)" gap={8}>
               {sessionData && sessionData.transmitter ? (
                 <Box gridColumn="span 4">
-                  <UserCard transmitter {...sessionData.transmitter} />
+                  <UserCard
+                    transmitter
+                    {...sessionData.transmitter}
+                    connected={connected}
+                  />
                 </Box>
               ) : (
                 <></>
               )}
-              {sessionData &&
-                sessionData.receivers.map((connection) => (
-                  <UserCard
-                    transmitter
-                    {...connection}
-                    key={connection.identifier}
-                  />
+              {connectionsList &&
+                connectionsList.map((connection) => (
+                  <Box gridColumn="span 4">
+                    <UserCard
+                      {...connection}
+                      key={connection.identifier}
+                      onVolumeChanged={async (volume) => {
+                        // TODO implement debouncing
+                        syncStage.changeReceiverVolume(connection.identifier, volume); 
+                        connectionsMap[connection.identifier].volume = volume;
+                        setConnectionsMap(connectionsMap);
+                      }}
+                    />
+                  </Box>
                 ))}
               <Box gridColumn="span 4">
                 <InviteOthers sessionCode={sessionCode} />{" "}

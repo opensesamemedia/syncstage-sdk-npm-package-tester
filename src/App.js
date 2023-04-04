@@ -113,7 +113,10 @@ const App = () => {
 
   const onCreateSession = async () => {
     setBackdropOpen(true);
-    const [createData, errorCode] = await syncStage.createSession(zoneId, nickname);
+    const [createData, errorCode] = await syncStage.createSession(
+      zoneId,
+      nickname
+    );
     errorCodeToSnackbar(errorCode, `Created session ${createData.sessionCode}`);
     setSessionCode(createData.sessionCode);
 

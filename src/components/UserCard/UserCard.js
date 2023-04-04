@@ -33,41 +33,51 @@ const StyledLinearProgress = styled(LinearProgress)`
   }
 `;
 
-const StyledBadge = styled(Badge)(({ theme }) => ({
-  "& .MuiBadge-badge": {
-    backgroundColor: "#44b700",
-    color: "#44b700",
-    boxShadow: `0 0 0 2px f00`,
-    "&::after": {
-      position: "absolute",
-      top: 0,
-      left: 0,
-      width: "100%",
-      height: "100%",
-      borderRadius: "50%",
-      animation: "ripple 1.2s infinite ease-in-out",
-      border: "1px solid currentColor",
-      content: '""',
+const StyledBadge = styled(Badge)(({ connected }) => {
+  const color = connected ? "#44b700" : "#93000A";
+  const animation = connected ? "ripple 1.2s infinite ease-in-out" : "none";
+  return {
+    "& .MuiBadge-badge": {
+      backgroundColor: color,
+      color: color,
+      boxShadow: `0 0 0 2px f00`,
+      "&::after": {
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+        borderRadius: "50%",
+        animation: animation,
+        border: "1px solid currentColor",
+        content: '""',
+      },
     },
-  },
-  "@keyframes ripple": {
-    "0%": {
-      transform: "scale(.8)",
-      opacity: 1,
+    "@keyframes ripple": {
+      "0%": {
+        transform: "scale(.8)",
+        opacity: 1,
+      },
+      "100%": {
+        transform: "scale(2.4)",
+        opacity: 0,
+      },
     },
-    "100%": {
-      transform: "scale(2.4)",
-      opacity: 0,
-    },
-  },
-}));
+  };
+});
 
 const UserCard = ({
+  connected,
   displayName,
   userId,
   identifier,
   isMuted,
   transmitter,
+  volume,
+  onVolumeChanged,
+  delay,
+  jitter,
+  quality,
 }) => {
   let nickname = displayName ?? userId;
   if (transmitter) {
@@ -88,6 +98,7 @@ const UserCard = ({
             overlap="circular"
             anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
             variant="dot"
+            connected={connected}
           >
             <Avatar
               sx={{ bgcolor: theme.surfaceVariant, width: 62, height: 62 }}
@@ -133,7 +144,11 @@ const UserCard = ({
                 <Grid item style={{ height: "12px" }} />
               ) : (
                 <Grid item>
-                  <StyledSlider defaultValue={50} style={{ width: "70%" }} />
+                  <StyledSlider
+                    value={volume}
+                    style={{ width: "70%" }}
+                    onChange={async (_, newValue) => await onVolumeChanged(newValue)}
+                  />
                 </Grid>
               )}
 
@@ -142,7 +157,9 @@ const UserCard = ({
               </Grid>
               {transmitter ? (
                 <Grid item>
-                  <p style={{marginTop: "6px", marginBottom: "6px"}}>Network type: </p>
+                  <p style={{ marginTop: "6px", marginBottom: "6px" }}>
+                    Network type:{" "}
+                  </p>
                 </Grid>
               ) : (
                 <></>
@@ -156,10 +173,10 @@ const UserCard = ({
                 style={{ marginTop: "6px" }}
               >
                 <Grid item style={{ paddingTop: 0, paddingBottom: 0 }}>
-                  <p style={{ margin: 0 }}> Ping: {} ms</p>
+                  <p style={{ margin: 0 }}> Ping: {delay} ms</p>
                 </Grid>
                 <Grid item style={{ paddingTop: 0, paddingBottom: 0 }}>
-                  <p style={{ margin: 0 }}> Jitter: {} ms</p>
+                  <p style={{ margin: 0 }}> Jitter: {jitter} ms</p>
                 </Grid>
               </Grid>
               <Grid item>
@@ -168,7 +185,7 @@ const UserCard = ({
               <Grid item style={{ marginTop: "6px" }}>
                 <StyledLinearProgress
                   variant="determinate"
-                  value={90}
+                  value={quality}
                   style={{ width: "80%" }}
                 />
               </Grid>
