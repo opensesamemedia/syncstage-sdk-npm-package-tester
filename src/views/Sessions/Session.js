@@ -13,7 +13,8 @@ import theme from "../../ui/theme";
 import InviteOthers from "../../components/UserCard/InviteOthers";
 import { errorCodeToSnackbar } from "../../utils";
 import { SyncStageSDKErrorCode } from "@opensesamemedia/syncstage-sdk-npm-package-development";
-import SyncStageUserDelegate from "../../UserDeletate";
+import SyncStageUserDelegate from "../../UserDelegate";
+import SyncStageConnectivityDelegate from "../../ConnectivityDelegate";
 import { enqueueSnackbar } from "notistack";
 import { PathEnum } from "../../router/PathEnum";
 
@@ -28,8 +29,6 @@ const Session = ({ onLeaveSession, inSession }) => {
   const [muted, setMuted] = useState(false);
   const [connected, setConnected] = useState(true);
   const [connectionsMap, setConnectionsMap] = useState({});
-
-  const [connectionsList, setConnectionsList] = useState([]);
 
   console.log(sessionData);
 
@@ -71,26 +70,36 @@ const Session = ({ onLeaveSession, inSession }) => {
   };
 
   const onUserMuted = (identifier) => {
-    // sessionData.receivers.forEach((receiver) => {
-    //   if (receiver.identifier === identifier) {
-    //     receiver.isMuted = true;
-    //   }
-    // });
-    // setSessionData(sessionData);
+    const receiversCopy = JSON.parse(JSON.stringify(sessionData.receivers))
+    receiversCopy.forEach((receiver) => {
+      if (receiver.identifier === identifier) {
+        receiver.isMuted = true;
+      }
+    });
+    setSessionData({...sessionData, receivers: receiversCopy});
   };
 
   const onUserUnmuted = (identifier) => {
-    // sessionData.receivers.forEach((receiver) => {
-    //   if (receiver.identifier === identifier) {
-    //     receiver.isMuted = false;
-    //   }
-    // });
-    // setSessionData(sessionData);
+    const receiversCopy = JSON.parse(JSON.stringify(sessionData.receivers))
+    receiversCopy.forEach((receiver) => {
+      if (receiver.identifier === identifier) {
+        receiver.isMuted = false;
+      }
+    });
+    setSessionData({...sessionData, receivers: receiversCopy});
   };
 
   const onSessionOut = () => {
     enqueueSnackbar("You have been disconnected from session");
     setCurrentStep(PathEnum.SESSIONS_JOIN);
+  };
+
+  const onTransmitterConnectivityChanged = (connected) => {
+
+  };
+
+  const onReceiverConnectivityChanged = (identifier, conected) => {
+
   };
 
   const [userDelegate] = useState(
@@ -103,12 +112,20 @@ const Session = ({ onLeaveSession, inSession }) => {
     )
   );
 
+  const [connectivityDelegate] = useState(
+    new SyncStageConnectivityDelegate(
+      onTransmitterConnectivityChanged,
+      onReceiverConnectivityChanged
+    )
+  );
+
   console.log(sessionData);
 
   useEffect(() => {
     async function executeAsync() {
       if (syncStage !== null) {
         syncStage.userDelegate = userDelegate;
+        syncStage.connectivityDelegate = connectivityDelegate;
 
         // eslint-disable-next-line no-unused-vars
         const [mutedState, errorCode] = await syncStage.isMicrophoneMuted();
@@ -146,7 +163,6 @@ const Session = ({ onLeaveSession, inSession }) => {
                 measurements.quality;
 
               setConnectionsMap(tempConnections);
-              setConnectionsList(Object.values(tempConnections));
             }
           });
         }
