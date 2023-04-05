@@ -11,12 +11,18 @@ import theme from "../../ui/theme";
 import { mountedStyle, unmountedStyle } from "../../ui/AnimationStyles";
 
 const Menu = ({ inSession, profileConfigured }) => {
-  const { currentStep, setCurrentStep, desktopConnected, desktopProvisioned } = useContext(AppContext);
+  const { currentStep, setCurrentStep, desktopConnected, desktopProvisioned } =
+    useContext(AppContext);
 
   const selectedStyle = {
     "&.Mui-selected": {
       backgroundColor: theme.primary,
       color: theme.onPrimary,
+      borderRadius: "100px",
+    },
+    ":hover": {
+      backgroundColor: theme.onPrimary,
+      color: "white",
       borderRadius: "100px",
     },
   };

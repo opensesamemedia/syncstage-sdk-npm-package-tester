@@ -10,7 +10,7 @@ import { createTheme, ThemeProvider as MuiThemeProvider } from "@mui/material";
 
 import GlobalStyle from "./ui/GlobalStyle";
 import theme from "./ui/theme";
-import AppWrapper from "./App.styled";
+import AppWrapper, {Logo} from "./App.styled";
 import { PathEnum } from "./router/PathEnum";
 import RoutesComponent from "./router/RoutesComponent";
 import Menu from "./components/Menu/Menu";
@@ -165,7 +165,11 @@ const App = () => {
                 inSession={inSession}
                 profileConfigured={profileConfigured}
               />
-              <div className="gradient" />
+              
+              <div className="bg" />
+              <div className="gradient2" />
+              <div className="gradient1" />
+              
               <Backdrop
                 sx={{
                   color: "#fff",
@@ -176,6 +180,7 @@ const App = () => {
               >
                 <CircularProgress color="inherit" />
               </Backdrop>
+              <Logo inSession={inSession}/>
               <div className="app-container">
                 <RoutesComponent
                   onProvisionSubmit={onProvisionSubmit}

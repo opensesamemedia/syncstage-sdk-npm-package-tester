@@ -9,7 +9,6 @@ const GlobalStyle = createGlobalStyle`
     font-style: normal;
     letter-spacing: 0.25px;
 
-    background: ${({ theme }) => theme.background};
     height: 100vh;
     width: 100vw;
     color: ${({ theme }) => theme.text};
