@@ -183,11 +183,11 @@ const UserCard = ({
                 <p style={{ margin: 0, marginTop: "6px" }}>Network:</p>
               </Grid>
               <Grid item style={{ marginTop: "6px" }}>
-                <StyledLinearProgress
+                {/* <StyledLinearProgress
                   variant="determinate"
                   value={quality}
                   style={{ width: "80%" }}
-                />
+                /> */}
               </Grid>
             </Grid>
           </Grid>

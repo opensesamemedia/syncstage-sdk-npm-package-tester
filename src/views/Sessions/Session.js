@@ -13,19 +13,103 @@ import theme from "../../ui/theme";
 import InviteOthers from "../../components/UserCard/InviteOthers";
 import { errorCodeToSnackbar } from "../../utils";
 import { SyncStageSDKErrorCode } from "@opensesamemedia/syncstage-sdk-npm-package-development";
+import SyncStageUserDelegate from "../../UserDeletate";
+import { enqueueSnackbar } from "notistack";
+import { PathEnum } from "../../router/PathEnum";
 
 const Session = ({ onLeaveSession, inSession }) => {
-  const { sessionCode, sessionData, setSessionData, syncStage } =
-    useContext(AppContext);
+  const {
+    sessionCode,
+    sessionData,
+    setSessionData,
+    syncStage,
+    setCurrentStep,
+  } = useContext(AppContext);
   const [muted, setMuted] = useState(false);
   const [connected, setConnected] = useState(true);
   const [connectionsMap, setConnectionsMap] = useState({});
 
   const [connectionsList, setConnectionsList] = useState([]);
 
+  console.log(sessionData);
+
+  const onMutedToggle = async () => {
+    const mutedState = !muted;
+    setMuted(mutedState);
+    const errorCode = await syncStage.toggleMicrophone(mutedState);
+    errorCodeToSnackbar(errorCode);
+    if (errorCode !== SyncStageSDKErrorCode.OK) {
+      setMuted(!mutedState);
+    }
+  };
+
+  const onUserJoined = (connection) => {
+    console.log("onUserJoined");
+    console.log(connection);
+    if (
+      sessionData.transmitter.identifier === connection.identifier ||
+      sessionData.receivers.some(receiver => receiver.identifier === connection.identifier)
+    ) {
+      return;
+    }
+    setSessionData({
+      ...sessionData,
+      receivers: [...sessionData.receivers, connection],
+    });
+  };
+
+  const onUserLeft = (identifier) => {
+    console.log("onUserLeft");
+    console.log(identifier);
+
+    setSessionData({
+      ...sessionData,
+      receivers: sessionData.receivers.filter((receiver) => {
+        return receiver.identifier !== identifier;
+      }),
+    });
+  };
+
+  const onUserMuted = (identifier) => {
+    // sessionData.receivers.forEach((receiver) => {
+    //   if (receiver.identifier === identifier) {
+    //     receiver.isMuted = true;
+    //   }
+    // });
+    // setSessionData(sessionData);
+  };
+
+  const onUserUnmuted = (identifier) => {
+    // sessionData.receivers.forEach((receiver) => {
+    //   if (receiver.identifier === identifier) {
+    //     receiver.isMuted = false;
+    //   }
+    // });
+    // setSessionData(sessionData);
+  };
+
+  const onSessionOut = () => {
+    enqueueSnackbar("You have been disconnected from session");
+    setCurrentStep(PathEnum.SESSIONS_JOIN);
+  };
+
+  const [userDelegate] = useState(
+    new SyncStageUserDelegate(
+      onUserJoined,
+      onUserLeft,
+      onUserMuted,
+      onUserUnmuted,
+      onSessionOut
+    )
+  );
+
+  console.log(sessionData);
+
   useEffect(() => {
     async function executeAsync() {
       if (syncStage !== null) {
+        syncStage.userDelegate = userDelegate;
+
         // eslint-disable-next-line no-unused-vars
         const [mutedState, errorCode] = await syncStage.isMicrophoneMuted();
         errorCodeToSnackbar(errorCode);
@@ -34,6 +118,8 @@ const Session = ({ onLeaveSession, inSession }) => {
         }
 
         if (sessionData) {
+          console.log("Updating connections");
+
           sessionData.receivers.forEach(async (receiver) => {
             const connection = connectionsMap[receiver.identifier];
             if (!connection) {
@@ -67,17 +153,7 @@ const Session = ({ onLeaveSession, inSession }) => {
       }
     }
     executeAsync();
-  }, [sessionData, syncStage, connectionsMap]);
-
-  const onMutedToggle = async () => {
-    const mutedState = !muted;
-    setMuted(mutedState);
-    const errorCode = await syncStage.toggleMicrophone(mutedState);
-    errorCodeToSnackbar(errorCode);
-    if (errorCode !== SyncStageSDKErrorCode.OK) {
-      setMuted(!mutedState);
-    }
-  };
+  }, [sessionData, syncStage, connectionsMap, userDelegate]);
 
   return (
     <div style={inSession ? mountedStyle : unmountedStyle}>
@@ -96,20 +172,23 @@ const Session = ({ onLeaveSession, inSession }) => {
                     transmitter
                     {...sessionData.transmitter}
                     connected={connected}
+                    // TODO NETWORK MEASUREMENTS
                   />
                 </Box>
               ) : (
                 <></>
               )}
-              {connectionsList &&
-                connectionsList.map((connection) => (
-                  <Box gridColumn="span 4">
+              {sessionData.receivers &&
+                sessionData.receivers.map((connection) => (
+                  <Box gridColumn="span 4" key={connection.identifier}>
                     <UserCard
                       {...connection}
-                      key={connection.identifier}
                       onVolumeChanged={async (volume) => {
                         // TODO implement debouncing
-                        syncStage.changeReceiverVolume(connection.identifier, volume); 
+                        syncStage.changeReceiverVolume(
+                          connection.identifier,
+                          volume
+                        );
                         connectionsMap[connection.identifier].volume = volume;
                         setConnectionsMap(connectionsMap);
                       }}
