@@ -6,6 +6,7 @@ import { SnackbarProvider } from "notistack";
 import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
 import { errorCodeToSnackbar } from "./utils";
+import { createTheme, ThemeProvider as MuiThemeProvider } from "@mui/material";
 
 import GlobalStyle from "./ui/GlobalStyle";
 import theme from "./ui/theme";
@@ -18,6 +19,12 @@ import "./ui/animationStyles.css";
 import SyncStage, {
   SyncStageSDKErrorCode,
 } from "@opensesamemedia/syncstage-sdk-npm-package-development";
+
+const muiTheme = createTheme({
+  typography: {
+    fontFamily: ["Josefin Sans", "sans-serif"].join(","),
+  },
+});
 
 const App = () => {
   const [syncStage, setSyncStage] = useState(null);
@@ -148,32 +155,40 @@ const App = () => {
 
   return (
     <AppContext.Provider value={sharedState}>
-      <ThemeProvider theme={theme}>
-        <GlobalStyle />
-        <SnackbarProvider />
-        <AppWrapper inSession={inSession}>
-          <Router>
-            <Menu inSession={inSession} profileConfigured={profileConfigured} />
-            <div className="gradient" />
-            <Backdrop
-              sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
-              open={backdropOpen}
-              onClick={() => setBackdropOpen(false)}
-            >
-              <CircularProgress color="inherit" />
-            </Backdrop>
-            <div className="app-container">
-              <RoutesComponent
-                onProvisionSubmit={onProvisionSubmit}
-                onJoinSession={onJoinSession}
-                onLeaveSession={onLeaveSession}
-                onCreateSession={onCreateSession}
+      <MuiThemeProvider theme={muiTheme}>
+        <ThemeProvider theme={theme}>
+          <GlobalStyle />
+          <SnackbarProvider />
+          <AppWrapper inSession={inSession}>
+            <Router>
+              <Menu
                 inSession={inSession}
+                profileConfigured={profileConfigured}
               />
-            </div>
-          </Router>
-        </AppWrapper>
-      </ThemeProvider>
+              <div className="gradient" />
+              <Backdrop
+                sx={{
+                  color: "#fff",
+                  zIndex: (theme) => theme.zIndex.drawer + 1,
+                }}
+                open={backdropOpen}
+                onClick={() => setBackdropOpen(false)}
+              >
+                <CircularProgress color="inherit" />
+              </Backdrop>
+              <div className="app-container">
+                <RoutesComponent
+                  onProvisionSubmit={onProvisionSubmit}
+                  onJoinSession={onJoinSession}
+                  onLeaveSession={onLeaveSession}
+                  onCreateSession={onCreateSession}
+                  inSession={inSession}
+                />
+              </div>
+            </Router>
+          </AppWrapper>
+        </ThemeProvider>
+      </MuiThemeProvider>
     </AppContext.Provider>
   );
 };

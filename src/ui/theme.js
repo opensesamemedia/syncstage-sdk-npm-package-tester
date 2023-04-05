@@ -1,7 +1,7 @@
 const theme = {
-  primary: "#FFAED9",
+  primary: "#30D8FA",
   onPrimary: "#610046",
-  text: "#CEC4C7",
+  text: "#C5C7C8",
   background: "#1F1A1C",
   surfaceVariant: "#504349",
   onSurfaceVariant: "#D3C2C9",

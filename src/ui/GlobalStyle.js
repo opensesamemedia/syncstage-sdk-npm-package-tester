@@ -1,10 +1,11 @@
 import { createGlobalStyle } from 'styled-components';
 
+
 const GlobalStyle = createGlobalStyle`
-  @import url('https://fonts.googleapis.com/css?family=Roboto');
 
   body {
-    font-family: 'Roboto', sans-serif;
+    font-family: 'Josefin Sans', sans-serif !important;
+    
     font-style: normal;
     letter-spacing: 0.25px;
 
