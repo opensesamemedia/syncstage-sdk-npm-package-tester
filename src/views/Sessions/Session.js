@@ -17,6 +17,7 @@ import SyncStageUserDelegate from "../../UserDelegate";
 import SyncStageConnectivityDelegate from "../../ConnectivityDelegate";
 import { enqueueSnackbar } from "notistack";
 import { PathEnum } from "../../router/PathEnum";
+import produce from "immer";
 
 const Session = ({ onLeaveSession, inSession }) => {
   const {
@@ -26,11 +27,20 @@ const Session = ({ onLeaveSession, inSession }) => {
     syncStage,
     setCurrentStep,
   } = useContext(AppContext);
+
+  // Transmitter
   const [muted, setMuted] = useState(false);
   const [connected, setConnected] = useState(true);
-  const [connectionsMap, setConnectionsMap] = useState({});
+  const [measurements, setMeasurements] = useState({});
 
-  console.log(sessionData);
+  // Receivers
+  const [measurementsMap, setMeasurementsMap] = useState({});
+  const [volumeMap, setVolumeMap] = useState({});
+  const [connectedMap, setConnectedMap] = useState({});
+
+  if (!sessionData) {
+    setCurrentStep(PathEnum.PROFILE_NICKNAME);
+  }
 
   const onMutedToggle = async () => {
     const mutedState = !muted;
@@ -47,46 +57,50 @@ const Session = ({ onLeaveSession, inSession }) => {
     console.log(connection);
     if (
       sessionData.transmitter.identifier === connection.identifier ||
-      sessionData.receivers.some(receiver => receiver.identifier === connection.identifier)
+      sessionData.receivers.some(
+        (receiver) => receiver.identifier === connection.identifier
+      )
     ) {
       return;
     }
-    setSessionData({
-      ...sessionData,
-      receivers: [...sessionData.receivers, connection],
-    });
+    setSessionData(
+      produce((draft) => {
+        draft.receivers.push(connection);
+      })
+    );
   };
 
   const onUserLeft = (identifier) => {
     console.log("onUserLeft");
     console.log(identifier);
 
-    setSessionData({
-      ...sessionData,
-      receivers: sessionData.receivers.filter((receiver) => {
-        return receiver.identifier !== identifier;
-      }),
-    });
+    setSessionData(
+      produce((draft) => {
+        draft.receivers = draft.receivers.filter((receiver) => receiver.identifier !== identifier);
+      })
+    );
   };
 
   const onUserMuted = (identifier) => {
-    const receiversCopy = JSON.parse(JSON.stringify(sessionData.receivers))
-    receiversCopy.forEach((receiver) => {
-      if (receiver.identifier === identifier) {
+    setSessionData(
+      produce((draft) => {
+        const receiver = draft.receivers.find(
+          (receiver) => receiver.identifier === identifier
+        );
         receiver.isMuted = true;
-      }
-    });
-    setSessionData({...sessionData, receivers: receiversCopy});
+      })
+    );
   };
 
   const onUserUnmuted = (identifier) => {
-    const receiversCopy = JSON.parse(JSON.stringify(sessionData.receivers))
-    receiversCopy.forEach((receiver) => {
-      if (receiver.identifier === identifier) {
+    setSessionData(
+      produce((draft) => {
+        const receiver = draft.receivers.find(
+          (receiver) => receiver.identifier === identifier
+        );
         receiver.isMuted = false;
-      }
-    });
-    setSessionData({...sessionData, receivers: receiversCopy});
+      })
+    );
   };
 
   const onSessionOut = () => {
@@ -95,11 +109,16 @@ const Session = ({ onLeaveSession, inSession }) => {
   };
 
   const onTransmitterConnectivityChanged = (connected) => {
-
+    setConnected(connected);
   };
 
-  const onReceiverConnectivityChanged = (identifier, conected) => {
-
+  const onReceiverConnectivityChanged = (identifier, connected) => {
+    setConnectedMap({
+      ...connectedMap,
+      [identifier]: {
+        connected,
+      },
+    });
   };
 
   const [userDelegate] = useState(
@@ -119,8 +138,6 @@ const Session = ({ onLeaveSession, inSession }) => {
     )
   );
 
-  console.log(sessionData);
-
   useEffect(() => {
     async function executeAsync() {
       if (syncStage !== null) {
@@ -134,42 +151,68 @@ const Session = ({ onLeaveSession, inSession }) => {
           setMuted(mutedState);
         }
 
-        if (sessionData) {
-          console.log("Updating connections");
+        if (sessionData != null) {
+          let errorCode;
+          let measurements;
+
+          //Tx measurements
+          [measurements, errorCode] =
+            await syncStage.getTransmitterMeasurements();
+          errorCodeToSnackbar(errorCode);
+
+          setMeasurements({
+            delay: measurements.networkDelayMs,
+            jitter: measurements.networkJitterMs,
+            quality: measurements.quality,
+          });
 
           sessionData.receivers.forEach(async (receiver) => {
-            const connection = connectionsMap[receiver.identifier];
-            if (!connection) {
-              const tempConnections = connectionsMap;
-              tempConnections[receiver.identifier] = receiver;
-              tempConnections[receiver.identifier].connected = false;
-
-              let [volumeValue, errorCode] = await syncStage.getReceiverVolume(
-                receiver.identifier
-              );
-              errorCodeToSnackbar(errorCode);
-
-              tempConnections[receiver.identifier].volume = volumeValue;
-
-              let measurements;
-              [measurements, errorCode] =
-                await syncStage.getReceiverMeasurements(receiver.identifier);
-              errorCodeToSnackbar(errorCode);
-              tempConnections[receiver.identifier].delay =
-                measurements.networkDelayMs;
-              tempConnections[receiver.identifier].jitter =
-                measurements.networkJitterMs;
-              tempConnections[receiver.identifier].quality =
-                measurements.quality;
-
-              setConnectionsMap(tempConnections);
+            // Connected
+            if (connectedMap[receiver.identifier] == null) {
+              setConnectedMap({
+                ...connectedMap,
+                [receiver.identifier]: {
+                  connected: true,
+                },
+              });
             }
+            // Volume
+            let volumeValue;
+            [volumeValue, errorCode] = await syncStage.getReceiverVolume(
+              receiver.identifier
+            );
+            errorCodeToSnackbar(errorCode);
+
+            setVolumeMap({
+              ...volumeMap,
+              [receiver.identifier]: volumeValue,
+            });
+
+            // Measurements
+            let measurements;
+            [measurements, errorCode] = await syncStage.getReceiverMeasurements(
+              receiver.identifier
+            );
+            errorCodeToSnackbar(errorCode);
+
+            setMeasurementsMap({
+              ...measurementsMap,
+              [receiver.identifier]: {
+                delay: measurements.networkDelayMs,
+                jitter: measurements.networkJitterMs,
+                quality: measurements.quality,
+              },
+            });
           });
         }
       }
     }
     executeAsync();
-  }, [sessionData, syncStage, connectionsMap, userDelegate]);
+  }, [sessionData, syncStage, userDelegate, connectivityDelegate]);
+
+  console.log(sessionData);
+  console.log(connectedMap);
+  console.log(measurementsMap);
 
   return (
     <div style={inSession ? mountedStyle : unmountedStyle}>
@@ -188,25 +231,36 @@ const Session = ({ onLeaveSession, inSession }) => {
                     transmitter
                     {...sessionData.transmitter}
                     connected={connected}
-                    // TODO NETWORK MEASUREMENTS
+                    {...measurements}
                   />
                 </Box>
               ) : (
                 <></>
               )}
-              {sessionData.receivers &&
+              {sessionData &&
+                sessionData.receivers &&
                 sessionData.receivers.map((connection) => (
                   <Box gridColumn="span 4" key={connection.identifier}>
                     <UserCard
                       {...connection}
+                      {...measurementsMap[connection.identifier]}
+                      {...connectedMap[connection.identifier]}
+                      volume={volumeMap[connection.identifier]}
                       onVolumeChanged={async (volume) => {
-                        // TODO implement debouncing
+                        setVolumeMap({
+                          ...volumeMap,
+                          [connection.identifier]: volume,
+                        });
+                      }}
+                      onVolumeChangeCommited={async (volume) => {
                         syncStage.changeReceiverVolume(
                           connection.identifier,
                           volume
                         );
-                        connectionsMap[connection.identifier].volume = volume;
-                        setConnectionsMap(connectionsMap);
+                        setVolumeMap({
+                          ...volumeMap,
+                          [connection.identifier]: volume,
+                        });
                       }}
                     />
                   </Box>

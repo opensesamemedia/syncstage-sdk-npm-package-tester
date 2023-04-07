@@ -75,6 +75,7 @@ const UserCard = ({
   transmitter,
   volume,
   onVolumeChanged,
+  onVolumeChangeCommited,
   delay,
   jitter,
   quality,
@@ -98,12 +99,12 @@ const UserCard = ({
             overlap="circular"
             anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
             variant="dot"
-            connected={connected}
+            connected={connected ? connected.toString() : "false"}
           >
             <Avatar
               sx={{ bgcolor: theme.surfaceVariant, width: 62, height: 62 }}
             >
-              {nickname.charAt(0)}
+              {/* {`${nickname.charAt(0)}`} */}
             </Avatar>
           </StyledBadge>
         </Grid>
@@ -145,9 +146,12 @@ const UserCard = ({
               ) : (
                 <Grid item>
                   <StyledSlider
-                    value={volume}
+                    value={volume || 0}
                     style={{ width: "70%" }}
-                    onChange={async (_, newValue) => await onVolumeChanged(newValue)}
+                    onChange={(_, newValue) => onVolumeChanged(newValue)}
+                    onChangeCommitted={async (_, newValue) =>
+                      await onVolumeChangeCommited(newValue)
+                    }
                   />
                 </Grid>
               )}
@@ -185,7 +189,7 @@ const UserCard = ({
               <Grid item style={{ marginTop: "6px" }}>
                 <StyledLinearProgress
                   variant="determinate"
-                  value={quality ? quality : 0}
+                  value={quality || 0}
                   style={{ width: "80%" }}
                 />
               </Grid>
