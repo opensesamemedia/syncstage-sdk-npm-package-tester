@@ -1,5 +1,4 @@
 import React from "react";
-import { SyncStageDashboardWrapper } from "./SyncStageDashboard.styled";
 import { useState } from "react";
 
 import Button from "react-bootstrap/Button";
@@ -53,7 +52,7 @@ const SyncStageDashboard = () => {
     useState([undefined, undefined]);
 
   return (
-    <SyncStageDashboardWrapper>
+    <>
       <h1>SyncStage React.js testapp</h1>
       <br />
 
@@ -471,7 +470,7 @@ const SyncStageDashboard = () => {
           </Col>
         </Row>
       </Container>
-    </SyncStageDashboardWrapper>
+    </>
   );
 };
 
