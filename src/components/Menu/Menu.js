@@ -11,7 +11,7 @@ import theme from "../../ui/theme";
 import { mountedStyle, unmountedStyle } from "../../ui/AnimationStyles";
 
 const Menu = ({ inSession, profileConfigured }) => {
-  const { currentStep, setCurrentStep, desktopConnected, desktopProvisioned } =
+  const { currentStep, setCurrentStep, desktopConnected, desktopProvisioned, syncStageSDKVersion } =
     useContext(AppContext);
 
   const selectedStyle = {
@@ -74,6 +74,7 @@ const Menu = ({ inSession, profileConfigured }) => {
             <ListItemText primary="Sessions" />
           </ListItemButton>
         </List>
+        <p style={{paddingLeft: 16, paddingTop: 20, fontSize: 10}}>SDK: {syncStageSDKVersion}</p>
       </MenuWrapper>
     </div>
   );

@@ -12,7 +12,7 @@ import Button from "@mui/material/Button";
 import theme from "../../ui/theme";
 import InviteOthers from "../../components/UserCard/InviteOthers";
 import { errorCodeToSnackbar } from "../../utils";
-import { SyncStageSDKErrorCode } from "@opensesamemedia/syncstage-sdk-npm-package-development";
+import { SyncStageSDKErrorCode } from "@opensesamemedia/syncstage-sdk-npm-package";
 import SyncStageUserDelegate from "../../UserDelegate";
 import SyncStageConnectivityDelegate from "../../ConnectivityDelegate";
 import { enqueueSnackbar } from "notistack";
