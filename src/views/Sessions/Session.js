@@ -89,10 +89,6 @@ const Session = ({ onLeaveSession, inSession }) => {
         );
       })
     );
-
-    if (sessionData.transmitter.identifier === identifier) {
-      onSessionOut();
-    }
   }, []);
 
   const onUserMuted = useCallback((identifier) => {
