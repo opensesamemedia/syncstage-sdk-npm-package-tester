@@ -1,3 +1,4 @@
+# SyncStage browser SDK test application
 ## Installing dependencies 
 `yarn install`
 
