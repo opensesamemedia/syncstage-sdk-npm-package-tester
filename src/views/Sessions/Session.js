@@ -12,7 +12,7 @@ import Button from "@mui/material/Button";
 import theme from "../../ui/theme";
 import InviteOthers from "../../components/UserCard/InviteOthers";
 import { errorCodeToSnackbar } from "../../utils";
-import { SyncStageSDKErrorCode } from "@opensesamemedia/syncstage-sdk-npm-package";
+import { SyncStageSDKErrorCode } from "@opensesamemedia/syncstage";
 import SyncStageUserDelegate from "../../UserDelegate";
 import SyncStageConnectivityDelegate from "../../ConnectivityDelegate";
 import { enqueueSnackbar } from "notistack";
@@ -54,7 +54,7 @@ const Session = ({ onLeaveSession, inSession }) => {
 
   const onUserJoined = (connection) => {
     console.log("onUserJoined");
-    console.log(connection);
+    // Not adding self connection and avoid duplicates
     if (
       sessionData.transmitter.identifier === connection.identifier ||
       sessionData.receivers.some(
@@ -72,13 +72,16 @@ const Session = ({ onLeaveSession, inSession }) => {
 
   const onUserLeft = (identifier) => {
     console.log("onUserLeft");
-    console.log(identifier);
 
     setSessionData(
       produce((draft) => {
         draft.receivers = draft.receivers.filter((receiver) => receiver.identifier !== identifier);
       })
     );
+
+    if(sessionData.transmitter.identifier === identifier){
+      onSessionOut();
+    }
   };
 
   const onUserMuted = (identifier) => {
@@ -113,30 +116,31 @@ const Session = ({ onLeaveSession, inSession }) => {
   };
 
   const onReceiverConnectivityChanged = (identifier, connected) => {
-    setConnectedMap({
-      ...connectedMap,
-      [identifier]: {
-        connected,
-      },
-    });
+    console.log(`onReceiverConnectivityChanged ${identifier}: connected ${connected}`);
+    setConnectedMap(
+      produce((draft) => {
+        const connectedReceiver = draft[identifier]
+        if(!connectedReceiver){
+          draft[identifier] = connected
+        }
+        draft[identifier] = connected;
+      })
+    );
   };
 
-  const [userDelegate] = useState(
-    new SyncStageUserDelegate(
+  const userDelegate = new SyncStageUserDelegate(
       onUserJoined,
       onUserLeft,
       onUserMuted,
       onUserUnmuted,
       onSessionOut
     )
-  );
 
-  const [connectivityDelegate] = useState(
+  const connectivityDelegate = 
     new SyncStageConnectivityDelegate(
       onTransmitterConnectivityChanged,
       onReceiverConnectivityChanged
-    )
-  );
+    );
 
   useEffect(() => {
     async function executeAsync() {
@@ -167,15 +171,15 @@ const Session = ({ onLeaveSession, inSession }) => {
           });
 
           sessionData.receivers.forEach(async (receiver) => {
-            // Connected
-            if (connectedMap[receiver.identifier] == null) {
-              setConnectedMap({
-                ...connectedMap,
-                [receiver.identifier]: {
-                  connected: true,
-                },
-              });
-            }
+            setConnectedMap(
+              produce((draft) => {
+                const connectedReceiver = draft[receiver.identifier]
+                if(!connectedReceiver){
+                  draft[receiver.identifier] = undefined
+                }
+              })
+            );
+
             // Volume
             let volumeValue;
             [volumeValue, errorCode] = await syncStage.getReceiverVolume(
@@ -183,36 +187,37 @@ const Session = ({ onLeaveSession, inSession }) => {
             );
             errorCodeToSnackbar(errorCode);
 
-            setVolumeMap({
-              ...volumeMap,
-              [receiver.identifier]: volumeValue,
-            });
-
-            // Measurements
-            let measurements;
-            [measurements, errorCode] = await syncStage.getReceiverMeasurements(
-              receiver.identifier
+            setVolumeMap(
+              produce((draft) => {
+                const receiverVolume = draft[receiver.identifier]
+                if(!receiverVolume){
+                  draft[receiver.identifier] = 0
+                }
+                draft[receiver.identifier] = volumeValue
+              })
             );
-            errorCodeToSnackbar(errorCode);
 
-            setMeasurementsMap({
-              ...measurementsMap,
-              [receiver.identifier]: {
-                delay: measurements.networkDelayMs,
-                jitter: measurements.networkJitterMs,
-                quality: measurements.quality,
-              },
-            });
+            // // Measurements
+            // let measurements;
+            // [measurements, errorCode] = await syncStage.getReceiverMeasurements(
+            //   receiver.identifier
+            // );
+            // errorCodeToSnackbar(errorCode);
+
+            // setMeasurementsMap({
+            //   ...measurementsMap,
+            //   [receiver.identifier]: {
+            //     delay: measurements.networkDelayMs,
+            //     jitter: measurements.networkJitterMs,
+            //     quality: measurements.quality,
+            //   },
+            // });
           });
         }
       }
     }
     executeAsync();
-  }, [sessionData, syncStage, userDelegate, connectivityDelegate]);
-
-  console.log(sessionData);
-  console.log(connectedMap);
-  console.log(measurementsMap);
+  }, [sessionData, syncStage]);
 
   return (
     <div style={inSession ? mountedStyle : unmountedStyle}>
@@ -244,7 +249,7 @@ const Session = ({ onLeaveSession, inSession }) => {
                     <UserCard
                       {...connection}
                       {...measurementsMap[connection.identifier]}
-                      {...connectedMap[connection.identifier]}
+                      connected={connectedMap[connection.identifier] }
                       volume={volumeMap[connection.identifier]}
                       onVolumeChanged={async (volume) => {
                         setVolumeMap({

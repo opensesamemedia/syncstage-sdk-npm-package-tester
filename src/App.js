@@ -16,7 +16,7 @@ import RoutesComponent from "./router/RoutesComponent";
 import Menu from "./components/Menu/Menu";
 import "./ui/animationStyles.css";
 
-import SyncStage, { SyncStageSDKErrorCode } from "@opensesamemedia/syncstage-sdk-npm-package";
+import SyncStage, { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
 
 const muiTheme = createTheme({
   typography: {
@@ -64,7 +64,7 @@ const App = () => {
 
   useEffect(() => {
     if (syncStage === null) {
-      const ss = new SyncStage(null, null);
+      const ss = new SyncStage(null, null, 18080, process.env.REACT_APP_AGENT_ADDRESS ?? "ws://localhost");
       setSyncStageSDKVersion(ss.getSDKVersion());
       setSyncStage(ss);
     }

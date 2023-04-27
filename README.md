@@ -1,13 +1,15 @@
-# Getting Started with Create React App
+## Installing dependencies 
+`yarn install`
 
-## Local dependency in package.json
-Run `npm i ../syncstage-sdk-npm-package`
-it will add to package.json:
+To work with local sdk package run:
 
-`"@opensesamemedia/syncstage-sdk-npm-package-development": "file:../syncstage-sdk-npm-package"`
+```
+yarn remove @opensesamemedia/syncstage
+npm link ../syncstage-sdk-npm-package
+```
 
-## Remote dependency
-`"@opensesamemedia/syncstage-sdk-npm-package-development": "^0.0.26-development",`
+## Running project
+`yarn start`
 
 ## Create .env with SyncStageSecrets
 

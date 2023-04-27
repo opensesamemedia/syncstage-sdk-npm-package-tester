@@ -49,7 +49,7 @@ const StyledBadge = styled(Badge)(({ connected }) => {
         height: "100%",
         borderRadius: "50%",
         animation: animation,
-        border: "1px solid currentColor",
+        border: `1px solid ${color}`,
         content: '""',
       },
     },
@@ -99,7 +99,7 @@ const UserCard = ({
             overlap="circular"
             anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
             variant="dot"
-            connected={connected ? connected.toString() : "false"}
+            connected={connected}
           >
             <Avatar
               sx={{ bgcolor: theme.surfaceVariant, width: 62, height: 62 }}
@@ -159,7 +159,8 @@ const UserCard = ({
               <Grid item>
                 <Divider color="white" style={{ width: "100%" }} light />
               </Grid>
-              {transmitter ? (
+             {/* TODO: recognize and display network type */}
+              {/* {transmitter ? (
                 <Grid item>
                   <p style={{ marginTop: "6px", marginBottom: "6px" }}>
                     Network type:{" "}
@@ -167,7 +168,7 @@ const UserCard = ({
                 </Grid>
               ) : (
                 <></>
-              )}
+              )} */}
               <Grid
                 container
                 direction="row"
