@@ -26,14 +26,14 @@ const JoinSession = ({ onJoinSession }) => {
         direction="row"
         justifyContent="space-between"
         alignItems="center"
-        style={{ width: "500px", paddingLeft: "18px" }}
+        style={{ paddingLeft: "18px" }}
       >
         <Grid item>
           <TextField
             label="Session code"
             value={sessionCode}
             onChange={(e) => setSessionCode(e.target.value)}
-            style={{ width: "360px" }}
+            style={{ width: "450px" }}
             placeholder="xyz-xyz-xyz"
           />
         </Grid>
@@ -51,7 +51,6 @@ const JoinSession = ({ onJoinSession }) => {
         direction="column"
         justifyContent="center"
         alignItems="center"
-        style={{maxWidth: '500px'}}
       >
         <Grid item style={{height: "30px"}}/>
         <Grid item>

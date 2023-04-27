@@ -74,10 +74,8 @@ const Regions = ({ onCreateSession }) => {
         direction="column"
         justifyContent="center"
         alignItems="center"
-        style={{ maxWidth: "500px" }}
       >
-        <Grid item style={{ height: "30px" }} />
-
+        <Grid item style={{ height: "60px" }} />
         <Grid item>
           <ButtonContained disabled={zoneId === ""} onClick={async () => onCreateSession()}>
             Start now

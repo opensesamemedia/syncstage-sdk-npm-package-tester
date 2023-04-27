@@ -185,13 +185,15 @@ const App = () => {
               </Backdrop>
               <Logo inSession={inSession} />
               <div className="app-container">
-                <RoutesComponent
-                  onProvisionSubmit={onProvisionSubmit}
-                  onJoinSession={onJoinSession}
-                  onLeaveSession={onLeaveSession}
-                  onCreateSession={onCreateSession}
-                  inSession={inSession}
-                />
+                <div className="app-container-limiter">
+                  <RoutesComponent
+                    onProvisionSubmit={onProvisionSubmit}
+                    onJoinSession={onJoinSession}
+                    onLeaveSession={onLeaveSession}
+                    onCreateSession={onCreateSession}
+                    inSession={inSession}
+                  />
+                </div>
               </div>
             </Router>
           </AppWrapper>

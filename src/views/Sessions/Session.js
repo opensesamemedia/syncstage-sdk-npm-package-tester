@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useState, useEffect, useCallback } from "react";
 import { Grid, Box } from "@mui/material";
 import AppContext from "../../AppContext";
 import { mountedStyle, unmountedStyle } from "../../ui/AnimationStyles";
@@ -19,6 +19,8 @@ import { enqueueSnackbar } from "notistack";
 import { PathEnum } from "../../router/PathEnum";
 import produce from "immer";
 
+const MEASUREMENTS_INTERVAL_MS = 2000;
+
 const Session = ({ onLeaveSession, inSession }) => {
   const {
     sessionCode,
@@ -27,6 +29,8 @@ const Session = ({ onLeaveSession, inSession }) => {
     syncStage,
     setCurrentStep,
   } = useContext(AppContext);
+
+  const [measurementsInterval, setMeasurementsInterval] = useState(null);
 
   // Transmitter
   const [muted, setMuted] = useState(false);
@@ -42,7 +46,12 @@ const Session = ({ onLeaveSession, inSession }) => {
     setCurrentStep(PathEnum.PROFILE_NICKNAME);
   }
 
-  const onMutedToggle = async () => {
+  const onSessionOut = useCallback(() => {
+    enqueueSnackbar("You have been disconnected from session");
+    setCurrentStep(PathEnum.SESSIONS_JOIN);
+  }, [setCurrentStep]);
+
+  const onMutedToggle = useCallback(async () => {
     const mutedState = !muted;
     setMuted(mutedState);
     const errorCode = await syncStage.toggleMicrophone(mutedState);
@@ -50,9 +59,9 @@ const Session = ({ onLeaveSession, inSession }) => {
     if (errorCode !== SyncStageSDKErrorCode.OK) {
       setMuted(!mutedState);
     }
-  };
+  }, [syncStage, muted]);
 
-  const onUserJoined = (connection) => {
+  const onUserJoined = useCallback((connection) => {
     console.log("onUserJoined");
     // Not adding self connection and avoid duplicates
     if (
@@ -68,23 +77,25 @@ const Session = ({ onLeaveSession, inSession }) => {
         draft.receivers.push(connection);
       })
     );
-  };
+  }, []);
 
-  const onUserLeft = (identifier) => {
+  const onUserLeft = useCallback((identifier) => {
     console.log("onUserLeft");
 
     setSessionData(
       produce((draft) => {
-        draft.receivers = draft.receivers.filter((receiver) => receiver.identifier !== identifier);
+        draft.receivers = draft.receivers.filter(
+          (receiver) => receiver.identifier !== identifier
+        );
       })
     );
 
-    if(sessionData.transmitter.identifier === identifier){
+    if (sessionData.transmitter.identifier === identifier) {
       onSessionOut();
     }
-  };
+  }, []);
 
-  const onUserMuted = (identifier) => {
+  const onUserMuted = useCallback((identifier) => {
     setSessionData(
       produce((draft) => {
         const receiver = draft.receivers.find(
@@ -93,9 +104,9 @@ const Session = ({ onLeaveSession, inSession }) => {
         receiver.isMuted = true;
       })
     );
-  };
+  }, []);
 
-  const onUserUnmuted = (identifier) => {
+  const onUserUnmuted = useCallback((identifier) => {
     setSessionData(
       produce((draft) => {
         const receiver = draft.receivers.find(
@@ -104,49 +115,88 @@ const Session = ({ onLeaveSession, inSession }) => {
         receiver.isMuted = false;
       })
     );
-  };
+  }, []);
 
-  const onSessionOut = () => {
-    enqueueSnackbar("You have been disconnected from session");
-    setCurrentStep(PathEnum.SESSIONS_JOIN);
-  };
-
-  const onTransmitterConnectivityChanged = (connected) => {
+  const onTransmitterConnectivityChanged = useCallback((connected) => {
     setConnected(connected);
-  };
+  }, []);
 
-  const onReceiverConnectivityChanged = (identifier, connected) => {
-    console.log(`onReceiverConnectivityChanged ${identifier}: connected ${connected}`);
+  const onReceiverConnectivityChanged = useCallback((identifier, connected) => {
+    console.log(
+      `onReceiverConnectivityChanged ${identifier}: connected ${connected}`
+    );
     setConnectedMap(
       produce((draft) => {
-        const connectedReceiver = draft[identifier]
-        if(!connectedReceiver){
-          draft[identifier] = connected
+        const connectedReceiver = draft[identifier];
+        if (!connectedReceiver) {
+          draft[identifier] = connected;
         }
         draft[identifier] = connected;
       })
     );
-  };
+  }, []);
 
-  const userDelegate = new SyncStageUserDelegate(
-      onUserJoined,
-      onUserLeft,
-      onUserMuted,
-      onUserUnmuted,
-      onSessionOut
-    )
+  const updateMeasurements = useCallback(async () => {
+    let errorCode;
+    let measurements;
 
-  const connectivityDelegate = 
-    new SyncStageConnectivityDelegate(
-      onTransmitterConnectivityChanged,
-      onReceiverConnectivityChanged
-    );
+    //Tx measurements
+    [measurements, errorCode] = await syncStage.getTransmitterMeasurements();
+    errorCodeToSnackbar(errorCode);
+
+    setMeasurements({
+      delay: measurements.networkDelayMs,
+      jitter: measurements.networkJitterMs,
+      quality: measurements.quality,
+    });
+
+    //Rx measurements
+    sessionData.receivers.forEach(async (receiver) => {
+      let errorCode;
+      let measurements;
+      [measurements, errorCode] = await syncStage.getReceiverMeasurements(
+        receiver.identifier
+      );
+      errorCodeToSnackbar(errorCode);
+
+      setMeasurementsMap(
+        produce((draft) => {
+          draft[receiver.identifier] = {
+            delay: measurements.networkDelayMs,
+            jitter: measurements.networkJitterMs,
+            quality: measurements.quality,
+          };
+        })
+      );
+    });
+  }, [syncStage, sessionData]);
+
+  useEffect(() => {
+    // Set up the interval
+    const intervalId = setInterval(async () => {
+      await updateMeasurements();
+    }, MEASUREMENTS_INTERVAL_MS);
+
+    // Clean up the interval when the component unmounts
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, []);
 
   useEffect(() => {
     async function executeAsync() {
       if (syncStage !== null) {
-        syncStage.userDelegate = userDelegate;
-        syncStage.connectivityDelegate = connectivityDelegate;
+        syncStage.userDelegate = new SyncStageUserDelegate(
+          onUserJoined,
+          onUserLeft,
+          onUserMuted,
+          onUserUnmuted,
+          onSessionOut
+        );
+        syncStage.connectivityDelegate = new SyncStageConnectivityDelegate(
+          onTransmitterConnectivityChanged,
+          onReceiverConnectivityChanged
+        );
 
         // eslint-disable-next-line no-unused-vars
         const [mutedState, errorCode] = await syncStage.isMicrophoneMuted();
@@ -157,25 +207,13 @@ const Session = ({ onLeaveSession, inSession }) => {
 
         if (sessionData != null) {
           let errorCode;
-          let measurements;
-
-          //Tx measurements
-          [measurements, errorCode] =
-            await syncStage.getTransmitterMeasurements();
-          errorCodeToSnackbar(errorCode);
-
-          setMeasurements({
-            delay: measurements.networkDelayMs,
-            jitter: measurements.networkJitterMs,
-            quality: measurements.quality,
-          });
-
+          // initialize connection and volume info based on the sessionData state
           sessionData.receivers.forEach(async (receiver) => {
             setConnectedMap(
               produce((draft) => {
-                const connectedReceiver = draft[receiver.identifier]
-                if(!connectedReceiver){
-                  draft[receiver.identifier] = undefined
+                const connectedReceiver = draft[receiver.identifier];
+                if (!connectedReceiver) {
+                  draft[receiver.identifier] = undefined;
                 }
               })
             );
@@ -189,35 +227,16 @@ const Session = ({ onLeaveSession, inSession }) => {
 
             setVolumeMap(
               produce((draft) => {
-                const receiverVolume = draft[receiver.identifier]
-                if(!receiverVolume){
-                  draft[receiver.identifier] = 0
-                }
-                draft[receiver.identifier] = volumeValue
+                draft[receiver.identifier] = volumeValue;
               })
             );
-
-            // // Measurements
-            // let measurements;
-            // [measurements, errorCode] = await syncStage.getReceiverMeasurements(
-            //   receiver.identifier
-            // );
-            // errorCodeToSnackbar(errorCode);
-
-            // setMeasurementsMap({
-            //   ...measurementsMap,
-            //   [receiver.identifier]: {
-            //     delay: measurements.networkDelayMs,
-            //     jitter: measurements.networkJitterMs,
-            //     quality: measurements.quality,
-            //   },
-            // });
           });
+          await updateMeasurements();
         }
       }
     }
     executeAsync();
-  }, [sessionData, syncStage]);
+  }, [syncStage, sessionData]);
 
   return (
     <div style={inSession ? mountedStyle : unmountedStyle}>
@@ -249,7 +268,7 @@ const Session = ({ onLeaveSession, inSession }) => {
                     <UserCard
                       {...connection}
                       {...measurementsMap[connection.identifier]}
-                      connected={connectedMap[connection.identifier] }
+                      connected={connectedMap[connection.identifier]}
                       volume={volumeMap[connection.identifier]}
                       onVolumeChanged={async (volume) => {
                         setVolumeMap({
@@ -302,11 +321,13 @@ const Session = ({ onLeaveSession, inSession }) => {
                 {muted ? <MicOffIcon /> : <Mic />}
               </Button>
             </Grid>
+            {/* 
+            TODO
             <Grid item>
               <Button style={{ color: theme.onSurfaceVariant }}>
                 <MoreVertIcon />
               </Button>
-            </Grid>
+            </Grid> */}
           </Grid>
         </div>
       </SessionWrapper>

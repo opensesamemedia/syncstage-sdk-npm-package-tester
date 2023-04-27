@@ -17,7 +17,7 @@ const Menu = ({ inSession, profileConfigured }) => {
   const selectedStyle = {
     "&.Mui-selected": {
       backgroundColor: theme.primary,
-      color: theme.onPrimary,
+      color: theme.onPrimaryDark,
       borderRadius: "100px",
     },
     ":hover": {

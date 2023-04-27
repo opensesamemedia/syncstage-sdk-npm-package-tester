@@ -177,12 +177,23 @@ const UserCard = ({
                 spacing={2}
                 style={{ marginTop: "6px" }}
               >
-                <Grid item style={{ paddingTop: 0, paddingBottom: 0 }}>
-                  <p style={{ margin: 0 }}> Ping: {delay} ms</p>
-                </Grid>
-                <Grid item style={{ paddingTop: 0, paddingBottom: 0 }}>
-                  <p style={{ margin: 0 }}> Jitter: {jitter} ms</p>
-                </Grid>
+                {
+                  !(delay === 0 || jitter === 0) ? 
+                    <>
+                      <Grid item style={{ paddingTop: 0, paddingBottom: 0 }}>
+                        <p style={{ margin: 0 }}> Ping: {delay ?? '-'} ms</p>
+                      </Grid>
+                      <Grid item style={{ paddingTop: 0, paddingBottom: 0 }}>
+                        <p style={{ margin: 0 }}> Jitter: {jitter ?? '-'} ms</p>
+                      </Grid>
+                    </>
+                   : 
+                    <Grid item style={{ paddingTop: 0, paddingBottom: 0 }}>
+                      <p style={{ margin: 0 }}> Collecting measurements</p>
+                    </Grid>
+                  
+                }
+                
               </Grid>
               <Grid item>
                 <p style={{ margin: 0, marginTop: "6px" }}>Network:</p>
