@@ -19,7 +19,7 @@ import { enqueueSnackbar } from "notistack";
 import { PathEnum } from "../../router/PathEnum";
 import produce from "immer";
 
-const MEASUREMENTS_INTERVAL_MS = 2000;
+const MEASUREMENTS_INTERVAL_MS = 5000;
 
 const Session = ({ onLeaveSession, inSession }) => {
   const {
