@@ -39,7 +39,7 @@ const Setup = ({ onProvisionSubmit }) => {
               <p>or</p>
             </Grid>
             <Grid item>
-              <a href=""> Install Desktop Agent </a>
+              <a href="https://syncstage.s3.amazonaws.com/Agent/SyncStageAgent_1.0.0.dmg" download> Install Desktop Agent </a>
             </Grid>
           </Grid>
         </>

@@ -232,6 +232,12 @@ const Session = ({ onLeaveSession, inSession }) => {
       }
     }
     executeAsync();
+    return () => {
+      if (syncStage !== null) {
+        syncStage.userDelegate = null;
+        syncStage.connectivityDelegate = null;
+      }
+    };
   }, [syncStage, sessionData]);
 
   return (
