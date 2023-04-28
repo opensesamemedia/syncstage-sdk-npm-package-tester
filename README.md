@@ -1,13 +1,22 @@
-# Getting Started with Create React App
+# SyncStage browser SDK test application
 
-## Local dependency in package.json
-Run `npm i ../syncstage-sdk-npm-package`
-it will add to package.json:
+## SyncStage Desktop Agent
 
-`"@opensesamemedia/syncstage-sdk-npm-package-development": "file:../syncstage-sdk-npm-package"`
+To use test application you need to install [SyncStage Desktop Agent](https://syncstage.s3.amazonaws.com/Agent/SyncStageAgent_1.0.0.dmg) on you Mac.
 
-## Remote dependency
-`"@opensesamemedia/syncstage-sdk-npm-package-development": "^0.0.26-development",`
+## Supported browsers
+
+The current version of the application and the desktop agent supports only the Google Chrome browser.
+## Documentation 
+
+For more information please visit [SyncStage documentation](https://docs.sync-stage.com/) and [SyncStage webpage](https://sync-stage.com/). 
+
+## npm SDK package
+https://www.npmjs.com/package/@opensesamemedia/syncstage
+
+
+## Running project
+`yarn start`
 
 ## Create .env with SyncStageSecrets
 
@@ -16,3 +25,14 @@ REACT_APP_SYNCSTAGE_SECRET_ID=
 REACT_APP_SYNCSTAGE_SECRET_KEY=
 
 ```
+
+## Switching to local SDK dependency
+`yarn install`
+
+To work with local sdk package run:
+
+```
+yarn remove @opensesamemedia/syncstage
+npm link ../syncstage-sdk-npm-package
+```
+

@@ -1,55 +1,41 @@
-import React from "react";
-import { useState } from "react";
+import React from 'react';
+import { useState } from 'react';
 
-import Button from "react-bootstrap/Button";
-import Container from "react-bootstrap/Container";
-import Row from "react-bootstrap/Row";
-import Col from "react-bootstrap/Col";
-import Form from "react-bootstrap/Form";
-import InputGroup from "react-bootstrap/InputGroup";
+import Button from 'react-bootstrap/Button';
+import Container from 'react-bootstrap/Container';
+import Row from 'react-bootstrap/Row';
+import Col from 'react-bootstrap/Col';
+import Form from 'react-bootstrap/Form';
+import InputGroup from 'react-bootstrap/InputGroup';
 
-import SyncStage from "@opensesamemedia/syncstage-sdk-npm-package-development";
+import SyncStage from '@opensesamemedia/syncstage';
 
 const SyncStageDashboard = () => {
-  const [applicationSecretId, setApplicationSecretId] = useState(
-    process.env.REACT_APP_SYNCSTAGE_SECRET_ID
-  );
-  const [applicationSecretKey, setApplicationSecretKey] = useState(
-    process.env.REACT_APP_SYNCSTAGE_SECRET_KEY
-  );
+  const [applicationSecretId, setApplicationSecretId] = useState(process.env.REACT_APP_SYNCSTAGE_SECRET_ID);
+  const [applicationSecretKey, setApplicationSecretKey] = useState(process.env.REACT_APP_SYNCSTAGE_SECRET_KEY);
   const [port, setPort] = useState(18080);
   const [syncStage, setSyncStage] = useState(null);
   const [initErrorCode, setInitErrorCode] = useState(undefined);
   const [zonesList, setZonesList] = useState([undefined, undefined]);
   const [createdSession, setCreatedSession] = useState([undefined, undefined]);
-  const [zoneId, setZoneId] = useState("");
-  const [userId, setUserId] = useState("");
-  const [sessionCode, setSessionCode] = useState("");
-  const [displayName, setDisplayName] = useState("");
-  const [identifier, setIdentifier] = useState("");
-  const [receiverVolume, setReceiverVolume] = useState("");
+  const [zoneId, setZoneId] = useState('');
+  const [userId, setUserId] = useState('');
+  const [sessionCode, setSessionCode] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [identifier, setIdentifier] = useState('');
+  const [receiverVolume, setReceiverVolume] = useState('');
   const [joinedSession, setJoinedSession] = useState([undefined, undefined]);
   const [leaveErrorCode, setLeaveErrorCode] = useState(undefined);
   const [session, setSession] = useState([undefined, undefined]);
-  const [receiverVolumeResponse, setReceiverVolumeResponse] = useState([
-    undefined,
-    undefined,
-  ]);
-  const [isMicrophoneMutedResponse, setIsMicrophoneMutedResponse] = useState([
-    undefined,
-    undefined,
-  ]);
-  const [changeReceiverVolumeErrorCode, setChangeReceiverVolumeErrorCode] =
-    useState(undefined);
-  const [toggleMicrophoneErrorCode, setToggleMicrophoneErrorCode] =
-    useState(undefined);
+  const [receiverVolumeResponse, setReceiverVolumeResponse] = useState([undefined, undefined]);
+  const [isMicrophoneMutedResponse, setIsMicrophoneMutedResponse] = useState([undefined, undefined]);
+  const [changeReceiverVolumeErrorCode, setChangeReceiverVolumeErrorCode] = useState(undefined);
+  const [toggleMicrophoneErrorCode, setToggleMicrophoneErrorCode] = useState(undefined);
   const [mute, setMute] = useState(false);
 
-  const [receiverMeasurementsResponse, setReceiverMeasurementsResponse] =
-    useState([undefined, undefined]);
+  const [receiverMeasurementsResponse, setReceiverMeasurementsResponse] = useState([undefined, undefined]);
 
-  const [transmitterMeasurementsResponse, setTransmitterMeasurementsResponse] =
-    useState([undefined, undefined]);
+  const [transmitterMeasurementsResponse, setTransmitterMeasurementsResponse] = useState([undefined, undefined]);
 
   return (
     <>
@@ -61,9 +47,7 @@ const SyncStageDashboard = () => {
         <Row>
           <Col>
             <InputGroup size="sm" className="mb-3">
-              <InputGroup.Text id="inputGroup-sizing-sm">
-                applicationSecretId
-              </InputGroup.Text>
+              <InputGroup.Text id="inputGroup-sizing-sm">applicationSecretId</InputGroup.Text>
               <Form.Control
                 aria-label="applicationSecretId"
                 aria-describedby="inputGroup-sizing-sm"
@@ -72,9 +56,7 @@ const SyncStageDashboard = () => {
               />
             </InputGroup>
             <InputGroup size="sm" className="mb-3">
-              <InputGroup.Text id="inputGroup-sizing-sm">
-                applicationSecretKey
-              </InputGroup.Text>
+              <InputGroup.Text id="inputGroup-sizing-sm">applicationSecretKey</InputGroup.Text>
               <Form.Control
                 aria-label="applicationSecretKey"
                 aria-describedby="inputGroup-sizing-sm"
@@ -97,12 +79,7 @@ const SyncStageDashboard = () => {
               variant="primary"
               onClick={async () => {
                 const syncStage = new SyncStage(null, null, port);
-                setInitErrorCode(
-                  await syncStage.init(
-                    applicationSecretId,
-                    applicationSecretKey
-                  )
-                );
+                setInitErrorCode(await syncStage.init(applicationSecretId, applicationSecretKey));
                 setSyncStage(syncStage);
               }}
             >
@@ -136,9 +113,7 @@ const SyncStageDashboard = () => {
         <Row>
           <Col sm={6}>
             <InputGroup size="sm" className="mb-3">
-              <InputGroup.Text id="inputGroup-sizing-sm">
-                zoneId
-              </InputGroup.Text>
+              <InputGroup.Text id="inputGroup-sizing-sm">zoneId</InputGroup.Text>
               <Form.Control
                 aria-label="zoneId"
                 aria-describedby="inputGroup-sizing-sm"
@@ -147,9 +122,7 @@ const SyncStageDashboard = () => {
               />
             </InputGroup>
             <InputGroup size="sm" className="mb-3">
-              <InputGroup.Text id="inputGroup-sizing-sm">
-                userId
-              </InputGroup.Text>
+              <InputGroup.Text id="inputGroup-sizing-sm">userId</InputGroup.Text>
               <Form.Control
                 aria-label="userId"
                 aria-describedby="inputGroup-sizing-sm"
@@ -162,10 +135,7 @@ const SyncStageDashboard = () => {
             <Button
               variant="primary"
               onClick={async () => {
-                const [response, errorCode] = await syncStage.createSession(
-                  zoneId,
-                  userId
-                );
+                const [response, errorCode] = await syncStage.createSession(zoneId, userId);
                 setCreatedSession([JSON.stringify(response), errorCode]);
               }}
             >
@@ -181,9 +151,7 @@ const SyncStageDashboard = () => {
         <Row>
           <Col sm={6}>
             <InputGroup size="sm" className="mb-3">
-              <InputGroup.Text id="inputGroup-sizing-sm">
-                sessionCode
-              </InputGroup.Text>
+              <InputGroup.Text id="inputGroup-sizing-sm">sessionCode</InputGroup.Text>
               <Form.Control
                 aria-label="sessionCode"
                 aria-describedby="inputGroup-sizing-sm"
@@ -192,9 +160,7 @@ const SyncStageDashboard = () => {
               />
             </InputGroup>
             <InputGroup size="sm" className="mb-3">
-              <InputGroup.Text id="inputGroup-sizing-sm">
-                userId
-              </InputGroup.Text>
+              <InputGroup.Text id="inputGroup-sizing-sm">userId</InputGroup.Text>
               <Form.Control
                 aria-label="userId"
                 aria-describedby="inputGroup-sizing-sm"
@@ -203,9 +169,7 @@ const SyncStageDashboard = () => {
               />
             </InputGroup>
             <InputGroup size="sm" className="mb-3">
-              <InputGroup.Text id="inputGroup-sizing-sm">
-                displayName
-              </InputGroup.Text>
+              <InputGroup.Text id="inputGroup-sizing-sm">displayName</InputGroup.Text>
               <Form.Control
                 aria-label="displayName"
                 aria-describedby="inputGroup-sizing-sm"
@@ -218,11 +182,7 @@ const SyncStageDashboard = () => {
             <Button
               variant="primary"
               onClick={async () => {
-                const [response, errorCode] = await syncStage.join(
-                  sessionCode,
-                  userId,
-                  displayName
-                );
+                const [response, errorCode] = await syncStage.join(sessionCode, userId, displayName);
                 setJoinedSession([JSON.stringify(response), errorCode]);
               }}
             >
@@ -274,9 +234,7 @@ const SyncStageDashboard = () => {
         <Row>
           <Col sm={6}>
             <InputGroup size="sm" className="mb-3">
-              <InputGroup.Text id="inputGroup-sizing-sm">
-                identifier
-              </InputGroup.Text>
+              <InputGroup.Text id="inputGroup-sizing-sm">identifier</InputGroup.Text>
               <Form.Control
                 aria-label="identifier"
                 aria-describedby="inputGroup-sizing-sm"
@@ -285,9 +243,7 @@ const SyncStageDashboard = () => {
               />
             </InputGroup>
             <InputGroup size="sm" className="mb-3">
-              <InputGroup.Text id="inputGroup-sizing-sm">
-                receiverVolume
-              </InputGroup.Text>
+              <InputGroup.Text id="inputGroup-sizing-sm">receiverVolume</InputGroup.Text>
               <Form.Control
                 aria-label="receiverVolume"
                 aria-describedby="inputGroup-sizing-sm"
@@ -300,10 +256,7 @@ const SyncStageDashboard = () => {
             <Button
               variant="primary"
               onClick={async () => {
-                const errorCode = await syncStage.changeReceiverVolume(
-                  identifier,
-                  parseInt(receiverVolume)
-                );
+                const errorCode = await syncStage.changeReceiverVolume(identifier, parseInt(receiverVolume));
                 setChangeReceiverVolumeErrorCode(errorCode);
               }}
             >
@@ -311,9 +264,7 @@ const SyncStageDashboard = () => {
             </Button>
           </Col>
           <Col>
-            <p>
-              Change receiver volume error code: {changeReceiverVolumeErrorCode}
-            </p>
+            <p>Change receiver volume error code: {changeReceiverVolumeErrorCode}</p>
           </Col>
         </Row>
 
@@ -321,9 +272,7 @@ const SyncStageDashboard = () => {
         <Row>
           <Col sm={6}>
             <InputGroup size="sm" className="mb-3">
-              <InputGroup.Text id="inputGroup-sizing-sm">
-                identifier
-              </InputGroup.Text>
+              <InputGroup.Text id="inputGroup-sizing-sm">identifier</InputGroup.Text>
               <Form.Control
                 aria-label="identifier"
                 aria-describedby="inputGroup-sizing-sm"
@@ -336,9 +285,7 @@ const SyncStageDashboard = () => {
             <Button
               variant="primary"
               onClick={async () => {
-                const [response, errorCode] = await syncStage.getReceiverVolume(
-                  identifier
-                );
+                const [response, errorCode] = await syncStage.getReceiverVolume(identifier);
                 setReceiverVolumeResponse([response, errorCode]);
               }}
             >
@@ -347,8 +294,7 @@ const SyncStageDashboard = () => {
           </Col>
           <Col>
             <p>
-              Get receiver volume: {receiverVolumeResponse[0]}{" "}
-              {receiverVolumeResponse[1]}
+              Get receiver volume: {receiverVolumeResponse[0]} {receiverVolumeResponse[1]}
             </p>
           </Col>
         </Row>
@@ -390,8 +336,7 @@ const SyncStageDashboard = () => {
             <Button
               variant="primary"
               onClick={async () => {
-                const [response, errorCode] =
-                  await syncStage.isMicrophoneMuted();
+                const [response, errorCode] = await syncStage.isMicrophoneMuted();
                 console.log(`${response} ${errorCode}`);
                 setIsMicrophoneMutedResponse([response, errorCode]);
               }}
@@ -401,8 +346,7 @@ const SyncStageDashboard = () => {
           </Col>
           <Col>
             <p>
-              Is microphone muted: {isMicrophoneMutedResponse[0]}{" "}
-              {isMicrophoneMutedResponse[1]}
+              Is microphone muted: {isMicrophoneMutedResponse[0]} {isMicrophoneMutedResponse[1]}
             </p>
           </Col>
         </Row>
@@ -411,9 +355,7 @@ const SyncStageDashboard = () => {
         <Row>
           <Col sm={6}>
             <InputGroup size="sm" className="mb-3">
-              <InputGroup.Text id="inputGroup-sizing-sm">
-                identifier
-              </InputGroup.Text>
+              <InputGroup.Text id="inputGroup-sizing-sm">identifier</InputGroup.Text>
               <Form.Control
                 aria-label="identifier"
                 aria-describedby="inputGroup-sizing-sm"
@@ -426,12 +368,8 @@ const SyncStageDashboard = () => {
             <Button
               variant="primary"
               onClick={async () => {
-                const [response, errorCode] =
-                  await syncStage.getReceiverMeasurements(identifier);
-                setReceiverMeasurementsResponse([
-                  JSON.stringify(response),
-                  errorCode,
-                ]);
+                const [response, errorCode] = await syncStage.getReceiverMeasurements(identifier);
+                setReceiverMeasurementsResponse([JSON.stringify(response), errorCode]);
               }}
             >
               Get receiver measurements
@@ -439,8 +377,7 @@ const SyncStageDashboard = () => {
           </Col>
           <Col>
             <p>
-              Receiver measurements: {receiverMeasurementsResponse[0]}{" "}
-              {receiverMeasurementsResponse[1]}
+              Receiver measurements: {receiverMeasurementsResponse[0]} {receiverMeasurementsResponse[1]}
             </p>
           </Col>
         </Row>
@@ -451,12 +388,8 @@ const SyncStageDashboard = () => {
             <Button
               variant="primary"
               onClick={async () => {
-                const [response, errorCode] =
-                  await syncStage.getTransmitterMeasurements();
-                setTransmitterMeasurementsResponse([
-                  JSON.stringify(response),
-                  errorCode,
-                ]);
+                const [response, errorCode] = await syncStage.getTransmitterMeasurements();
+                setTransmitterMeasurementsResponse([JSON.stringify(response), errorCode]);
               }}
             >
               Get transmitter measurements
@@ -464,8 +397,7 @@ const SyncStageDashboard = () => {
           </Col>
           <Col>
             <p>
-              Transmitter measurements: {transmitterMeasurementsResponse[0]}{" "}
-              {transmitterMeasurementsResponse[1]}
+              Transmitter measurements: {transmitterMeasurementsResponse[0]} {transmitterMeasurementsResponse[1]}
             </p>
           </Col>
         </Row>

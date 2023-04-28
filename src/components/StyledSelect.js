@@ -1,5 +1,5 @@
-import styled from "styled-components";
-import Select from "@mui/material/Select";
+import styled from 'styled-components';
+import Select from '@mui/material/Select';
 
 const StyledSelect = styled(Select)`
   color: ${({ theme }) => theme.text} !important;
