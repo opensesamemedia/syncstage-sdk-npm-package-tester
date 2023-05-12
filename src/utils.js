@@ -5,7 +5,7 @@ const syncStageErrorToMessageMap = new Map();
 
 syncStageErrorToMessageMap.set(parseInt(SyncStageSDKErrorCode.UNKNOWN_ERROR), 'Unknown error');
 syncStageErrorToMessageMap.set(parseInt(SyncStageSDKErrorCode.CONFIGURATION_ERROR), 'Configuration error');
-syncStageErrorToMessageMap.set(parseInt(SyncStageSDKErrorCode.API_ERROR), 'SyncStage service error');
+syncStageErrorToMessageMap.set(parseInt(SyncStageSDKErrorCode.API_ERROR), 'SyncStage service error - possibly invalid secret key');
 syncStageErrorToMessageMap.set(parseInt(SyncStageSDKErrorCode.API_UNAUTHORIZED), 'Unauthorized');
 syncStageErrorToMessageMap.set(parseInt(SyncStageSDKErrorCode.AUDIO_STREAMING_ERROR), 'Audio streaming error');
 syncStageErrorToMessageMap.set(parseInt(SyncStageSDKErrorCode.STREAM_DOES_NOT_EXIST), 'Stream does not exist');
@@ -27,4 +27,6 @@ const errorCodeToSnackbar = (errorCode, msgOnOK) => {
   }
 };
 
-export { syncStageErrorToMessageMap, errorCodeToSnackbar };
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+export { syncStageErrorToMessageMap, errorCodeToSnackbar, sleep };
