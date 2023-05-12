@@ -7,15 +7,17 @@ To use test application you need to install [SyncStage Desktop Agent](https://sy
 ## Supported browsers
 
 The current version of the application and the desktop agent supports only the Google Chrome browser.
-## Documentation 
 
-For more information please visit [SyncStage documentation](https://docs.sync-stage.com/) and [SyncStage webpage](https://sync-stage.com/). 
+## Documentation
+
+For more information please visit [SyncStage documentation](https://docs.sync-stage.com/) and [SyncStage webpage](https://sync-stage.com/).
 
 ## npm SDK package
+
 https://www.npmjs.com/package/@opensesamemedia/syncstage
 
-
 ## Running project
+
 `yarn start`
 
 ## Create .env with SyncStageSecrets
@@ -27,12 +29,12 @@ REACT_APP_SYNCSTAGE_SECRET_KEY=
 ```
 
 ## Switching to local SDK dependency
+
 `yarn install`
 
 To work with local sdk package run:
 
 ```
 yarn remove @opensesamemedia/syncstage
-npm link ../syncstage-sdk-npm-package
+yarn add ../syncstage-sdk-npm-package
 ```
-

@@ -82,6 +82,13 @@ const App = () => {
     setBackdropOpen,
     desktopConnected,
     desktopProvisioned,
+    setDesktopProvisioned,
+  };
+
+  const goToProvisioningPageOnUnauthorized = () => {
+    setCurrentStep(PathEnum.PROFILE_SECRET);
+    setDesktopProvisioned(false);
+    setBackdropOpen(false);
   };
 
   const onProvisionSubmit = async () => {
@@ -101,6 +108,11 @@ const App = () => {
     setBackdropOpen(true);
     const [data, errorCode] = await syncStage.join(sessionCode, nickname, nickname);
     errorCodeToSnackbar(errorCode, `Joined session ${sessionCode}`);
+
+    if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
+      return goToProvisioningPageOnUnauthorized();
+    }
+
     setBackdropOpen(false);
     if (errorCode === SyncStageSDKErrorCode.OK) {
       setSessionData(data);
@@ -112,6 +124,11 @@ const App = () => {
     setBackdropOpen(true);
     const [createData, errorCode] = await syncStage.createSession(zoneId, nickname);
     errorCodeToSnackbar(errorCode, `Created session ${createData.sessionCode}`);
+
+    if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
+      return goToProvisioningPageOnUnauthorized();
+    }
+
     setSessionCode(createData.sessionCode);
 
     if (errorCode === SyncStageSDKErrorCode.OK) {
@@ -130,6 +147,11 @@ const App = () => {
     const errorCode = await syncStage.leave();
     errorCodeToSnackbar(errorCode);
     setBackdropOpen(false);
+
+    if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
+      return goToProvisioningPageOnUnauthorized();
+    }
+
     setCurrentStep(PathEnum.SESSIONS_JOIN);
     setSessionData(null);
   };
