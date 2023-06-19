@@ -2,13 +2,15 @@ import React, { useContext } from 'react';
 import { Route, Routes, Navigate } from 'react-router-dom';
 import Setup from '../views/Setup/Setup';
 import JoinSession from '../views/Sessions/JoinSession';
-import Regions from '../views/Sessions/Regions';
 import Session from '../views/Sessions/Session';
 import Nickname from '../views/Profile/Nickname';
 import Secret from '../views/Profile/Secret';
 import Dev from '../views/Development/Dev';
 import { PathEnum } from './PathEnum';
 import AppContext from '../AppContext';
+import Location from '../views/Location/Location';
+import Latencies from '../views/Location/Latencies';
+import ManualLocation from '../views/Location/ManualLocation';
 
 const RoutesComponent = ({ onProvisionSubmit, onJoinSession, onCreateSession, onLeaveSession, inSession }) => {
   const { currentStep } = useContext(AppContext);
@@ -36,7 +38,25 @@ const RoutesComponent = ({ onProvisionSubmit, onJoinSession, onCreateSession, on
 
       <Route
         path={PathEnum.LOCATION}
-        element={currentStep === PathEnum.LOCATION ? <>LOCATION</> : <Navigate to={`/${currentStep}`} replace />}
+        element={currentStep === PathEnum.LOCATION ? <Location /> : <Navigate to={`/${currentStep}`} replace />}
+      />
+      <Route
+        path={PathEnum.LOCATION_LATENCIES}
+        element={currentStep === PathEnum.LOCATION_LATENCIES ? <Latencies /> : <Navigate to={`/${currentStep}`} replace />}
+      />
+      <Route
+        path={PathEnum.LOCATION_MANUAL}
+        element={currentStep === PathEnum.LOCATION_MANUAL ? <ManualLocation /> : <Navigate to={`/${currentStep}`} replace />}
+      />
+      <Route
+        path={PathEnum.SESSIONS_JOIN}
+        element={
+          currentStep === PathEnum.SESSIONS_JOIN ? (
+            <JoinSession onJoinSession={onJoinSession} onCreateSession={onCreateSession} />
+          ) : (
+            <Navigate to={`/${currentStep}`} replace />
+          )
+        }
       />
       <Route
         path={PathEnum.SESSIONS_JOIN}
@@ -48,17 +68,18 @@ const RoutesComponent = ({ onProvisionSubmit, onJoinSession, onCreateSession, on
           )
         }
       />
+
       <Route
-        path={PathEnum.SESSIONS_REGIONS}
+        path={PathEnum.SESSIONS_JOIN}
         element={
-          currentStep === PathEnum.SESSIONS_REGIONS ? (
-            <Regions onCreateSession={onCreateSession} />
+          currentStep === PathEnum.SESSIONS_JOIN ? (
+            <JoinSession onJoinSession={onJoinSession} />
           ) : (
             <Navigate to={`/${currentStep}`} replace />
           )
         }
-        on
       />
+
       <Route
         path={PathEnum.SESSIONS_SESSION}
         element={

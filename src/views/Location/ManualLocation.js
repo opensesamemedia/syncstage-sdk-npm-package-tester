@@ -10,23 +10,23 @@ import AppContext from '../../AppContext';
 import { PathEnum } from '../../router/PathEnum';
 import theme from '../../ui/theme';
 import { errorCodeToSnackbar } from '../../utils';
-import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
+import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-package-development';
 
-const Regions = ({ onCreateSession }) => {
-  const { zoneId, setZoneId, setCurrentStep, syncStage, setBackdropOpen } = useContext(AppContext);
+const ManualLocation = () => {
+  const { selectedServer, setSelectedServer, setCurrentStep, syncStage, setBackdropOpen } = useContext(AppContext);
 
-  const [zoneList, setZoneList] = useState([]);
+  const [instancesList, setInstancesList] = useState([]);
 
   useEffect(() => {
     async function fetchData() {
       setBackdropOpen(true);
-      const [data, errorCode] = await syncStage.zonesList();
+      const [data, errorCode] = await syncStage.getServerInstances();
       setBackdropOpen(false);
       if (errorCode === SyncStageSDKErrorCode.OK) {
-        setZoneList(data);
+        setInstancesList(data);
       } else {
         errorCodeToSnackbar(errorCode);
-        setZoneList([]);
+        setInstancesList([]);
       }
     }
     fetchData();
@@ -35,14 +35,14 @@ const Regions = ({ onCreateSession }) => {
   return (
     <Grid container direction="column" spacing={2}>
       <Grid item>
-        <h2>Region</h2>
+        <h2>Location</h2>
       </Grid>
       <Grid item>
         <p>Select the closest location for all the session participants.</p>
       </Grid>
       <Grid item>
         <FormControl fullWidth style={{ maxWidth: '400px' }}>
-          {zoneId === '' ? (
+          {selectedServer == null ? (
             <InputLabel
               id="region-select-label"
               style={{
@@ -56,38 +56,33 @@ const Regions = ({ onCreateSession }) => {
             <></>
           )}
 
-          <Select labelId="region-select-label" value={zoneId} onChange={(e) => setZoneId(e.target.value)}>
-            {zoneList.map((zone) => (
-              <MenuItem value={zone.zoneId} key={zone.zoneId}>
-                {zone.zoneName}
+          <Select labelId="region-select-label" value={selectedServer} onChange={(e) => setSelectedServer(e.target.value)}>
+            {instancesList.map((server) => (
+              <MenuItem value={server} key={server.studioServerId}>
+                {server.zoneName}
               </MenuItem>
             ))}
           </Select>
         </FormControl>
       </Grid>
 
-      <Grid container direction="column" justifyContent="center" alignItems="center">
-        <Grid item style={{ height: '60px' }} />
-        <Grid item>
-          <ButtonContained disabled={zoneId === ''} onClick={async () => onCreateSession()}>
-            Start now
-          </ButtonContained>
-        </Grid>
-      </Grid>
       <Grid item style={{ height: '80px' }} />
-      <Grid container justifyContent="flex-start">
+      <Grid container justifyContent="space-between">
         <Grid item>
-          <Button
+          <Button onClick={() => setCurrentStep(PathEnum.LOCATION)}>Previous</Button>
+        </Grid>
+        <Grid item>
+          <ButtonContained
             onClick={() => {
               setCurrentStep(PathEnum.SESSIONS_JOIN);
             }}
           >
-            Previous
-          </Button>
+            Next
+          </ButtonContained>
         </Grid>
       </Grid>
     </Grid>
   );
 };
 
-export default Regions;
+export default ManualLocation;

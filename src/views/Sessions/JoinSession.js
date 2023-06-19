@@ -6,7 +6,7 @@ import TextField from '../../components/StyledTextField';
 import AppContext from '../../AppContext';
 import { PathEnum } from '../../router/PathEnum';
 
-const JoinSession = ({ onJoinSession }) => {
+const JoinSession = ({ onJoinSession, onCreateSession }) => {
   const { sessionCode, setSessionCode, setCurrentStep } = useContext(AppContext);
 
   return (
@@ -39,7 +39,7 @@ const JoinSession = ({ onJoinSession }) => {
           <p>or</p>
         </Grid>
         <Grid item>
-          <ButtonContained onClick={() => setCurrentStep(PathEnum.SESSIONS_REGIONS)}>New session</ButtonContained>
+          <ButtonContained onClick={onCreateSession}>New session</ButtonContained>
         </Grid>
       </Grid>
       <Grid item style={{ height: '80px' }} />

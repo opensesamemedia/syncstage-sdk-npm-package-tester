@@ -4,6 +4,7 @@ import { List, ListItemText, ListItemIcon } from '@mui/material';
 import ListItemButton from '../StyledListItemButton';
 import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
 import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
+import LocationOn from '@mui/icons-material/LocationOn';
 import GroupsIcon from '@mui/icons-material/Groups';
 import AppContext from '../../AppContext';
 import { PathEnum } from '../../router/PathEnum';
@@ -11,7 +12,7 @@ import theme from '../../ui/theme';
 import { mountedStyle, unmountedStyle } from '../../ui/AnimationStyles';
 
 const Menu = ({ inSession, profileConfigured }) => {
-  const { currentStep, setCurrentStep, desktopConnected, desktopProvisioned, syncStageSDKVersion } = useContext(AppContext);
+  const { currentStep, setCurrentStep, desktopConnected, desktopProvisioned, syncStageSDKVersion, selectedServer } = useContext(AppContext);
 
   const selectedStyle = {
     '&.Mui-selected': {
@@ -51,10 +52,24 @@ const Menu = ({ inSession, profileConfigured }) => {
           </ListItemButton>
 
           <ListItemButton
+            selected={[PathEnum.LOCATION, PathEnum.LOCATION_LATENCIES, PathEnum.LOCATION_MANUAL].includes(currentStep)}
+            sx={selectedStyle}
+            onClick={() => {
+              setCurrentStep(PathEnum.LOCATION);
+            }}
+            disabled={!desktopProvisioned || !profileConfigured}
+          >
+            <ListItemIcon sx={{ color: 'inherit' }}>
+              <LocationOn />
+            </ListItemIcon>
+            <ListItemText primary="Location" />
+          </ListItemButton>
+
+          <ListItemButton
             selected={[PathEnum.SESSIONS_JOIN, PathEnum.SESSIONS_REGIONS, PathEnum.SESSIONS_SESSION].includes(currentStep)}
             sx={selectedStyle}
             onClick={() => setCurrentStep(PathEnum.SESSIONS_JOIN)}
-            disabled={!profileConfigured || !desktopProvisioned}
+            disabled={!profileConfigured || !desktopProvisioned || !selectedServer}
           >
             <ListItemIcon sx={{ color: 'inherit' }}>
               <GroupsIcon />

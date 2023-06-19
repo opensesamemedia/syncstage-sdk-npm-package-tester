@@ -8,7 +8,7 @@ import Col from 'react-bootstrap/Col';
 import Form from 'react-bootstrap/Form';
 import InputGroup from 'react-bootstrap/InputGroup';
 
-import SyncStage from '@opensesamemedia/syncstage';
+import SyncStage from '@opensesamemedia/syncstage-sdk-npm-package-development';
 
 const SyncStageDashboard = () => {
   const [applicationSecretId, setApplicationSecretId] = useState(process.env.REACT_APP_SYNCSTAGE_SECRET_ID);

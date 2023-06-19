@@ -16,7 +16,7 @@ import RoutesComponent from './router/RoutesComponent';
 import Menu from './components/Menu/Menu';
 import './ui/animationStyles.css';
 
-import SyncStage, { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
+import SyncStage, { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-package-development';
 
 const muiTheme = createTheme({
   typography: {
@@ -32,7 +32,7 @@ const App = () => {
   const [nickname, setNickname] = useState('');
   const [sessionCode, setSessionCode] = useState('');
   const [sessionData, setSessionData] = useState(null);
-  const [zoneId, setZoneId] = useState('');
+  const [selectedServer, setSelectedServer] = useState(null);
 
   let startPath = PathEnum.SETUP;
 
@@ -46,6 +46,8 @@ const App = () => {
   const [desktopConnected, setDesktopConnected] = useState(syncStage ? syncStage.isDesktopAgentConnected() : false);
 
   const [desktopProvisioned, setDesktopProvisioned] = useState(false);
+  const [automatedLocationSelection, setAutomatedLocationSelection] = useState(true);
+  const [locationSelected, setLocationSelected] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -56,11 +58,17 @@ const App = () => {
 
   useEffect(() => {
     if (syncStage === null) {
-      const ss = new SyncStage(null, null, 18080, process.env.REACT_APP_AGENT_ADDRESS ?? 'ws://localhost');
+      const ss = new SyncStage(null, null, null, 18080, process.env.REACT_APP_AGENT_ADDRESS ?? 'ws://localhost');
       setSyncStageSDKVersion(ss.getSDKVersion());
       setSyncStage(ss);
     }
   }, [syncStage]);
+
+  useEffect(() => {
+    if (!desktopProvisioned) {
+      setCurrentStep(PathEnum.SETUP);
+    }
+  }, []);
 
   const sharedState = {
     syncStage,
@@ -75,14 +83,18 @@ const App = () => {
     setSessionCode,
     sessionData,
     setSessionData,
-    zoneId,
-    setZoneId,
+    selectedServer,
+    setSelectedServer,
     currentStep,
     setCurrentStep,
     setBackdropOpen,
     desktopConnected,
     desktopProvisioned,
     setDesktopProvisioned,
+    locationSelected,
+    setLocationSelected,
+    automatedLocationSelection,
+    setAutomatedLocationSelection,
   };
 
   const goToProvisioningPageOnUnauthorized = () => {
@@ -97,7 +109,7 @@ const App = () => {
     errorCodeToSnackbar(errorCode, 'Authorized');
     setBackdropOpen(false);
     if (errorCode === SyncStageSDKErrorCode.OK) {
-      setCurrentStep(PathEnum.SESSIONS_JOIN);
+      setCurrentStep(PathEnum.LOCATION);
       setDesktopProvisioned(true);
     } else {
       setDesktopProvisioned(false);
@@ -106,7 +118,7 @@ const App = () => {
 
   const onJoinSession = async () => {
     setBackdropOpen(true);
-    const [data, errorCode] = await syncStage.join(sessionCode, nickname, nickname);
+    const [data, errorCode] = await syncStage.join(sessionCode, nickname, selectedServer.zoneId, selectedServer.studioServerId, nickname);
     errorCodeToSnackbar(errorCode, `Joined session ${sessionCode}`);
 
     if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
@@ -122,7 +134,7 @@ const App = () => {
 
   const onCreateSession = async () => {
     setBackdropOpen(true);
-    const [createData, errorCode] = await syncStage.createSession(zoneId, nickname);
+    const [createData, errorCode] = await syncStage.createSession(selectedServer.zoneId, selectedServer.studioServerId, nickname);
     errorCodeToSnackbar(errorCode, `Created session ${createData.sessionCode}`);
 
     if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
@@ -132,7 +144,13 @@ const App = () => {
     setSessionCode(createData.sessionCode);
 
     if (errorCode === SyncStageSDKErrorCode.OK) {
-      const [joinData, errorCode] = await syncStage.join(createData.sessionCode, nickname, nickname);
+      const [joinData, errorCode] = await syncStage.join(
+        createData.sessionCode,
+        nickname,
+        selectedServer.zoneId,
+        selectedServer.studioServerId,
+        nickname,
+      );
       errorCodeToSnackbar(errorCode);
       if (errorCode === SyncStageSDKErrorCode.OK) {
         setSessionData(joinData);
