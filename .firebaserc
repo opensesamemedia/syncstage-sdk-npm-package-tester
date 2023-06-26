@@ -1,5 +1,19 @@
 {
   "projects": {
-    "default": "syncstagebrowsersdktestapp"
-  }
+    "default": "syncstagebrowsersdktestapp",
+    "syncstage-air": "syncstagebrowsersdktestapp"
+  },
+  "targets": {
+    "syncstagebrowsersdktestapp": {
+      "hosting": {
+        "syncstage-air": [
+          "syncstage-air"
+        ],
+        "syncstagebrowsersdktestapp": [
+          "syncstagebrowsersdktestapp"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }
