@@ -4,7 +4,7 @@ import ButtonContained from '../../components/StyledButtonContained';
 import Button from '../../components/StyledButton';
 import AppContext from '../../AppContext';
 import { PathEnum } from '../../router/PathEnum';
-import { errorCodeToSnackbar, sleep } from '../../utils';
+import { errorCodeToSnackbar } from '../../utils';
 import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-package-development';
 import SyncStageDicoveryDelegate from '../../SyncStageDiscoveryDelegate';
 import styled from 'styled-components';

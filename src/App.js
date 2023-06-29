@@ -182,7 +182,7 @@ const App = () => {
       <MuiThemeProvider theme={muiTheme}>
         <ThemeProvider theme={theme}>
           <GlobalStyle />
-          <SnackbarProvider />
+          <SnackbarProvider preventDuplicate />
           <AppWrapper inSession={inSession}>
             <Router>
               <Menu inSession={inSession} profileConfigured={profileConfigured} />

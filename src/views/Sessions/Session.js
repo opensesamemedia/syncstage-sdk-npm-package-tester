@@ -33,6 +33,7 @@ const Session = ({ onLeaveSession, inSession }) => {
   const [measurementsMap, setMeasurementsMap] = useState({});
   const [volumeMap, setVolumeMap] = useState({});
   const [connectedMap, setConnectedMap] = useState({});
+  const [receiversMap, setReceiversMap] = useState({});
 
   if (!sessionData) {
     setCurrentStep(PathEnum.PROFILE_NICKNAME);
@@ -59,15 +60,13 @@ const Session = ({ onLeaveSession, inSession }) => {
   const onUserJoined = useCallback((connection) => {
     console.log('onUserJoined');
     // Not adding self connection and avoid duplicates
-    if (
-      sessionData.transmitter.identifier === connection.identifier ||
-      sessionData.receivers.some((receiver) => receiver.identifier === connection.identifier)
-    ) {
+    if (sessionData.transmitter.identifier === connection.identifier || receiversMap[connection.identifier]) {
       return;
     }
-    setSessionData(
+
+    setReceiversMap(
       produce((draft) => {
-        draft.receivers.push(connection);
+        draft[connection.identifier] = connection;
       }),
     );
   }, []);
@@ -75,27 +74,29 @@ const Session = ({ onLeaveSession, inSession }) => {
   const onUserLeft = useCallback((identifier) => {
     console.log('onUserLeft');
 
-    setSessionData(
+    setReceiversMap(
       produce((draft) => {
-        draft.receivers = draft.receivers.filter((receiver) => receiver.identifier !== identifier);
+        delete draft[identifier];
       }),
     );
   }, []);
 
   const onUserMuted = useCallback((identifier) => {
-    setSessionData(
+    setReceiversMap(
       produce((draft) => {
-        const receiver = draft.receivers.find((receiver) => receiver.identifier === identifier);
-        receiver.isMuted = true;
+        if (draft[identifier]) {
+          draft[identifier].isMuted = true;
+        }
       }),
     );
   }, []);
 
   const onUserUnmuted = useCallback((identifier) => {
-    setSessionData(
+    setReceiversMap(
       produce((draft) => {
-        const receiver = draft.receivers.find((receiver) => receiver.identifier === identifier);
-        receiver.isMuted = false;
+        if (draft[identifier]) {
+          draft[identifier].isMuted = false;
+        }
       }),
     );
   }, []);
@@ -123,7 +124,7 @@ const Session = ({ onLeaveSession, inSession }) => {
         console.log(buildViewSessionState);
 
         let errorCode;
-        // initialize connection and volume info based on the sessionData state
+        // initialize connection and volume, receivers map based on the sessionData state
         sessionData.receivers.forEach(async (receiver) => {
           setConnectedMap(
             produce((draft) => {
@@ -147,6 +148,12 @@ const Session = ({ onLeaveSession, inSession }) => {
           setVolumeMap(
             produce((draft) => {
               draft[receiver.identifier] = volumeValue;
+            }),
+          );
+
+          setReceiversMap(
+            produce((draft) => {
+              draft[receiver.identifier] = receiver;
             }),
           );
         });
@@ -192,7 +199,7 @@ const Session = ({ onLeaveSession, inSession }) => {
     });
 
     //Rx measurements
-    sessionData.receivers.forEach(async (receiver) => {
+    Object.entries(receiversMap).forEach(async ([_, receiver]) => {
       let errorCode;
       let measurements;
       [measurements, errorCode] = await syncStage.getReceiverMeasurements(receiver.identifier);
@@ -213,7 +220,7 @@ const Session = ({ onLeaveSession, inSession }) => {
         }),
       );
     });
-  }, [syncStage, sessionData]);
+  }, [syncStage, receiversMap]);
 
   useEffect(() => {
     // Set up the interval
@@ -280,31 +287,29 @@ const Session = ({ onLeaveSession, inSession }) => {
               ) : (
                 <></>
               )}
-              {sessionData &&
-                sessionData.receivers &&
-                sessionData.receivers.map((connection) => (
-                  <Box gridColumn="span 4" key={connection.identifier}>
-                    <UserCard
-                      {...connection}
-                      {...measurementsMap[connection.identifier]}
-                      connected={connectedMap[connection.identifier]}
-                      volume={volumeMap[connection.identifier]}
-                      onVolumeChanged={async (volume) => {
-                        setVolumeMap({
-                          ...volumeMap,
-                          [connection.identifier]: volume,
-                        });
-                      }}
-                      onVolumeChangeCommited={async (volume) => {
-                        syncStage.changeReceiverVolume(connection.identifier, volume);
-                        setVolumeMap({
-                          ...volumeMap,
-                          [connection.identifier]: volume,
-                        });
-                      }}
-                    />
-                  </Box>
-                ))}
+              {Object.entries(receiversMap).map(([identifier, connection]) => (
+                <Box gridColumn="span 4" key={identifier}>
+                  <UserCard
+                    {...connection}
+                    {...measurementsMap[identifier]}
+                    connected={connectedMap[identifier]}
+                    volume={volumeMap[identifier]}
+                    onVolumeChanged={async (volume) => {
+                      setVolumeMap({
+                        ...volumeMap,
+                        [identifier]: volume,
+                      });
+                    }}
+                    onVolumeChangeCommited={async (volume) => {
+                      syncStage.changeReceiverVolume(identifier, volume);
+                      setVolumeMap({
+                        ...volumeMap,
+                        [identifier]: volume,
+                      });
+                    }}
+                  />
+                </Box>
+              ))}
               <Box gridColumn="span 4">
                 <InviteOthers sessionCode={sessionCode} />{' '}
               </Box>
