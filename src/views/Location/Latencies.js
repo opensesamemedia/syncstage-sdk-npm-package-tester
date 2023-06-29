@@ -117,7 +117,12 @@ const Latencies = () => {
               {latencyTestResults.map((result) => (
                 <tr key={result.name}>
                   <Cell isBestServer={result.bestServer}>{result.name}</Cell>
-                  <Cell isBestServer={result.bestServer}>{result.latency}</Cell>
+
+                  {result.latency !== '0' ? (
+                    <Cell isBestServer={result.bestServer}>{result.latency} ms</Cell>
+                  ) : (
+                    <Cell isBestServer={result.bestServer}>n/a</Cell>
+                  )}
                 </tr>
               ))}
             </tbody>
