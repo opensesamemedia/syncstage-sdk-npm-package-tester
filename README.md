@@ -38,3 +38,9 @@ To work with local sdk package run:
 yarn remove @opensesamemedia/syncstage
 yarn add ../syncstage-sdk-npm-package
 ```
+
+## Firebase deployment
+
+1. Update env with values for particular deployment.
+2. `yarn build`
+3. `firebase deploy --only hosting:<name of the hosting>`
