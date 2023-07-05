@@ -1,16 +1,22 @@
 {
   "projects": {
     "default": "syncstagebrowsersdktestapp",
-    "syncstage-air": "syncstagebrowsersdktestapp"
+    "syncstage-air": "syncstagebrowsersdktestapp",
+    "syncstage-dev": "syncstagebrowsersdktestapp",
+    "syncstage-staging": "syncstagebrowsersdktestapp",
+    "syncstage": "syncstagebrowsersdktestapp"
   },
   "targets": {
     "syncstagebrowsersdktestapp": {
       "hosting": {
-        "syncstage-air": [
-          "syncstage-air"
+        "syncstage-dev": [
+          "syncstage-dev"
         ],
-        "syncstagebrowsersdktestapp": [
-          "syncstagebrowsersdktestapp"
+        "syncstage-staging": [
+          "syncstage-staging"
+        ],
+        "syncstage": [
+          "syncstage"
         ]
       }
     }

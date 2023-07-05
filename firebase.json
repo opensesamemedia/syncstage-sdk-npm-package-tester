@@ -1,7 +1,7 @@
 {
   "hosting": [
     {
-      "target": "syncstagebrowsersdktestapp",
+      "target": "syncstage-dev",
       "public": "build",
       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
       "rewrites": [
@@ -12,7 +12,18 @@
       ]
     },
     {
-      "target": "syncstage-air",
+      "target": "syncstage-staging",
+      "public": "build",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "rewrites": [
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ]
+    },
+    {
+      "target": "syncstage",
       "public": "build",
       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
       "rewrites": [
