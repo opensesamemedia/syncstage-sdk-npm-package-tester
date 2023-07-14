@@ -10,6 +10,7 @@ import { createTheme, ThemeProvider as MuiThemeProvider } from '@mui/material';
 import Box from '@mui/material/Box';
 import Modal from '@mui/material/Modal';
 import Typography from '@mui/material/Typography';
+import { enqueueSnackbar } from 'notistack';
 
 import GlobalStyle from './ui/GlobalStyle';
 import theme from './ui/theme';
@@ -134,7 +135,11 @@ const App = () => {
   const onJoinSession = async () => {
     setBackdropOpen(true);
     const [data, errorCode] = await syncStage.join(sessionCode, nickname, selectedServer.zoneId, selectedServer.studioServerId, nickname);
-    errorCodeToSnackbar(errorCode, `Joined session ${sessionCode}`);
+    if (errorCode === SyncStageSDKErrorCode.OK) {
+      enqueueSnackbar(`Joined session ${sessionCode}`);
+    } else {
+      enqueueSnackbar(`Could not join the session ${sessionCode}`);
+    }
 
     if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
       return goToProvisioningPageOnUnauthorized();
