@@ -51,13 +51,10 @@ const Session = ({ onLeaveSession, inSession }) => {
     errorCodeToSnackbar(errorCode);
     if (errorCode !== SyncStageSDKErrorCode.OK) {
       setMuted(!mutedState);
-    } else if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
-      setCurrentStep(PathEnum.PROFILE_SECRET);
-      setDesktopProvisioned(false);
     }
   }, [syncStage, muted]);
 
-  const onUserJoined = useCallback((connection) => {
+  const onUserJoined = useCallback(async (connection) => {
     console.log('onUserJoined');
     // Not adding self connection and avoid duplicates
     if (sessionData.transmitter.identifier === connection.identifier || receiversMap[connection.identifier]) {
@@ -67,6 +64,16 @@ const Session = ({ onLeaveSession, inSession }) => {
     setReceiversMap(
       produce((draft) => {
         draft[connection.identifier] = connection;
+      }),
+    );
+    // Volume
+
+    const [volumeValue, errorCode] = await syncStage.getReceiverVolume(connection.identifier);
+    errorCodeToSnackbar(errorCode);
+
+    setVolumeMap(
+      produce((draft) => {
+        draft[connection.identifier] = volumeValue;
       }),
     );
   }, []);
@@ -121,10 +128,12 @@ const Session = ({ onLeaveSession, inSession }) => {
   const buildViewSessionState = useCallback(
     async (sessionData, setConnectedMap, syncStage, setCurrentStep, setDesktopProvisioned, setVolumeMap, updateMeasurements) => {
       if (sessionData != null) {
-        console.log(buildViewSessionState);
-
         let errorCode;
         // initialize connection and volume, receivers map based on the sessionData state
+        setConnectedMap({});
+        setVolumeMap({});
+        setReceiversMap({});
+
         sessionData.receivers.forEach(async (receiver) => {
           setConnectedMap(
             produce((draft) => {
@@ -139,11 +148,6 @@ const Session = ({ onLeaveSession, inSession }) => {
           let volumeValue;
           [volumeValue, errorCode] = await syncStage.getReceiverVolume(receiver.identifier);
           errorCodeToSnackbar(errorCode);
-
-          if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
-            setCurrentStep(PathEnum.PROFILE_SECRET);
-            setDesktopProvisioned(false);
-          }
 
           setVolumeMap(
             produce((draft) => {
@@ -176,7 +180,7 @@ const Session = ({ onLeaveSession, inSession }) => {
       setSessionData(data);
     }
 
-    buildViewSessionState(sessionData, setConnectedMap, syncStage, setCurrentStep, setDesktopProvisioned, setVolumeMap, updateMeasurements);
+    buildViewSessionState(data, setConnectedMap, syncStage, setCurrentStep, setDesktopProvisioned, setVolumeMap, updateMeasurements);
   }, []);
 
   const updateMeasurements = useCallback(async () => {
@@ -187,16 +191,13 @@ const Session = ({ onLeaveSession, inSession }) => {
     [measurements, errorCode] = await syncStage.getTransmitterMeasurements();
     errorCodeToSnackbar(errorCode);
 
-    if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
-      setCurrentStep(PathEnum.PROFILE_SECRET);
-      setDesktopProvisioned(false);
+    if (measurements) {
+      setMeasurements({
+        delay: measurements.networkDelayMs,
+        jitter: measurements.networkJitterMs,
+        quality: measurements.quality,
+      });
     }
-
-    setMeasurements({
-      delay: measurements.networkDelayMs,
-      jitter: measurements.networkJitterMs,
-      quality: measurements.quality,
-    });
 
     //Rx measurements
     Object.entries(receiversMap).forEach(async ([_, receiver]) => {
@@ -204,21 +205,17 @@ const Session = ({ onLeaveSession, inSession }) => {
       let measurements;
       [measurements, errorCode] = await syncStage.getReceiverMeasurements(receiver.identifier);
       errorCodeToSnackbar(errorCode);
-
-      if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
-        setCurrentStep(PathEnum.PROFILE_SECRET);
-        setDesktopProvisioned(false);
+      if (measurements) {
+        setMeasurementsMap(
+          produce((draft) => {
+            draft[receiver.identifier] = {
+              delay: measurements.networkDelayMs,
+              jitter: measurements.networkJitterMs,
+              quality: measurements.quality,
+            };
+          }),
+        );
       }
-
-      setMeasurementsMap(
-        produce((draft) => {
-          draft[receiver.identifier] = {
-            delay: measurements.networkDelayMs,
-            jitter: measurements.networkJitterMs,
-            quality: measurements.quality,
-          };
-        }),
-      );
     });
   }, [syncStage, receiversMap]);
 
@@ -238,22 +235,14 @@ const Session = ({ onLeaveSession, inSession }) => {
     async function executeAsync() {
       if (syncStage !== null) {
         syncStage.userDelegate = new SyncStageUserDelegate(onUserJoined, onUserLeft, onUserMuted, onUserUnmuted, onSessionOut);
-        syncStage.connectivityDelegate = new SyncStageConnectivityDelegate(
-          onTransmitterConnectivityChanged,
-          onReceiverConnectivityChanged,
-          onDesktopAgentReconnected,
-        );
+        syncStage.connectivityDelegate = new SyncStageConnectivityDelegate(onTransmitterConnectivityChanged, onReceiverConnectivityChanged);
+        syncStage.updateOnDesktopAgentReconnected(onDesktopAgentReconnected);
 
-        // eslint-disable-next-line no-unused-vars
         const [mutedState, errorCode] = await syncStage.isMicrophoneMuted();
         errorCodeToSnackbar(errorCode);
         if (errorCode === SyncStageSDKErrorCode.OK) {
           setMuted(mutedState);
-        } else if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
-          setCurrentStep(PathEnum.PROFILE_SECRET);
-          setDesktopProvisioned(false);
         }
-
         await buildViewSessionState(
           sessionData,
           setConnectedMap,

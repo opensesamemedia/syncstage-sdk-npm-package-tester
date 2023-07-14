@@ -1884,11 +1884,12 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@opensesamemedia/syncstage-sdk-npm-package-development@^0.0.3-rc.9":
-  version "0.0.3-rc.9"
-  resolved "https://registry.yarnpkg.com/@opensesamemedia/syncstage-sdk-npm-package-development/-/syncstage-sdk-npm-package-development-0.0.3-rc.9.tgz#df931e6c4d63c98a7964076f5866a81f5efaf5e7"
-  integrity sha512-4byHyC/Bfv7unyKrHZgu2+F1iXsX5fNo5jRQr2+qWb/E8djnZ+CtsmB+3ZTkqfdu6J69qQvcmjPj5zJ56Ibk7Q==
+"@opensesamemedia/syncstage-sdk-npm-package-development@^0.0.3-rc.26":
+  version "0.0.3-rc.26"
+  resolved "https://registry.yarnpkg.com/@opensesamemedia/syncstage-sdk-npm-package-development/-/syncstage-sdk-npm-package-development-0.0.3-rc.26.tgz#9d733a1b1eced13555c603f6a7f2da9316b2cc8f"
+  integrity sha512-ij+9l2f2HifswpO0zehS2pbkfca33O2ylzw2AJUXsPvc4fV3ichY8JywzpP+8700+Q/iYMLM/LzK1CZpmRSGxQ==
   dependencies:
+    async-mutex "^0.4.0"
     uuid "^9.0.0"
 
 "@pmmmwh/react-refresh-webpack-plugin@^0.5.3":
@@ -3034,6 +3035,13 @@ ast-types-flow@^0.0.7:
   version "0.0.7"
   resolved "https://registry.yarnpkg.com/ast-types-flow/-/ast-types-flow-0.0.7.tgz#f70b735c6bca1a5c9c22d982c3e39e7feba3bdad"
   integrity sha512-eBvWn1lvIApYMhzQMsu9ciLfkBY499mFZlNqG+/9WR7PVlroQw0vG30cOQQbaKz3sCEc44TAOu2ykzqXSNnwag==
+
+async-mutex@^0.4.0:
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/async-mutex/-/async-mutex-0.4.0.tgz#ae8048cd4d04ace94347507504b3cf15e631c25f"
+  integrity sha512-eJFZ1YhRR8UN8eBLoNzcDPcy/jqjsg6I1AP+KvWQX80BqOSW1oJPJXDylPUEeMr2ZQvHgnQ//Lp6f3RQ1zI7HA==
+  dependencies:
+    tslib "^2.4.0"
 
 async@^3.2.3:
   version "3.2.4"

@@ -1,12 +1,10 @@
 class SyncStageConnectivityDelegate {
   onTransmitterConnectivityChanged;
   onReceiverConnectivityChanged;
-  onDesktopAgentReconnected;
 
-  constructor(onTransmitterConnectivityChanged, onReceiverConnectivityChanged, onDesktopAgentReconnected) {
+  constructor(onTransmitterConnectivityChanged, onReceiverConnectivityChanged) {
     this.onTransmitterConnectivityChanged = onTransmitterConnectivityChanged;
     this.onReceiverConnectivityChanged = onReceiverConnectivityChanged;
-    this.onDesktopAgentReconnected = onDesktopAgentReconnected;
   }
 
   transmitterConnectivityChanged(connected) {
@@ -14,10 +12,6 @@ class SyncStageConnectivityDelegate {
   }
   receiverConnectivityChanged(identifier, connected) {
     this.onReceiverConnectivityChanged(identifier, connected);
-  }
-
-  desktopAgentReconnected() {
-    this.onDesktopAgentReconnected();
   }
 }
 
