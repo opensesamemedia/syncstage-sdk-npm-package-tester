@@ -7,6 +7,9 @@ import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 import { errorCodeToSnackbar } from './utils';
 import { createTheme, ThemeProvider as MuiThemeProvider } from '@mui/material';
+import Box from '@mui/material/Box';
+import Modal from '@mui/material/Modal';
+import Typography from '@mui/material/Typography';
 
 import GlobalStyle from './ui/GlobalStyle';
 import theme from './ui/theme';
@@ -15,6 +18,7 @@ import { PathEnum } from './router/PathEnum';
 import RoutesComponent from './router/RoutesComponent';
 import Menu from './components/Menu/Menu';
 import './ui/animationStyles.css';
+import SyncStageDesktopAgentDelegate from './SyncStageDesktopAgentDelegate';
 
 import SyncStage, { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-package-development';
 
@@ -49,6 +53,15 @@ const App = () => {
   const [automatedLocationSelection, setAutomatedLocationSelection] = useState(true);
   const [locationSelected, setLocationSelected] = useState(false);
 
+  const [desktopAgentAquired, setDesktopAgentAquired] = useState(false);
+
+  const onDesktopAgentAquired = () => {
+    setDesktopAgentAquired(true);
+  };
+  const onDesktopAgentReleased = () => {
+    setDesktopAgentAquired(false);
+  };
+
   useEffect(() => {
     const interval = setInterval(() => {
       setDesktopConnected(syncStage ? syncStage.isDesktopAgentConnected() : false);
@@ -58,7 +71,9 @@ const App = () => {
 
   useEffect(() => {
     if (syncStage === null) {
-      const ss = new SyncStage(null, null, null, 18080, process.env.REACT_APP_AGENT_ADDRESS ?? 'ws://localhost');
+      const desktopAgentDelegate = new SyncStageDesktopAgentDelegate(onDesktopAgentAquired, onDesktopAgentReleased);
+      const ss = new SyncStage(null, null, null, desktopAgentDelegate, 18080, process.env.REACT_APP_AGENT_ADDRESS ?? 'ws://localhost');
+
       setSyncStageSDKVersion(ss.getSDKVersion());
       setSyncStage(ss);
     }
@@ -177,6 +192,18 @@ const App = () => {
   const inSession = currentStep === PathEnum.SESSIONS_SESSION;
   const profileConfigured = nickname && appSecretId && appSecretKey;
 
+  const modalStyle = {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: 600,
+    background: theme.surfaceVariant,
+    border: '2px solid #000',
+    boxShadow: 24,
+    p: 4,
+  };
+
   return (
     <AppContext.Provider value={sharedState}>
       <MuiThemeProvider theme={muiTheme}>
@@ -201,6 +228,16 @@ const App = () => {
               >
                 <CircularProgress color="inherit" />
               </Backdrop>
+              <Modal keepMounted open={desktopAgentAquired}>
+                <Box sx={modalStyle}>
+                  <Typography variant="h6" component="h2">
+                    Desktop Agent in use
+                  </Typography>
+                  <Typography sx={{ mt: 2 }}>
+                    SyncStage opened in another browser tab. Please swith to that tab or close current one.
+                  </Typography>
+                </Box>
+              </Modal>
               <Logo inSession={inSession} />
               <div className="app-container">
                 <div className="app-container-limiter">
