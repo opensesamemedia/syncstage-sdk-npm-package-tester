@@ -239,7 +239,7 @@ const App = () => {
                     Desktop Agent in use
                   </Typography>
                   <Typography sx={{ mt: 2 }}>
-                    SyncStage opened in another browser tab. Please swith to that tab or close current one.
+                    SyncStage opened in another browser tab. Please switch to that tab or close current one.
                   </Typography>
                 </Box>
               </Modal>

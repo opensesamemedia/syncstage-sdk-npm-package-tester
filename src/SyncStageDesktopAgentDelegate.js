@@ -8,10 +8,10 @@ class SyncStageDesktopAgentDelegate {
   }
 
   desktopAgentAquired() {
-    this.onDesktopAgentAquired;
+    this.onDesktopAgentAquired();
   }
   desktopAgentReleased() {
-    this.onDesktopAgentReleased;
+    this.onDesktopAgentReleased();
   }
 }
 
