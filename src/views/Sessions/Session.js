@@ -130,7 +130,6 @@ const Session = ({ onLeaveSession, inSession }) => {
       if (sessionData != null) {
         let errorCode;
         // initialize connection and volume, receivers map based on the sessionData state
-        setConnectedMap({});
         setVolumeMap({});
         setReceiversMap({});
 
@@ -183,7 +182,7 @@ const Session = ({ onLeaveSession, inSession }) => {
     buildViewSessionState(data, setConnectedMap, syncStage, setCurrentStep, setDesktopProvisioned, setVolumeMap, updateMeasurements);
   }, []);
 
-  const updateMeasurements = useCallback(async () => {
+  const updateMeasurements = async () => {
     let errorCode;
     let measurements;
 
@@ -198,7 +197,6 @@ const Session = ({ onLeaveSession, inSession }) => {
         quality: measurements.quality,
       });
     }
-
     //Rx measurements
     Object.entries(receiversMap).forEach(async ([_, receiver]) => {
       let errorCode;
@@ -217,7 +215,7 @@ const Session = ({ onLeaveSession, inSession }) => {
         );
       }
     });
-  }, [syncStage, receiversMap]);
+  };
 
   useEffect(() => {
     // Set up the interval
