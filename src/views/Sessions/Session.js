@@ -12,7 +12,7 @@ import Button from '@mui/material/Button';
 import theme from '../../ui/theme';
 import InviteOthers from '../../components/UserCard/InviteOthers';
 import { errorCodeToSnackbar } from '../../utils';
-import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-package-development';
+import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
 import SyncStageUserDelegate from '../../SyncStageUserDelegate';
 import SyncStageConnectivityDelegate from '../../SyncStageConnectivityDelegate';
 import { enqueueSnackbar } from 'notistack';
@@ -125,45 +125,51 @@ const Session = ({ onLeaveSession, inSession }) => {
     );
   }, []);
 
-  const buildViewSessionState = useCallback(
-    async (sessionData, setConnectedMap, syncStage, setCurrentStep, setDesktopProvisioned, setVolumeMap, updateMeasurements) => {
-      if (sessionData != null) {
-        let errorCode;
-        // initialize connection and volume, receivers map based on the sessionData state
-        setVolumeMap({});
-        setReceiversMap({});
+  const buildViewSessionState = async (
+    sessionData,
+    setConnectedMap,
+    syncStage,
+    setCurrentStep,
+    setDesktopProvisioned,
+    setVolumeMap,
+    updateMeasurements,
+  ) => {
+    if (sessionData != null) {
+      let errorCode;
+      // initialize connection and volume, receivers map based on the sessionData state
+      setVolumeMap({});
+      setReceiversMap({});
 
-        sessionData.receivers.forEach(async (receiver) => {
-          setConnectedMap(
-            produce((draft) => {
-              const connectedReceiver = draft[receiver.identifier];
-              if (!connectedReceiver) {
-                draft[receiver.identifier] = undefined;
-              }
-            }),
-          );
+      sessionData.receivers.forEach(async (receiver) => {
+        setConnectedMap(
+          produce((draft) => {
+            const connectedReceiver = draft[receiver.identifier];
+            if (!connectedReceiver) {
+              draft[receiver.identifier] = undefined;
+            }
+          }),
+        );
 
-          // Volume
-          let volumeValue;
-          [volumeValue, errorCode] = await syncStage.getReceiverVolume(receiver.identifier);
-          errorCodeToSnackbar(errorCode);
+        // Volume
+        let volumeValue;
+        [volumeValue, errorCode] = await syncStage.getReceiverVolume(receiver.identifier);
+        errorCodeToSnackbar(errorCode);
 
-          setVolumeMap(
-            produce((draft) => {
-              draft[receiver.identifier] = volumeValue;
-            }),
-          );
+        setVolumeMap(
+          produce((draft) => {
+            draft[receiver.identifier] = volumeValue;
+          }),
+        );
 
-          setReceiversMap(
-            produce((draft) => {
-              draft[receiver.identifier] = receiver;
-            }),
-          );
-        });
-        await updateMeasurements();
-      }
-    },
-  );
+        setReceiversMap(
+          produce((draft) => {
+            draft[receiver.identifier] = receiver;
+          }),
+        );
+      });
+      await updateMeasurements();
+    }
+  };
 
   const onDesktopAgentReconnected = useCallback(async () => {
     console.log('onDesktopAgentReconnected in session');
@@ -198,6 +204,7 @@ const Session = ({ onLeaveSession, inSession }) => {
       });
     }
     //Rx measurements
+    // console.log(`Receivers map: ${JSON.stringify(receiversMap)}`);
     Object.entries(receiversMap).forEach(async ([_, receiver]) => {
       let errorCode;
       let measurements;
@@ -227,7 +234,7 @@ const Session = ({ onLeaveSession, inSession }) => {
     return () => {
       clearInterval(intervalId);
     };
-  }, []);
+  }, [receiversMap]);
 
   useEffect(() => {
     async function executeAsync() {

@@ -136,7 +136,7 @@ const UserCard = ({
                 <></>
               )} */}
               <Grid container direction="row" justifyContent="flex-start" alignItems="center" spacing={2} style={{ marginTop: '6px' }}>
-                {!(delay === 0 || jitter === 0) ? (
+                {!(delay === 0 || jitter === 0 || delay === -1 || jitter === -1) ? (
                   <>
                     <Grid item style={{ paddingTop: 0, paddingBottom: 0 }}>
                       <p style={{ margin: 0 }}> Ping: {delay ?? '-'} ms</p>
