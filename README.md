@@ -2,7 +2,7 @@
 
 ## SyncStage Desktop Agent
 
-To use test application you need to install [SyncStage Desktop Agent](https://public.sync-stage.com/agent/macos/prod/0.1.0/SyncStageAgent_0.1.0.dmg) on you Mac.
+To use test application you need to install [SyncStage Desktop Agent](https://public.sync-stage.com/agent/macos/prod/0.1.1/SyncStageAgent_0.1.1.dmg) on you Mac.
 
 ## Supported browsers
 
