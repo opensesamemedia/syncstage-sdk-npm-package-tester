@@ -187,7 +187,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
       });
       await updateMeasurements();
 
-      //TODO SET isRecording  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      setIsRecording(sessionData.isRecording);
     }
   };
 
@@ -341,7 +341,6 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
         </Grid>
         <div id="footer">
           <Grid container direction="column" justifyContent="center" alignItems="center" style={{ margin: 0, padding: 0 }}>
-            {/* {sessionData && sessionData.isRecording ? ( */}
             {isRecording ? (
               <Grid
                 container
