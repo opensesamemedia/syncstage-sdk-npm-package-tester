@@ -12,7 +12,15 @@ import Location from '../views/Location/Location';
 import Latencies from '../views/Location/Latencies';
 import ManualLocation from '../views/Location/ManualLocation';
 
-const RoutesComponent = ({ onProvisionSubmit, onJoinSession, onCreateSession, onLeaveSession, inSession }) => {
+const RoutesComponent = ({
+  onProvisionSubmit,
+  onJoinSession,
+  onCreateSession,
+  onLeaveSession,
+  inSession,
+  onStartRecording,
+  onStopRecording,
+}) => {
   const { currentStep } = useContext(AppContext);
 
   return (
@@ -84,7 +92,12 @@ const RoutesComponent = ({ onProvisionSubmit, onJoinSession, onCreateSession, on
         path={PathEnum.SESSIONS_SESSION}
         element={
           currentStep === PathEnum.SESSIONS_SESSION ? (
-            <Session onLeaveSession={onLeaveSession} inSession={inSession} />
+            <Session
+              onLeaveSession={onLeaveSession}
+              inSession={inSession}
+              onStartRecording={onStartRecording}
+              onStopRecording={onStopRecording}
+            />
           ) : (
             <Navigate to={`/${currentStep}`} replace />
           )

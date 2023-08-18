@@ -21,7 +21,8 @@ import Menu from './components/Menu/Menu';
 import './ui/animationStyles.css';
 import SyncStageDesktopAgentDelegate from './SyncStageDesktopAgentDelegate';
 
-import SyncStage, { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
+import SyncStage, { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-package-development';
+import modalStyle from './ui/ModalStyle';
 
 const muiTheme = createTheme({
   typography: {
@@ -194,20 +195,30 @@ const App = () => {
     setSessionData(null);
   };
 
+  const onStartRecording = async () => {
+    setBackdropOpen(true);
+    const errorCode = await syncStage.startRecording();
+    errorCodeToSnackbar(errorCode);
+    setBackdropOpen(false);
+
+    if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
+      return goToProvisioningPageOnUnauthorized();
+    }
+  };
+
+  const onStopRecording = async () => {
+    setBackdropOpen(true);
+    const errorCode = await syncStage.stopRecording();
+    errorCodeToSnackbar(errorCode);
+    setBackdropOpen(false);
+
+    if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
+      return goToProvisioningPageOnUnauthorized();
+    }
+  };
+
   const inSession = currentStep === PathEnum.SESSIONS_SESSION;
   const profileConfigured = nickname && appSecretId && appSecretKey;
-
-  const modalStyle = {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: 600,
-    background: theme.surfaceVariant,
-    border: '2px solid #000',
-    boxShadow: 24,
-    p: 4,
-  };
 
   return (
     <AppContext.Provider value={sharedState}>
@@ -252,6 +263,8 @@ const App = () => {
                     onLeaveSession={onLeaveSession}
                     onCreateSession={onCreateSession}
                     inSession={inSession}
+                    onStartRecording={onStartRecording}
+                    onStopRecording={onStopRecording}
                   />
                 </div>
               </div>

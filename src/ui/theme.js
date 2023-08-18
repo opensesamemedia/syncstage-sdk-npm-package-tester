@@ -5,6 +5,8 @@ const theme = {
   surfaceVariant: '#504349',
   onSurfaceVariant: '#D3C2C9',
   onPrimaryDark: '#003640',
+  recordingBackground: '#322e3a',
+  modalBackground: '#201A1B',
 };
 
 export default theme;
