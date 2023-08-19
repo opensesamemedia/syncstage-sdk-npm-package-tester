@@ -21,7 +21,7 @@ import Menu from './components/Menu/Menu';
 import './ui/animationStyles.css';
 import SyncStageDesktopAgentDelegate from './SyncStageDesktopAgentDelegate';
 
-import SyncStage, { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-package-development';
+import SyncStage, { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
 import modalStyle from './ui/ModalStyle';
 
 const muiTheme = createTheme({
