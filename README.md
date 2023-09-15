@@ -20,14 +20,6 @@ https://www.npmjs.com/package/@opensesamemedia/syncstage
 
 `yarn start`
 
-## Create .env with SyncStageSecrets
-
-```
-REACT_APP_SYNCSTAGE_SECRET_ID=
-REACT_APP_SYNCSTAGE_SECRET_KEY=
-
-```
-
 ## Switching to local SDK dependency
 
 `yarn install`
