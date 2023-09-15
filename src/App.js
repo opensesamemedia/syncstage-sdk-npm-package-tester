@@ -21,7 +21,7 @@ import Menu from './components/Menu/Menu';
 import './ui/animationStyles.css';
 import SyncStageDesktopAgentDelegate from './SyncStageDesktopAgentDelegate';
 
-import SyncStage, { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
+import SyncStage, { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-package-development';
 import modalStyle from './ui/ModalStyle';
 
 const muiTheme = createTheme({
@@ -30,11 +30,17 @@ const muiTheme = createTheme({
   },
 });
 
+async function onJwtExpired() {
+  console.log('jwt expired');
+  // TODO: returned value is faked. In your implementation
+  // eslint-disable-next-line max-len
+  return 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
+}
+
 const App = () => {
   const [syncStage, setSyncStage] = useState(null);
   const [syncStageSDKVersion, setSyncStageSDKVersion] = useState('');
-  const [appSecretId, setAppSecretId] = useState(process.env.REACT_APP_SYNCSTAGE_SECRET_ID);
-  const [appSecretKey, setAppSecretKey] = useState(process.env.REACT_APP_SYNCSTAGE_SECRET_KEY);
+  const [jwt, setJwt] = useState('');
   const [nickname, setNickname] = useState('');
   const [sessionCode, setSessionCode] = useState('');
   const [sessionData, setSessionData] = useState(null);
@@ -74,7 +80,15 @@ const App = () => {
   useEffect(() => {
     if (syncStage === null) {
       const desktopAgentDelegate = new SyncStageDesktopAgentDelegate(onDesktopAgentAquired, onDesktopAgentReleased);
-      const ss = new SyncStage(null, null, null, desktopAgentDelegate, 18080, process.env.REACT_APP_AGENT_ADDRESS ?? 'ws://localhost');
+      const ss = new SyncStage(
+        null,
+        null,
+        null,
+        desktopAgentDelegate,
+        onJwtExpired,
+        18080,
+        process.env.REACT_APP_AGENT_ADDRESS ?? 'ws://localhost',
+      );
 
       setSyncStageSDKVersion(ss.getSDKVersion());
       setSyncStage(ss);
@@ -90,10 +104,8 @@ const App = () => {
   const sharedState = {
     syncStage,
     syncStageSDKVersion,
-    appSecretId,
-    setAppSecretId,
-    appSecretKey,
-    setAppSecretKey,
+    jwt,
+    setJwt,
     nickname,
     setNickname,
     sessionCode,
@@ -122,7 +134,7 @@ const App = () => {
 
   const onProvisionSubmit = async () => {
     setBackdropOpen(true);
-    const errorCode = await syncStage.init(appSecretId, appSecretKey);
+    const errorCode = await syncStage.init(jwt);
     errorCodeToSnackbar(errorCode, 'Authorized');
     setBackdropOpen(false);
     if (errorCode === SyncStageSDKErrorCode.OK) {
@@ -218,7 +230,7 @@ const App = () => {
   };
 
   const inSession = currentStep === PathEnum.SESSIONS_SESSION;
-  const profileConfigured = nickname && appSecretId && appSecretKey;
+  const profileConfigured = nickname && jwt;
 
   return (
     <AppContext.Provider value={sharedState}>

@@ -5,7 +5,6 @@ import JoinSession from '../views/Sessions/JoinSession';
 import Session from '../views/Sessions/Session';
 import Nickname from '../views/Profile/Nickname';
 import Secret from '../views/Profile/Secret';
-import Dev from '../views/Development/Dev';
 import { PathEnum } from './PathEnum';
 import AppContext from '../AppContext';
 import Location from '../views/Location/Location';
@@ -103,8 +102,6 @@ const RoutesComponent = ({
           )
         }
       />
-
-      <Route path={PathEnum.DEV} element={currentStep === PathEnum.DEV ? <Dev /> : <Navigate to={`/${currentStep}`} replace />} />
     </Routes>
   );
 };

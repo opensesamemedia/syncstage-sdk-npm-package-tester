@@ -7,6 +7,4 @@ export const PathEnum = {
   LOCATION_MANUAL: 'location/manual',
   SESSIONS_JOIN: 'sessions/join',
   SESSIONS_SESSION: 'sessions/session',
-
-  DEV: 'dev',
 };

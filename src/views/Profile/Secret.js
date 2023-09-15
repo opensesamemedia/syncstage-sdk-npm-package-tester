@@ -7,33 +7,24 @@ import Button from '../../components/StyledButton';
 import { PathEnum } from '../../router/PathEnum';
 
 const Secret = ({ onProvisionSubmit }) => {
-  const { appSecretId, setAppSecretId, appSecretKey, setAppSecretKey, setCurrentStep } = useContext(AppContext);
+  const { jwt, setJwt, setCurrentStep } = useContext(AppContext);
 
   return (
     <Grid container direction="column" spacing={2}>
       <Grid item>
-        <h2>Secrets</h2>
+        <h2>Desktop Agent provisioning</h2>
       </Grid>
       <Grid item>
-        <p>Please upload your secret file. You can get your secret file from the SyncStage Developer Console.</p>
+        <p>
+          Please provide the jwt from the response of the authorization method.
+          <br></br>
+          HINT: In your implementation your application should request this value from your backend service.
+        </p>
       </Grid>
       <Grid item>
-        <TextField
-          label="Application Secret ID"
-          value={appSecretId}
-          onChange={(e) => setAppSecretId(e.target.value)}
-          style={{ width: '90%' }}
-        />
+        <TextField label="jwt" value={jwt} onChange={(e) => setJwt(e.target.value)} style={{ width: '90%' }} />
       </Grid>
-      <Grid item>
-        <TextField
-          label="Application Secret Key"
-          value={appSecretKey}
-          onChange={(e) => setAppSecretKey(e.target.value)}
-          style={{ width: '90%' }}
-          type="password"
-        />
-      </Grid>
+
       <Grid item style={{ height: '140px' }} />
       <Grid container justifyContent="space-between">
         <Grid item>
@@ -41,7 +32,7 @@ const Secret = ({ onProvisionSubmit }) => {
         </Grid>
         <Grid item>
           <ButtonContained
-            disabled={appSecretId === '' || appSecretKey === ''}
+            disabled={jwt === ''}
             onClick={async () => {
               await onProvisionSubmit();
             }}

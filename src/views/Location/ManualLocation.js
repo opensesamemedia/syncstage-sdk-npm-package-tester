@@ -10,7 +10,7 @@ import AppContext from '../../AppContext';
 import { PathEnum } from '../../router/PathEnum';
 import theme from '../../ui/theme';
 import { errorCodeToSnackbar } from '../../utils';
-import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
+import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-package-development';
 
 const ManualLocation = () => {
   const { selectedServer, setSelectedServer, setCurrentStep, syncStage, setBackdropOpen } = useContext(AppContext);
