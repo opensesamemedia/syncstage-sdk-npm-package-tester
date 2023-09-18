@@ -64,7 +64,7 @@ const Latencies = () => {
         setBestServer(data);
         setSelectedServer(data);
       } else {
-        errorCodeToSnackbar(errorCode);
+        errorCodeToSnackbar(errorCode, '');
         setBestServer([]);
       }
     }
