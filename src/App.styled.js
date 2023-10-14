@@ -1,17 +1,8 @@
 import styled from 'styled-components';
 
-const Logo = styled.div`
-  position: absolute;
-  width: 199px;
-  height: 60px;
-  left: 50%;
-  margin-left: -100px;
-  transition: top 2s;
-  top: ${(props) => (props.inSession ? '30px' : '60px')};
-  background: url('/logo.png');
-`;
-
 const AppWrapper = styled.div`
+  height: 100vh;
+
   .bg {
     position: absolute;
     left: 0;
@@ -46,10 +37,11 @@ const AppWrapper = styled.div`
     display: flex;
     justify-content: center;
     align-items: ${(props) => (props.inSession ? 'flex-start' : 'center')};
-    padding-top: ${(props) => (props.inSession ? '160px' : '30vh')};
-    padding-left: '50px';
-    padding-right: '50px';
+    padding-top: ${(props) => (props.inSession ? '160px' : '0px')};
+    padding-left: 50px;
+    padding-right: 50px;
     margin: 0px;
+    height: 100%;
   }
 
   .app-container-limiter {
@@ -58,4 +50,3 @@ const AppWrapper = styled.div`
 `;
 
 export default AppWrapper;
-export { Logo };

@@ -22,6 +22,7 @@ import './ui/animationStyles.css';
 import SyncStageDesktopAgentDelegate from './SyncStageDesktopAgentDelegate';
 
 import SyncStage, { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
+import Navigation from './components/Navigation/Navigation';
 
 const muiTheme = createTheme({
   typography: {
@@ -217,11 +218,10 @@ const App = () => {
           <SnackbarProvider preventDuplicate />
           <AppWrapper inSession={inSession}>
             <Router>
-              <Menu inSession={inSession} profileConfigured={profileConfigured} />
-
               <div className="bg" />
               <div className="gradient2" />
               <div className="gradient1" />
+              <Navigation inSession={inSession} profileConfigured={profileConfigured} />
 
               <Backdrop
                 sx={{
@@ -243,7 +243,6 @@ const App = () => {
                   </Typography>
                 </Box>
               </Modal>
-              <Logo inSession={inSession} />
               <div className="app-container">
                 <div className="app-container-limiter">
                   <RoutesComponent
