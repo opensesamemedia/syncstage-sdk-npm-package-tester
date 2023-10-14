@@ -204,6 +204,7 @@ const Session = ({ onLeaveSession, inSession }) => {
     }
     //Rx measurements
     // console.log(`Receivers map: ${JSON.stringify(receiversMap)}`);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     Object.entries(receiversMap).forEach(async ([_, receiver]) => {
       let errorCode;
       let measurements;
@@ -270,7 +271,7 @@ const Session = ({ onLeaveSession, inSession }) => {
   return (
     <div style={inSession ? mountedStyle : unmountedStyle}>
       <SessionWrapper>
-        <Grid item container flexDirection="row" rowGap={2} columnGap={8} alignItems="flex-start" style={{ marginBottom: '10vh' }}>
+        <Grid item container flexDirection="row" rowGap={2} columnGap={8} alignItems="flex-start" style={{ marginBottom: '90px' }}>
           {!!sessionData && !!sessionData.transmitter && (
             <UserCard transmitter {...sessionData.transmitter} connected={connected} {...measurements} />
           )}

@@ -36,7 +36,7 @@ const AppWrapper = styled.div`
   .app-container {
     display: flex;
     justify-content: center;
-    padding-top: ${(props) => (props.inSession ? '120px' : '30vh')};
+    padding-top: ${(props) => (props.inSession ? '120px' : '160px')};
     padding-bottom: 30px;
     padding-left: 50px;
     padding-right: 50px;
@@ -45,6 +45,7 @@ const AppWrapper = styled.div`
 
   .app-container-limiter {
     max-width: ${(props) => (props.inSession ? '1400px' : '600px')};
+    padding-top: ${(props) => (props.inSession ? '0' : '15vh')};
     width: 100%;
   }
 `;

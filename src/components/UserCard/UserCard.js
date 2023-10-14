@@ -87,12 +87,12 @@ const UserCard = ({
   return (
     <UserCardBase>
       <Grid container direction="row" justifyContent="flex-start" alignItems="center" style={{ height: '100%', width: '100%' }}>
-        <Grid item sm={3} style={{ paddingLeft: '6px' }}>
+        <Grid item xs={3} style={{ paddingLeft: '6px' }}>
           <StyledBadge overlap="circular" anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} variant="dot" connected={connected}>
             <Avatar sx={{ bgcolor: theme.surfaceVariant, width: 62, height: 62 }}>{/* {`${nickname.charAt(0)}`} */}</Avatar>
           </StyledBadge>
         </Grid>
-        <Grid item sm={9}>
+        <Grid item xs={9}>
           <Grid container direction="column" justifyContent="flex-start" alignItems="flex-start" style={{ height: '100%', width: '100%' }}>
             <Grid item style={{ width: '100%' }}>
               <Grid container direction="row" justifyContent="flex-start" alignItems="center" style={{ width: '100%' }}>
