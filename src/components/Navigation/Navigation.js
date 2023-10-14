@@ -1,24 +1,29 @@
 import { IconButton, useMediaQuery, useTheme } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import NavigationWrapper from './Navigation.styled';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Menu from '../Menu/Menu';
 import Logo from './Logo.styled';
 
 function Navigation({ inSession, profileConfigured }) {
   const muiTheme = useTheme();
   const lgScreenMatches = useMediaQuery(muiTheme.breakpoints.up('lg'));
-  const [openedDrawer, setOpenedDrawer] = useState(false);
+  const [openedMobileDrawer, setOpenedMobileDrawer] = useState(false);
 
-  const handleDrawerOpen = () => setOpenedDrawer(true);
-  const handleDrawerClose = () => setOpenedDrawer(false);
+  const handleDrawerOpen = () => setOpenedMobileDrawer(true);
+  const handleDrawerClose = () => setOpenedMobileDrawer(false);
+
+  const isDrawerOpened = useMemo(() => {
+    if (inSession) return false;
+    if (lgScreenMatches) return true;
+    return openedMobileDrawer;
+  }, [openedMobileDrawer, lgScreenMatches, inSession]);
 
   return (
     <>
       <Menu
-        inSession={inSession}
         profileConfigured={profileConfigured}
-        drawerOpened={openedDrawer && !inSession}
+        drawerOpened={isDrawerOpened}
         onCloseDrawer={handleDrawerClose}
         isMobile={!lgScreenMatches}
       />

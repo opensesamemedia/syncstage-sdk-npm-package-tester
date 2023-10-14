@@ -4,6 +4,8 @@ const NavigationWrapper = styled.div`
   position: absolute;
   width: 100%;
   height: 70px;
+  top: 0;
+  left: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;

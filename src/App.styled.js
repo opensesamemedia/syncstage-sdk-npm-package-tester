@@ -4,7 +4,7 @@ const AppWrapper = styled.div`
   height: 100vh;
 
   .bg {
-    position: absolute;
+    position: fixed;
     left: 0;
     right: 0;
     height: 100vh;
@@ -13,7 +13,7 @@ const AppWrapper = styled.div`
     z-index: -100;
   }
   .gradient1 {
-    position: absolute;
+    position: fixed;
     left: 0;
     right: 0;
     height: 100vh;
@@ -23,7 +23,7 @@ const AppWrapper = styled.div`
   }
 
   .gradient2 {
-    position: absolute;
+    position: fixed;
     left: 0;
     right: 0;
     height: 100vh;
@@ -36,16 +36,16 @@ const AppWrapper = styled.div`
   .app-container {
     display: flex;
     justify-content: center;
-    align-items: ${(props) => (props.inSession ? 'flex-start' : 'center')};
-    padding-top: ${(props) => (props.inSession ? '160px' : '0px')};
+    padding-top: ${(props) => (props.inSession ? '120px' : '30vh')};
+    padding-bottom: 30px;
     padding-left: 50px;
     padding-right: 50px;
     margin: 0px;
-    height: 100%;
   }
 
   .app-container-limiter {
-    width: ${(props) => (props.inSession ? '100%' : '600px')};
+    max-width: ${(props) => (props.inSession ? '1400px' : '600px')};
+    width: 100%;
   }
 `;
 

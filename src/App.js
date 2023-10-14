@@ -14,10 +14,9 @@ import { enqueueSnackbar } from 'notistack';
 
 import GlobalStyle from './ui/GlobalStyle';
 import theme from './ui/theme';
-import AppWrapper, { Logo } from './App.styled';
+import AppWrapper from './App.styled';
 import { PathEnum } from './router/PathEnum';
 import RoutesComponent from './router/RoutesComponent';
-import Menu from './components/Menu/Menu';
 import './ui/animationStyles.css';
 import SyncStageDesktopAgentDelegate from './SyncStageDesktopAgentDelegate';
 
