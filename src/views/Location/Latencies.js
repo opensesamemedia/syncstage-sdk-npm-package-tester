@@ -82,7 +82,6 @@ const Latencies = () => {
       const tempResults = [...latencyTestResults];
 
       tempResults.forEach((element) => {
-        if (isInvalidLatency(element.latency)) return false;
         element.bestServer = bestServer.zoneName == element.name;
       });
       setBestServerMarkedOnList(true);
