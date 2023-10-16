@@ -2,7 +2,7 @@
 
 ## SyncStage Desktop Agent
 
-To use test application you need to install [SyncStage Desktop Agent](https://syncstage.s3.amazonaws.com/Agent/SyncStageAgent_1.0.0.dmg) on you Mac.
+To use test application you need to install [SyncStage Desktop Agent](https://public.sync-stage.com/agent/macos/prod/0.1.1/SyncStageAgent_0.1.1.dmg) on you Mac.
 
 ## Supported browsers
 
@@ -19,14 +19,6 @@ https://www.npmjs.com/package/@opensesamemedia/syncstage
 ## Running project
 
 `yarn start`
-
-## Create .env with SyncStageSecrets
-
-```
-REACT_APP_SYNCSTAGE_SECRET_ID=
-REACT_APP_SYNCSTAGE_SECRET_KEY=
-
-```
 
 ## Switching to local SDK dependency
 

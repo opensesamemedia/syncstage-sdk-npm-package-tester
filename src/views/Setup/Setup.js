@@ -30,7 +30,7 @@ const Setup = () => {
               <p>or</p>
             </Grid>
             <Grid item>
-              <a href="https://syncstage.s3.amazonaws.com/Agent/SyncStageAgent_1.0.0.dmg" download>
+              <a href="https://public.sync-stage.com/agent/macos/prod/0.2.0/SyncStageAgent_0.2.0.dmg" download>
                 {' '}
                 Install Desktop Agent{' '}
               </a>

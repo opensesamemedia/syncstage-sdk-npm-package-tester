@@ -5,7 +5,7 @@ import Button from '../../components/StyledButton';
 import AppContext from '../../AppContext';
 import { PathEnum } from '../../router/PathEnum';
 import { errorCodeToSnackbar } from '../../utils';
-import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
+import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-package-development';
 import SyncStageDicoveryDelegate from '../../SyncStageDiscoveryDelegate';
 import styled from 'styled-components';
 import { isInvalidLatency } from './utils';
@@ -70,7 +70,7 @@ const Latencies = () => {
         setBestServer(data);
         setSelectedServer(data);
       } else {
-        errorCodeToSnackbar(errorCode);
+        errorCodeToSnackbar(errorCode, '');
         setBestServer([]);
       }
     }

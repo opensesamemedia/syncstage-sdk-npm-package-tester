@@ -5,14 +5,21 @@ import JoinSession from '../views/Sessions/JoinSession';
 import Session from '../views/Sessions/Session';
 import Nickname from '../views/Profile/Nickname';
 import Secret from '../views/Profile/Secret';
-import Dev from '../views/Development/Dev';
 import { PathEnum } from './PathEnum';
 import AppContext from '../AppContext';
 import Location from '../views/Location/Location';
 import Latencies from '../views/Location/Latencies';
 import ManualLocation from '../views/Location/ManualLocation';
 
-const RoutesComponent = ({ onProvisionSubmit, onJoinSession, onCreateSession, onLeaveSession, inSession }) => {
+const RoutesComponent = ({
+  onProvisionSubmit,
+  onJoinSession,
+  onCreateSession,
+  onLeaveSession,
+  inSession,
+  onStartRecording,
+  onStopRecording,
+}) => {
   const { currentStep } = useContext(AppContext);
 
   return (
@@ -84,14 +91,17 @@ const RoutesComponent = ({ onProvisionSubmit, onJoinSession, onCreateSession, on
         path={PathEnum.SESSIONS_SESSION}
         element={
           currentStep === PathEnum.SESSIONS_SESSION ? (
-            <Session onLeaveSession={onLeaveSession} inSession={inSession} />
+            <Session
+              onLeaveSession={onLeaveSession}
+              inSession={inSession}
+              onStartRecording={onStartRecording}
+              onStopRecording={onStopRecording}
+            />
           ) : (
             <Navigate to={`/${currentStep}`} replace />
           )
         }
       />
-
-      <Route path={PathEnum.DEV} element={currentStep === PathEnum.DEV ? <Dev /> : <Navigate to={`/${currentStep}`} replace />} />
     </Routes>
   );
 };

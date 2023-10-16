@@ -1,4 +1,4 @@
-import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
+import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-package-development';
 import { enqueueSnackbar } from 'notistack';
 
 const syncStageErrorToMessageMap = new Map();
@@ -14,6 +14,7 @@ syncStageErrorToMessageMap.set(parseInt(SyncStageSDKErrorCode.STREAM_DOES_NOT_EX
 syncStageErrorToMessageMap.set(parseInt(SyncStageSDKErrorCode.BAD_VOLUME_VALUE), 'Incorrect volume value');
 syncStageErrorToMessageMap.set(parseInt(SyncStageSDKErrorCode.NO_ZONE_AVAILABLE), 'No zone availible');
 syncStageErrorToMessageMap.set(parseInt(SyncStageSDKErrorCode.NO_STUDIO_SERVER_AVAILABLE), 'No studio server availible');
+syncStageErrorToMessageMap.set(parseInt(SyncStageSDKErrorCode.TOKEN_EXPIRED), 'Jwt expired');
 
 const errorCodeToSnackbar = (errorCode, msgOnOK) => {
   if (errorCode !== SyncStageSDKErrorCode.OK) {
