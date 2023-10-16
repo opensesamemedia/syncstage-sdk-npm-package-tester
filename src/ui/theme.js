@@ -5,6 +5,7 @@ const theme = {
   surfaceVariant: '#504349',
   onSurfaceVariant: '#D3C2C9',
   onPrimaryDark: '#003640',
+  dark: '#1d262f',
 };
 
 export default theme;
