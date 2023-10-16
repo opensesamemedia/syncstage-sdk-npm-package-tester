@@ -8,6 +8,7 @@ import { errorCodeToSnackbar } from '../../utils';
 import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
 import SyncStageDicoveryDelegate from '../../SyncStageDiscoveryDelegate';
 import styled from 'styled-components';
+import { isInvalidLatency } from './utils';
 
 const Table = styled.table`
   border-collapse: collapse;
@@ -31,14 +32,17 @@ const Latencies = () => {
   const [latencyTestResults, setLatencyTestResults] = useState([]);
 
   const onDiscoveryResults = (zones) => {
-    console.log('onDiscoveryResults');
-    console.log(zones);
     setZones(zones);
   };
 
   const onDiscoveryLatencyTestResults = (results) => {
-    console.log('onDiscoveryLatencyTestResults');
-    setLatencyTestResults(results);
+    setLatencyTestResults(
+      results.sort((a, b) => {
+        if (isInvalidLatency(a.latency)) return 1;
+        if (isInvalidLatency(b.latency)) return -1;
+        return a.latency - b.latency;
+      }),
+    );
   };
 
   useEffect(() => {
@@ -57,6 +61,8 @@ const Latencies = () => {
 
   useEffect(() => {
     async function fetchData() {
+      if (!syncStage) return;
+
       setBackdropOpen(true);
       const [data, errorCode] = await syncStage.getBestAvailableServer();
       setBackdropOpen(false);
@@ -74,6 +80,7 @@ const Latencies = () => {
   useEffect(() => {
     if (latencyTestResults.length && bestServer && !bestServerMarkedOnList) {
       const tempResults = [...latencyTestResults];
+
       tempResults.forEach((element) => {
         element.bestServer = bestServer.zoneName == element.name;
       });
@@ -118,7 +125,7 @@ const Latencies = () => {
                 <tr key={result.name}>
                   <Cell isBestServer={result.bestServer}>{result.name}</Cell>
 
-                  {result.latency !== '0' ? (
+                  {!isInvalidLatency(result.latency) ? (
                     <Cell isBestServer={result.bestServer}>{result.latency} ms</Cell>
                   ) : (
                     <Cell isBestServer={result.bestServer}>n/a</Cell>
