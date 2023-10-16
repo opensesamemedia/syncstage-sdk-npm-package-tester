@@ -14,15 +14,15 @@ import { enqueueSnackbar } from 'notistack';
 
 import GlobalStyle from './ui/GlobalStyle';
 import theme from './ui/theme';
-import AppWrapper, { Logo } from './App.styled';
+import AppWrapper from './App.styled';
 import { PathEnum } from './router/PathEnum';
 import RoutesComponent from './router/RoutesComponent';
-import Menu from './components/Menu/Menu';
 import './ui/animationStyles.css';
 import SyncStageDesktopAgentDelegate from './SyncStageDesktopAgentDelegate';
 
 import SyncStage, { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-package-development';
 import modalStyle from './ui/ModalStyle';
+import Navigation from './components/Navigation/Navigation';
 
 const muiTheme = createTheme({
   typography: {
@@ -240,11 +240,10 @@ const App = () => {
           <SnackbarProvider preventDuplicate />
           <AppWrapper inSession={inSession}>
             <Router>
-              <Menu inSession={inSession} profileConfigured={profileConfigured} />
-
               <div className="bg" />
               <div className="gradient2" />
               <div className="gradient1" />
+              <Navigation inSession={inSession} profileConfigured={profileConfigured} />
 
               <Backdrop
                 sx={{
@@ -266,7 +265,6 @@ const App = () => {
                   </Typography>
                 </Box>
               </Modal>
-              <Logo inSession={inSession} />
               <div className="app-container">
                 <div className="app-container-limiter">
                   <RoutesComponent

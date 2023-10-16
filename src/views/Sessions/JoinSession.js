@@ -17,13 +17,13 @@ const JoinSession = ({ onJoinSession, onCreateSession }) => {
       <Grid item>
         <p>Enter a session code to join an existing session or to create a new one.</p>
       </Grid>
-      <Grid container direction="row" justifyContent="space-between" alignItems="center" style={{ paddingLeft: '18px' }}>
-        <Grid item>
+      <Grid container direction="row" justifyContent="space-between" alignItems="center" style={{ paddingLeft: '18px' }} gap={3}>
+        <Grid item xs>
           <TextField
             label="Session code"
             value={sessionCode}
+            fullWidth
             onChange={(e) => setSessionCode(e.target.value)}
-            style={{ width: '450px' }}
             placeholder="xyz-xyz-xyz"
           />
         </Grid>

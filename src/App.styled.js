@@ -1,19 +1,10 @@
 import styled from 'styled-components';
 
-const Logo = styled.div`
-  position: absolute;
-  width: 199px;
-  height: 60px;
-  left: 50%;
-  margin-left: -100px;
-  transition: top 2s;
-  top: ${(props) => (props.inSession ? '30px' : '60px')};
-  background: url('/logo.png');
-`;
-
 const AppWrapper = styled.div`
+  height: 100vh;
+
   .bg {
-    position: absolute;
+    position: fixed;
     left: 0;
     right: 0;
     height: 100vh;
@@ -22,7 +13,7 @@ const AppWrapper = styled.div`
     z-index: -100;
   }
   .gradient1 {
-    position: absolute;
+    position: fixed;
     left: 0;
     right: 0;
     height: 100vh;
@@ -32,7 +23,7 @@ const AppWrapper = styled.div`
   }
 
   .gradient2 {
-    position: absolute;
+    position: fixed;
     left: 0;
     right: 0;
     height: 100vh;
@@ -45,17 +36,18 @@ const AppWrapper = styled.div`
   .app-container {
     display: flex;
     justify-content: center;
-    align-items: ${(props) => (props.inSession ? 'flex-start' : 'center')};
-    padding-top: ${(props) => (props.inSession ? '160px' : '30vh')};
-    padding-left: '50px';
-    padding-right: '50px';
+    padding-top: ${(props) => (props.inSession ? '120px' : '160px')};
+    padding-bottom: 30px;
+    padding-left: 50px;
+    padding-right: 50px;
     margin: 0px;
   }
 
   .app-container-limiter {
-    width: ${(props) => (props.inSession ? '100%' : '600px')};
+    max-width: ${(props) => (props.inSession ? '1400px' : '600px')};
+    padding-top: ${(props) => (props.inSession ? '0' : '15vh')};
+    width: 100%;
   }
 `;
 
 export default AppWrapper;
-export { Logo };

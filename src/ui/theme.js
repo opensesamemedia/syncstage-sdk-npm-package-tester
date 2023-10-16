@@ -7,6 +7,7 @@ const theme = {
   onPrimaryDark: '#003640',
   recordingBackground: '#322e3a',
   modalBackground: '#201A1B',
+  dark: '#1d262f',
 };
 
 export default theme;
