@@ -63,6 +63,8 @@ const App = () => {
 
   const [desktopAgentAquired, setDesktopAgentAquired] = useState(false);
 
+  const [desktopAgentProtocolHandler, setDesktopAgentProtocolHandler] = useState('');
+
   const onDesktopAgentAquired = () => {
     setDesktopAgentAquired(true);
   };
@@ -86,12 +88,12 @@ const App = () => {
         null,
         desktopAgentDelegate,
         onJwtExpired,
-        18080,
-        process.env.REACT_APP_AGENT_ADDRESS ?? 'ws://localhost',
+        process.env.REACT_APP_WSS_ADDRESS ?? 'wss://websocket-pipe.sync-stage.com',
       );
 
       setSyncStageSDKVersion(ss.getSDKVersion());
       setSyncStage(ss);
+      setDesktopAgentProtocolHandler(ss.getDesktopAgentProtocolHandler());
     }
   }, [syncStage]);
 
@@ -124,6 +126,8 @@ const App = () => {
     setLocationSelected,
     automatedLocationSelection,
     setAutomatedLocationSelection,
+    desktopAgentProtocolHandler,
+    setDesktopAgentProtocolHandler,
   };
 
   const goToProvisioningPageOnUnauthorized = () => {

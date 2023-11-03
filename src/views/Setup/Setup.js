@@ -5,8 +5,7 @@ import ButtonContained from '../../components/StyledButtonContained';
 import { PathEnum } from '../../router/PathEnum';
 
 const Setup = () => {
-  const { setCurrentStep, desktopConnected } = useContext(AppContext);
-
+  const { setCurrentStep, desktopAgentProtocolHandler, desktopConnected } = useContext(AppContext);
   return (
     <Grid container direction="column" spacing={2}>
       <Grid item>
@@ -24,7 +23,7 @@ const Setup = () => {
           <Grid item style={{ height: '80px' }} />
           <Grid container direction="column" justifyContent="flex-center" alignItems="center">
             <Grid item>
-              <a href=""> Open Desktop Agent </a>
+              <a href={desktopAgentProtocolHandler}> Open Desktop Agent </a>
             </Grid>
             <Grid item style={{ marginTop: '14px' }}>
               <p>or</p>
