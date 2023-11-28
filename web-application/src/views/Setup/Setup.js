@@ -23,13 +23,16 @@ const Setup = () => {
           <Grid item style={{ height: '80px' }} />
           <Grid container direction="column" justifyContent="flex-center" alignItems="center">
             <Grid item>
-              <a href={desktopAgentProtocolHandler}> Open Desktop Agent </a>
+              <a target="_blank" href={desktopAgentProtocolHandler}>
+                {' '}
+                Open Desktop Agent{' '}
+              </a>
             </Grid>
             <Grid item style={{ marginTop: '14px' }}>
               <p>or</p>
             </Grid>
             <Grid item>
-              <a href="https://public.sync-stage.com/agent/macos/prod/0.2.0/SyncStageAgent_0.2.0.dmg" download>
+              <a target="_blank" href="https://public.sync-stage.com/agent/macos/prod/0.2.0/SyncStageAgent_0.2.0.dmg" download>
                 {' '}
                 Install Desktop Agent{' '}
               </a>
