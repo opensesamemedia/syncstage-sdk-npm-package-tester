@@ -1,6 +1,6 @@
 export const PathEnum = {
   PROFILE_NICKNAME: 'profile/nickname',
-  PROFILE_SECRET: 'profile/secret',
+  PROFILE_LOGIN: 'profile/login',
   SETUP: 'setup',
   LOCATION: 'location',
   LOCATION_LATENCIES: 'location/latencies',

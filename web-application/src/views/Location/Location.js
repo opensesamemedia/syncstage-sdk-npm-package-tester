@@ -39,7 +39,7 @@ const Location = () => {
       <Grid item style={{ height: '80px' }} />
       <Grid container justifyContent="space-between">
         <Grid item>
-          <Button onClick={() => setCurrentStep(PathEnum.PROFILE_SECRET)}>Previous</Button>
+          <Button onClick={() => setCurrentStep(PathEnum.PROFILE_NICKNAME)}>Previous</Button>
         </Grid>
         <Grid item>
           <ButtonContained

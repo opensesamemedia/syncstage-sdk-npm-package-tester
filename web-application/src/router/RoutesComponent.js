@@ -4,12 +4,12 @@ import Setup from '../views/Setup/Setup';
 import JoinSession from '../views/Sessions/JoinSession';
 import Session from '../views/Sessions/Session';
 import Nickname from '../views/Profile/Nickname';
-import Secret from '../views/Profile/Secret';
 import { PathEnum } from './PathEnum';
 import AppContext from '../AppContext';
 import Location from '../views/Location/Location';
 import Latencies from '../views/Location/Latencies';
 import ManualLocation from '../views/Location/ManualLocation';
+import LoginView from '../views/Profile/LoginView';
 
 const RoutesComponent = ({
   onProvisionSubmit,
@@ -31,10 +31,10 @@ const RoutesComponent = ({
       />
 
       <Route
-        path={PathEnum.PROFILE_SECRET}
+        path={PathEnum.PROFILE_LOGIN}
         element={
-          currentStep === PathEnum.PROFILE_SECRET ? (
-            <Secret onProvisionSubmit={onProvisionSubmit} />
+          currentStep === PathEnum.PROFILE_LOGIN ? (
+            <LoginView onProvisionSubmit={onProvisionSubmit} />
           ) : (
             <Navigate to={`/${currentStep}`} replace />
           )

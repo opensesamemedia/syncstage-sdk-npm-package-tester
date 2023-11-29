@@ -54,10 +54,10 @@ const Menu = ({ profileConfigured, drawerOpened, onCloseDrawer, isMobile }) => {
               <ListItemText primary="Setup" />
             </ListItemButton>
             <ListItemButton
-              selected={[PathEnum.PROFILE_NICKNAME, PathEnum.PROFILE_SECRET].includes(currentStep)}
+              selected={[PathEnum.PROFILE_NICKNAME, PathEnum.PROFILE_LOGIN].includes(currentStep)}
               sx={selectedStyle}
               onClick={() => {
-                setCurrentStep(PathEnum.PROFILE_NICKNAME);
+                setCurrentStep(PathEnum.PROFILE_LOGIN);
               }}
               disabled={!desktopConnected}
             >

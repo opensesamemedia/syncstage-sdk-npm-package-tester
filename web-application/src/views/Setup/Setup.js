@@ -43,7 +43,7 @@ const Setup = () => {
       <Grid item style={{ height: '80px' }} />
       <Grid container justifyContent="flex-end">
         <Grid item>
-          <ButtonContained onClick={() => setCurrentStep(PathEnum.PROFILE_NICKNAME)} disabled={!desktopConnected}>
+          <ButtonContained onClick={() => setCurrentStep(PathEnum.PROFILE_LOGIN)} disabled={!desktopConnected}>
             Next
           </ButtonContained>
         </Grid>

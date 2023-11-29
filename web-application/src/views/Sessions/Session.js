@@ -197,7 +197,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     errorCodeToSnackbar(errorCode);
 
     if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
-      setCurrentStep(PathEnum.PROFILE_SECRET);
+      setCurrentStep(PathEnum.PROFILE_LOGIN);
       setDesktopProvisioned(false);
     }
 

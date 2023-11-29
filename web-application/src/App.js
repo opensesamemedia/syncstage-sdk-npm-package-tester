@@ -38,9 +38,10 @@ async function onJwtExpired() {
 }
 
 const App = () => {
+  const [userJwt, setUserJwt] = useState('');
   const [syncStage, setSyncStage] = useState(null);
   const [syncStageSDKVersion, setSyncStageSDKVersion] = useState('');
-  const [jwt, setJwt] = useState('');
+  const [syncStageJwt, setSyncStageJwt] = useState('');
   const [nickname, setNickname] = useState('');
   const [sessionCode, setSessionCode] = useState('');
   const [sessionData, setSessionData] = useState(null);
@@ -106,8 +107,8 @@ const App = () => {
   const sharedState = {
     syncStage,
     syncStageSDKVersion,
-    jwt,
-    setJwt,
+    jwt: syncStageJwt,
+    setJwt: setSyncStageJwt,
     nickname,
     setNickname,
     sessionCode,
@@ -128,17 +129,19 @@ const App = () => {
     setAutomatedLocationSelection,
     desktopAgentProtocolHandler,
     setDesktopAgentProtocolHandler,
+    userJwt,
+    setUserJwt,
   };
 
   const goToProvisioningPageOnUnauthorized = () => {
-    setCurrentStep(PathEnum.PROFILE_SECRET);
+    setCurrentStep(PathEnum.PROFILE_LOGIN);
     setDesktopProvisioned(false);
     setBackdropOpen(false);
   };
 
   const onProvisionSubmit = async () => {
     setBackdropOpen(true);
-    const errorCode = await syncStage.init(jwt);
+    const errorCode = await syncStage.init(syncStageJwt);
     errorCodeToSnackbar(errorCode, 'Authorized');
     setBackdropOpen(false);
     if (errorCode === SyncStageSDKErrorCode.OK) {
@@ -234,7 +237,7 @@ const App = () => {
   };
 
   const inSession = currentStep === PathEnum.SESSIONS_SESSION;
-  const profileConfigured = nickname && jwt;
+  const profileConfigured = nickname && syncStageJwt;
 
   return (
     <AppContext.Provider value={sharedState}>

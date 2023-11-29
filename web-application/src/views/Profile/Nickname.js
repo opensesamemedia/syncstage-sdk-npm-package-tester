@@ -29,7 +29,7 @@ const Nickname = () => {
           <ButtonContained
             disabled={nickname === ''}
             onClick={() => {
-              setCurrentStep(PathEnum.PROFILE_SECRET);
+              setCurrentStep(PathEnum.LOCATION);
             }}
           >
             Next
