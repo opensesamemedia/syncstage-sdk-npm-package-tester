@@ -47,7 +47,7 @@ const JoinSession = ({ onJoinSession, onCreateSession }) => {
         <Grid item>
           <Button
             onClick={() => {
-              setCurrentStep(PathEnum.PROFILE_NICKNAME);
+              setCurrentStep(PathEnum.SESSION_NICKNAME);
             }}
           >
             Previous

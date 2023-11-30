@@ -11,6 +11,7 @@ import Box from '@mui/material/Box';
 import Modal from '@mui/material/Modal';
 import Typography from '@mui/material/Typography';
 import { enqueueSnackbar } from 'notistack';
+import { fetchSyncStageToken } from './apiHandler';
 
 import GlobalStyle from './ui/GlobalStyle';
 import theme from './ui/theme';
@@ -30,24 +31,17 @@ const muiTheme = createTheme({
   },
 });
 
-async function onJwtExpired() {
-  console.log('jwt expired');
-  // TODO: returned value is faked. In your implementation
-  // eslint-disable-next-line max-len
-  return 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
-}
-
 const App = () => {
-  const [userJwt, setUserJwt] = useState('');
+  const [userJwt, setUserJwt] = useState(null);
+  const [syncStageJwt, setSyncStageJwt] = useState(null);
   const [syncStage, setSyncStage] = useState(null);
   const [syncStageSDKVersion, setSyncStageSDKVersion] = useState('');
-  const [syncStageJwt, setSyncStageJwt] = useState('');
   const [nickname, setNickname] = useState('');
   const [sessionCode, setSessionCode] = useState('');
   const [sessionData, setSessionData] = useState(null);
   const [selectedServer, setSelectedServer] = useState(null);
 
-  let startPath = PathEnum.SETUP;
+  let startPath = PathEnum.LOGIN;
 
   if (Object.values(PathEnum).includes(window.location.pathname.substring(1))) {
     startPath = window.location.pathname.substring(1);
@@ -71,6 +65,11 @@ const App = () => {
   };
   const onDesktopAgentReleased = () => {
     setDesktopAgentAquired(false);
+  };
+
+  const onJwtExpired = async () => {
+    const { jwt } = await fetchSyncStageToken(userJwt);
+    return jwt;
   };
 
   useEffect(() => {
@@ -99,16 +98,25 @@ const App = () => {
   }, [syncStage]);
 
   useEffect(() => {
-    if (!desktopProvisioned) {
+    if (!userJwt) {
+      setCurrentStep(PathEnum.LOGIN);
+    } else if (!desktopProvisioned) {
       setCurrentStep(PathEnum.SETUP);
     }
   }, []);
 
+  const signOut = async () => {
+    setUserJwt(null);
+    setSyncStageJwt(null);
+    setCurrentStep(PathEnum.LOGIN);
+    setDesktopProvisioned(false);
+    await syncStage.leave();
+    setSessionData(null);
+  };
+
   const sharedState = {
     syncStage,
     syncStageSDKVersion,
-    jwt: syncStageJwt,
-    setJwt: setSyncStageJwt,
     nickname,
     setNickname,
     sessionCode,
@@ -131,21 +139,24 @@ const App = () => {
     setDesktopAgentProtocolHandler,
     userJwt,
     setUserJwt,
+    signOut,
   };
 
   const goToProvisioningPageOnUnauthorized = () => {
-    setCurrentStep(PathEnum.PROFILE_LOGIN);
+    setCurrentStep(PathEnum.LOGIN);
     setDesktopProvisioned(false);
     setBackdropOpen(false);
   };
 
   const onProvisionSubmit = async () => {
     setBackdropOpen(true);
-    const errorCode = await syncStage.init(syncStageJwt);
-    errorCodeToSnackbar(errorCode, 'Authorized');
+    const { jwt } = await fetchSyncStageToken(userJwt);
+    setSyncStageJwt(jwt);
+    const errorCode = await syncStage.init(jwt);
+    errorCodeToSnackbar(errorCode, 'Authorized to SyncStage services');
     setBackdropOpen(false);
     if (errorCode === SyncStageSDKErrorCode.OK) {
-      setCurrentStep(PathEnum.LOCATION);
+      setCurrentStep(PathEnum.SESSION_NICKNAME);
       setDesktopProvisioned(true);
     } else {
       setDesktopProvisioned(false);
@@ -237,7 +248,7 @@ const App = () => {
   };
 
   const inSession = currentStep === PathEnum.SESSIONS_SESSION;
-  const profileConfigured = nickname && syncStageJwt;
+  const nicknameSetAndProvisioned = nickname && syncStageJwt;
 
   return (
     <AppContext.Provider value={sharedState}>
@@ -250,7 +261,7 @@ const App = () => {
               <div className="bg" />
               <div className="gradient2" />
               <div className="gradient1" />
-              <Navigation inSession={inSession} profileConfigured={profileConfigured} />
+              <Navigation hidden={userJwt === null} inSession={inSession} nicknameSetAndProvisioned={nicknameSetAndProvisioned} />
 
               <Backdrop
                 sx={{

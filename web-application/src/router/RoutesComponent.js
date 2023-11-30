@@ -3,45 +3,42 @@ import { Route, Routes, Navigate } from 'react-router-dom';
 import Setup from '../views/Setup/Setup';
 import JoinSession from '../views/Sessions/JoinSession';
 import Session from '../views/Sessions/Session';
-import Nickname from '../views/Profile/Nickname';
+import SessionNickname from '../views/SessionNickname/SessionNickname';
 import { PathEnum } from './PathEnum';
 import AppContext from '../AppContext';
 import Location from '../views/Location/Location';
 import Latencies from '../views/Location/Latencies';
 import ManualLocation from '../views/Location/ManualLocation';
-import LoginView from '../views/Profile/LoginView';
+import LoginView from '../views/Login/LoginView';
 
 const RoutesComponent = ({
-  onProvisionSubmit,
   onJoinSession,
   onCreateSession,
   onLeaveSession,
   inSession,
   onStartRecording,
   onStopRecording,
+  onProvisionSubmit,
 }) => {
   const { currentStep } = useContext(AppContext);
 
   return (
     <Routes>
       <Route path="/" element={<Navigate to={`/${currentStep}`} replace />} />
+
+      <Route path={PathEnum.LOGIN} element={currentStep === PathEnum.LOGIN ? <LoginView /> : <Navigate to={`/${currentStep}`} replace />} />
+
       <Route
-        path={PathEnum.PROFILE_NICKNAME}
-        element={currentStep === PathEnum.PROFILE_NICKNAME ? <Nickname /> : <Navigate to={`/${currentStep}`} replace />}
+        path={PathEnum.SESSION_NICKNAME}
+        element={currentStep === PathEnum.SESSION_NICKNAME ? <SessionNickname /> : <Navigate to={`/${currentStep}`} replace />}
       />
 
       <Route
-        path={PathEnum.PROFILE_LOGIN}
+        path={PathEnum.SETUP}
         element={
-          currentStep === PathEnum.PROFILE_LOGIN ? (
-            <LoginView onProvisionSubmit={onProvisionSubmit} />
-          ) : (
-            <Navigate to={`/${currentStep}`} replace />
-          )
+          currentStep === PathEnum.SETUP ? <Setup onProvisionSubmit={onProvisionSubmit} /> : <Navigate to={`/${currentStep}`} replace />
         }
       />
-
-      <Route path={PathEnum.SETUP} element={currentStep === PathEnum.SETUP ? <Setup /> : <Navigate to={`/${currentStep}`} replace />} />
 
       <Route
         path={PathEnum.LOCATION}

@@ -6,7 +6,7 @@ import AppContext from '../../AppContext';
 import { PathEnum } from '../../router/PathEnum';
 import Button from '../../components/StyledButton';
 
-const Nickname = () => {
+const SessionNickname = () => {
   const { nickname, setNickname, setCurrentStep } = useContext(AppContext);
 
   return (
@@ -15,7 +15,7 @@ const Nickname = () => {
         <h2>Profile</h2>
       </Grid>
       <Grid item>
-        <p>Please enter your nickname and upload your secret file. You can get your secret file from the SyncStage Developer Console.</p>
+        <p>Please enter your session nickname.</p>
       </Grid>
       <Grid item>
         <TextField label="Nickname" value={nickname} onChange={(e) => setNickname(e.target.value)} style={{ width: '70%' }} />
@@ -40,4 +40,4 @@ const Nickname = () => {
   );
 };
 
-export default Nickname;
+export default SessionNickname;

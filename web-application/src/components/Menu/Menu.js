@@ -6,12 +6,13 @@ import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined
 import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
 import LocationOn from '@mui/icons-material/LocationOn';
 import GroupsIcon from '@mui/icons-material/Groups';
+import LogoutIcon from '@mui/icons-material/Logout';
 import AppContext from '../../AppContext';
 import { PathEnum } from '../../router/PathEnum';
 import theme from '../../ui/theme';
 
-const Menu = ({ profileConfigured, drawerOpened, onCloseDrawer, isMobile }) => {
-  const { currentStep, setCurrentStep, desktopConnected, desktopProvisioned, syncStageSDKVersion, selectedServer } = useContext(AppContext);
+const Menu = ({ nicknameSetAndProvisioned, drawerOpened, onCloseDrawer, isMobile }) => {
+  const { currentStep, setCurrentStep, syncStageSDKVersion, selectedServer, desktopProvisioned, signOut } = useContext(AppContext);
 
   const selectedStyle = {
     '&.Mui-selected': {
@@ -54,17 +55,17 @@ const Menu = ({ profileConfigured, drawerOpened, onCloseDrawer, isMobile }) => {
               <ListItemText primary="Setup" />
             </ListItemButton>
             <ListItemButton
-              selected={[PathEnum.PROFILE_NICKNAME, PathEnum.PROFILE_LOGIN].includes(currentStep)}
+              selected={[PathEnum.SESSION_NICKNAME, PathEnum.LOGIN].includes(currentStep)}
               sx={selectedStyle}
               onClick={() => {
-                setCurrentStep(PathEnum.PROFILE_LOGIN);
+                setCurrentStep(PathEnum.LOGIN);
               }}
-              disabled={!desktopConnected}
+              disabled={!desktopProvisioned}
             >
               <ListItemIcon sx={{ color: 'inherit' }}>
                 <AccountCircleOutlinedIcon />
               </ListItemIcon>
-              <ListItemText primary="Profile" />
+              <ListItemText primary="Session Nickname" />
             </ListItemButton>
 
             <ListItemButton
@@ -73,7 +74,7 @@ const Menu = ({ profileConfigured, drawerOpened, onCloseDrawer, isMobile }) => {
               onClick={() => {
                 setCurrentStep(PathEnum.LOCATION);
               }}
-              disabled={!desktopProvisioned || !profileConfigured}
+              disabled={!nicknameSetAndProvisioned}
             >
               <ListItemIcon sx={{ color: 'inherit' }}>
                 <LocationOn />
@@ -85,12 +86,19 @@ const Menu = ({ profileConfigured, drawerOpened, onCloseDrawer, isMobile }) => {
               selected={[PathEnum.SESSIONS_JOIN, PathEnum.SESSIONS_REGIONS, PathEnum.SESSIONS_SESSION].includes(currentStep)}
               sx={selectedStyle}
               onClick={() => setCurrentStep(PathEnum.SESSIONS_JOIN)}
-              disabled={!profileConfigured || !desktopProvisioned || !selectedServer}
+              disabled={!nicknameSetAndProvisioned || !selectedServer}
             >
               <ListItemIcon sx={{ color: 'inherit' }}>
                 <GroupsIcon />
               </ListItemIcon>
               <ListItemText primary="Sessions" />
+            </ListItemButton>
+
+            <ListItemButton onClick={() => signOut()}>
+              <ListItemIcon sx={{ color: 'inherit' }}>
+                <LogoutIcon />
+              </ListItemIcon>
+              <ListItemText primary="Sign out" />
             </ListItemButton>
           </List>
           <p style={{ paddingLeft: 16, paddingTop: 20, fontSize: 10 }}>SDK: {syncStageSDKVersion}</p>

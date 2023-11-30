@@ -2,10 +2,9 @@ import React, { useContext } from 'react';
 import { Grid } from '@mui/material';
 import AppContext from '../../AppContext';
 import ButtonContained from '../../components/StyledButtonContained';
-import { PathEnum } from '../../router/PathEnum';
 
-const Setup = () => {
-  const { setCurrentStep, desktopAgentProtocolHandler, desktopConnected } = useContext(AppContext);
+const Setup = ({ onProvisionSubmit }) => {
+  const { desktopAgentProtocolHandler, desktopConnected } = useContext(AppContext);
   return (
     <Grid container direction="column" spacing={2}>
       <Grid item>
@@ -43,7 +42,12 @@ const Setup = () => {
       <Grid item style={{ height: '80px' }} />
       <Grid container justifyContent="flex-end">
         <Grid item>
-          <ButtonContained onClick={() => setCurrentStep(PathEnum.PROFILE_LOGIN)} disabled={!desktopConnected}>
+          <ButtonContained
+            onClick={() => {
+              onProvisionSubmit();
+            }}
+            disabled={!desktopConnected}
+          >
             Next
           </ButtonContained>
         </Grid>

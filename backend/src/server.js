@@ -1,5 +1,7 @@
 const express = require("express");
+const cors = require("cors");
 const axios = require("axios");
+
 const fs = require("fs");
 const jwt = require("jsonwebtoken");
 const swaggerJsDoc = require("swagger-jsdoc");
@@ -53,12 +55,9 @@ const authenticateJwt = (req, res, next) => {
 
 // region Express setup
 const app = express();
+app.use(cors());
 app.use(express.json()); // for parsing application/json
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
-// endregion
-
-// region mock DB
-const users = JSON.parse(fs.readFileSync("user-db.json", "utf8"));
 // endregion
 
 // region SyncStageSecret
@@ -108,6 +107,7 @@ const syncStageSecret = JSON.parse(
  */
 app.post("/api/login", (req, res) => {
   const { username, password } = req.body;
+  const users = JSON.parse(fs.readFileSync("user-db.json", "utf8"));
   const user = users.find(
     (u) => u.username === username && u.password === password
   );

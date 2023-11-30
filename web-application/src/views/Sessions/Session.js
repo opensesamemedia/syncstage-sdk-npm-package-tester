@@ -42,7 +42,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
   const [receiversMap, setReceiversMap] = useState({});
 
   if (!sessionData) {
-    setCurrentStep(PathEnum.PROFILE_NICKNAME);
+    setCurrentStep(PathEnum.SESSION_NICKNAME);
   }
 
   const onSessionOut = useCallback(() => {
@@ -197,7 +197,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     errorCodeToSnackbar(errorCode);
 
     if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
-      setCurrentStep(PathEnum.PROFILE_LOGIN);
+      setCurrentStep(PathEnum.LOGIN);
       setDesktopProvisioned(false);
     }
 

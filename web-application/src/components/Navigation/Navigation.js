@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 import Menu from '../Menu/Menu';
 import Logo from './Logo.styled';
 
-function Navigation({ inSession, profileConfigured }) {
+function Navigation({ inSession, hidden, nicknameSetAndProvisioned }) {
   const muiTheme = useTheme();
   const lgScreenMatches = useMediaQuery(muiTheme.breakpoints.up('lg'));
   const [openedMobileDrawer, setOpenedMobileDrawer] = useState(false);
@@ -14,19 +14,21 @@ function Navigation({ inSession, profileConfigured }) {
   const handleDrawerClose = () => setOpenedMobileDrawer(false);
 
   const isDrawerOpened = useMemo(() => {
-    if (inSession) return false;
+    if (hidden) return false;
     if (lgScreenMatches) return true;
     return openedMobileDrawer;
-  }, [openedMobileDrawer, lgScreenMatches, inSession]);
+  }, [openedMobileDrawer, lgScreenMatches, hidden]);
 
   return (
     <>
-      <Menu
-        profileConfigured={profileConfigured}
-        drawerOpened={isDrawerOpened}
-        onCloseDrawer={handleDrawerClose}
-        isMobile={!lgScreenMatches}
-      />
+      {!hidden && (
+        <Menu
+          nicknameSetAndProvisioned={nicknameSetAndProvisioned}
+          drawerOpened={isDrawerOpened}
+          onCloseDrawer={handleDrawerClose}
+          isMobile={!lgScreenMatches}
+        />
+      )}
       <NavigationWrapper inSession={inSession}>
         {!lgScreenMatches && !inSession && (
           <IconButton color="inherit" aria-label="open drawer" edge="start" size="large" onClick={handleDrawerOpen}>
