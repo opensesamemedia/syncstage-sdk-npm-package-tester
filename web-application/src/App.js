@@ -82,14 +82,7 @@ const App = () => {
   useEffect(() => {
     if (syncStage === null) {
       const desktopAgentDelegate = new SyncStageDesktopAgentDelegate(onDesktopAgentAquired, onDesktopAgentReleased);
-      const ss = new SyncStage(
-        null,
-        null,
-        null,
-        desktopAgentDelegate,
-        onJwtExpired,
-        process.env.REACT_APP_WSS_ADDRESS ?? 'wss://websocket-pipe.sync-stage.com',
-      );
+      const ss = new SyncStage(null, null, null, desktopAgentDelegate, onJwtExpired);
 
       setSyncStageSDKVersion(ss.getSDKVersion());
       setSyncStage(ss);

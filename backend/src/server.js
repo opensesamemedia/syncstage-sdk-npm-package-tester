@@ -135,9 +135,12 @@ app.post("/api/login", (req, res) => {
  *       200:
  *         description: Token for Desktop Agent Provisioning
  *         content:
- *           text/plain:
+ *           application/json:
  *             schema:
- *               type: string
+ *               type: object
+ *               properties:
+ *                 jwt:
+ *                   type: string
  *       401:
  *         description: Unauthorized
  */

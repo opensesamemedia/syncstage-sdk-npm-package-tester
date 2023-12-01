@@ -23,6 +23,8 @@ This application is a test environment for SyncStage web SDK. It allows you to r
 9. Start the frontend server by running: yarn start
 10. The application will start and you can access it in your browser at http://localhost:3001.
 
+## Swagger
+
 You can view the server API Swagger definition under: http://localhost:3000/api-docs 
 
 ## Important Notes
