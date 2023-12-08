@@ -1891,10 +1891,10 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@opensesamemedia/syncstage-sdk-npm-package-development@^0.4.0-rc13":
-  version "0.4.0-rc13"
-  resolved "https://registry.yarnpkg.com/@opensesamemedia/syncstage-sdk-npm-package-development/-/syncstage-sdk-npm-package-development-0.4.0-rc13.tgz#ec68aed3e64ac37676ff8a70713c370da848f377"
-  integrity sha512-43GIx/o0al7/ebULBJVcudEyfm8JKQ9p/qDprCkaB/GRFUKMQ13ai/0+DIEpHP0nPnAHTjBMXjKGS2T6ZWdLAA==
+"@opensesamemedia/syncstage-sdk-npm-package-development@^0.4.0-rc17":
+  version "0.4.0-rc17"
+  resolved "https://registry.yarnpkg.com/@opensesamemedia/syncstage-sdk-npm-package-development/-/syncstage-sdk-npm-package-development-0.4.0-rc17.tgz#2c5110b78511a91b0e1cdbbbb5ee1611ac83f3ef"
+  integrity sha512-I/qmuRZmtOuOvm9oEA55WdE/Q//YKRVLtY4FHbrk+ByOku/fw49nRPrPX7S8DTkAP/zQog9nkOsr4KZwYiNnIg==
   dependencies:
     async-mutex "^0.4.0"
     uuid "^9.0.0"
@@ -8228,6 +8228,11 @@ react-bootstrap@^2.7.2:
     react-transition-group "^4.4.5"
     uncontrollable "^7.2.1"
     warning "^4.0.3"
+
+react-detect-offline@^2.4.5:
+  version "2.4.5"
+  resolved "https://registry.yarnpkg.com/react-detect-offline/-/react-detect-offline-2.4.5.tgz#3c242516c37b6789cf89102881031f87e70b80e6"
+  integrity sha512-sI13NPEKl3uQp95FT5CwrYzH3DnXCwNP6TnY6NRF5gFDM4NU9KDlbtA6HG2dwhDVS0RYQGXwZW/mHbdf8fCnaw==
 
 react-dev-utils@^12.0.1:
   version "12.0.1"

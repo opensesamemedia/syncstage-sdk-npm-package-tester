@@ -5,6 +5,20 @@ import ButtonContained from '../../components/StyledButtonContained';
 
 const Setup = ({ onProvisionSubmit }) => {
   const { desktopAgentProtocolHandler, desktopConnected } = useContext(AppContext);
+
+  const getDownloadLink = () => {
+    const userAgent = window.navigator.userAgent;
+    if (userAgent.indexOf('Mac') !== -1) {
+      return 'https://public.sync-stage.com/agent/macos/prod/0.3.0/SyncStageAgent_0.3.0.dmg';
+    } else if (userAgent.indexOf('Win') !== -1) {
+      return 'https://public.sync-stage.com/agent/windows/prod/0.3.0/SyncStageAgent_0.3.0.exe';
+    } else {
+      return null;
+    }
+  };
+
+  const downloadLink = getDownloadLink();
+
   return (
     <Grid container direction="column" spacing={2}>
       <Grid item>
@@ -20,23 +34,29 @@ const Setup = ({ onProvisionSubmit }) => {
             <p>To have a low latency conversation you need to have the SyncStage Desktop Agent running.</p>
           </Grid>
           <Grid item style={{ height: '80px' }} />
-          <Grid container direction="column" justifyContent="flex-center" alignItems="center">
+          {downloadLink ? (
+            <Grid container direction="column" justifyContent="flex-center" alignItems="center">
+              <Grid item>
+                <a target="_blank" href={desktopAgentProtocolHandler}>
+                  {' '}
+                  Open Desktop Agent{' '}
+                </a>
+              </Grid>
+              <Grid item style={{ marginTop: '14px' }}>
+                <p>or</p>
+              </Grid>
+              <Grid item>
+                <a target="_blank" href={downloadLink} download>
+                  {' '}
+                  Install Desktop Agent{' '}
+                </a>
+              </Grid>
+            </Grid>
+          ) : (
             <Grid item>
-              <a target="_blank" href={desktopAgentProtocolHandler}>
-                {' '}
-                Open Desktop Agent{' '}
-              </a>
+              <p>Your system is not supported yet.</p>
             </Grid>
-            <Grid item style={{ marginTop: '14px' }}>
-              <p>or</p>
-            </Grid>
-            <Grid item>
-              <a target="_blank" href="https://public.sync-stage.com/agent/macos/prod/0.2.0/SyncStageAgent_0.2.0.dmg" download>
-                {' '}
-                Install Desktop Agent{' '}
-              </a>
-            </Grid>
-          </Grid>
+          )}
         </>
       )}
       <Grid item style={{ height: '80px' }} />

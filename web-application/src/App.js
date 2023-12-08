@@ -11,6 +11,7 @@ import Box from '@mui/material/Box';
 import Modal from '@mui/material/Modal';
 import Typography from '@mui/material/Typography';
 import { enqueueSnackbar } from 'notistack';
+import { Online } from 'react-detect-offline';
 import { fetchSyncStageToken } from './apiHandler';
 
 import GlobalStyle from './ui/GlobalStyle';
@@ -266,16 +267,18 @@ const App = () => {
               >
                 <CircularProgress color="inherit" />
               </Backdrop>
-              <Modal keepMounted open={desktopAgentAquired}>
-                <Box sx={modalStyle}>
-                  <Typography variant="h6" component="h2">
-                    Desktop Agent in use
-                  </Typography>
-                  <Typography sx={{ mt: 2 }}>
-                    SyncStage opened in another browser tab. Please switch to that tab or close current one.
-                  </Typography>
-                </Box>
-              </Modal>
+              <Online>
+                <Modal keepMounted open={desktopAgentAquired}>
+                  <Box sx={modalStyle}>
+                    <Typography variant="h6" component="h2">
+                      Desktop Agent in use
+                    </Typography>
+                    <Typography sx={{ mt: 2 }}>
+                      SyncStage opened in another browser tab. Please switch to that tab or close current one.
+                    </Typography>
+                  </Box>
+                </Modal>
+              </Online>
               <div className="app-container">
                 <div className="app-container-limiter">
                   <RoutesComponent
