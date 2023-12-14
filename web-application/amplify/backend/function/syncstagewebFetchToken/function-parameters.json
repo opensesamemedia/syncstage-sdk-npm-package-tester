@@ -1,0 +1,13 @@
+{
+  "lambdaLayers": [],
+  "secretNames": [
+    "syncstagesecret"
+  ],
+  "environmentVariableList": [
+    {
+      "cloudFormationParameterName": "baseApiPath",
+      "environmentVariableName": "BASE_API_PATH"
+    }
+  ],
+  "permissions": {}
+}

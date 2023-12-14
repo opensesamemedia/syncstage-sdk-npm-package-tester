@@ -1,1 +1,171 @@
-{}
+{
+  "api": {
+    "syncstagewebapi": {
+      "dependsOn": [
+        {
+          "attributes": [
+            "Name",
+            "Arn"
+          ],
+          "category": "function",
+          "resourceName": "syncstagewebFetchToken"
+        },
+        {
+          "attributes": [
+            "Name",
+            "Arn"
+          ],
+          "category": "function",
+          "resourceName": "syncStageWebFetchSyncStageToken"
+        }
+      ],
+      "providerPlugin": "awscloudformation",
+      "service": "API Gateway"
+    }
+  },
+  "auth": {
+    "syncstageweb": {
+      "dependsOn": [],
+      "frontendAuthConfig": {
+        "mfaConfiguration": "OFF",
+        "mfaTypes": [
+          "SMS"
+        ],
+        "passwordProtectionSettings": {
+          "passwordPolicyCharacters": [],
+          "passwordPolicyMinLength": 8
+        },
+        "signupAttributes": [
+          "EMAIL"
+        ],
+        "socialProviders": [],
+        "usernameAttributes": [],
+        "verificationMechanisms": [
+          "EMAIL"
+        ]
+      },
+      "providerPlugin": "awscloudformation",
+      "service": "Cognito",
+      "serviceType": "managed"
+    },
+    "userPoolGroups": {
+      "dependsOn": [
+        {
+          "attributes": [
+            "UserPoolId",
+            "AppClientIDWeb",
+            "AppClientID",
+            "IdentityPoolId"
+          ],
+          "category": "auth",
+          "resourceName": "syncstageweb"
+        }
+      ],
+      "providerPlugin": "awscloudformation",
+      "service": "Cognito-UserPool-Groups"
+    }
+  },
+  "function": {
+    "syncStageWebFetchSyncStageToken": {
+      "build": true,
+      "dependsOn": [],
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    },
+    "syncstagewebFetchToken": {
+      "build": true,
+      "dependsOn": [],
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    }
+  },
+  "hosting": {
+    "amplifyhosting": {
+      "providerPlugin": "awscloudformation",
+      "service": "amplifyhosting",
+      "type": "manual"
+    }
+  },
+  "parameters": {
+    "AMPLIFY_function_syncStageWebFetchSyncStageToken_baseApiPath": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "syncStageWebFetchSyncStageToken"
+        }
+      ]
+    },
+    "AMPLIFY_function_syncStageWebFetchSyncStageToken_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "syncStageWebFetchSyncStageToken"
+        }
+      ]
+    },
+    "AMPLIFY_function_syncStageWebFetchSyncStageToken_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "syncStageWebFetchSyncStageToken"
+        }
+      ]
+    },
+    "AMPLIFY_function_syncStageWebFetchSyncStageToken_secretsPathAmplifyAppId": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "syncStageWebFetchSyncStageToken"
+        }
+      ]
+    },
+    "AMPLIFY_function_syncstagewebFetchToken_baseApiPath": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "syncstagewebFetchToken"
+        }
+      ]
+    },
+    "AMPLIFY_function_syncstagewebFetchToken_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "syncstagewebFetchToken"
+        }
+      ]
+    },
+    "AMPLIFY_function_syncstagewebFetchToken_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "syncstagewebFetchToken"
+        }
+      ]
+    },
+    "AMPLIFY_function_syncstagewebFetchToken_secretsPathAmplifyAppId": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "syncstagewebFetchToken"
+        }
+      ]
+    },
+    "AMPLIFY_hosting_amplifyhosting_appId": {
+      "usedBy": [
+        {
+          "category": "hosting",
+          "resourceName": "amplifyhosting"
+        }
+      ]
+    },
+    "AMPLIFY_hosting_amplifyhosting_type": {
+      "usedBy": [
+        {
+          "category": "hosting",
+          "resourceName": "amplifyhosting"
+        }
+      ]
+    }
+  }
+}

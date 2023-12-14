@@ -1,5 +1,11 @@
+import { Amplify } from 'aws-amplify';
+import { signOut as amplifySignOut, getCurrentUser } from 'aws-amplify/auth';
+
+import amplifyconfig from './amplifyconfiguration.json';
+import { get } from 'aws-amplify/api';
+
 import AppContext from './AppContext';
-import { BrowserRouter as Router } from 'react-router-dom';
+import { HashRouter } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
 import { ThemeProvider } from 'styled-components';
 import { SnackbarProvider } from 'notistack';
@@ -26,6 +32,8 @@ import SyncStage, { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk
 import modalStyle from './ui/ModalStyle';
 import Navigation from './components/Navigation/Navigation';
 
+Amplify.configure(amplifyconfig);
+
 const muiTheme = createTheme({
   typography: {
     fontFamily: ['Josefin Sans', 'sans-serif'].join(','),
@@ -33,6 +41,7 @@ const muiTheme = createTheme({
 });
 
 const App = () => {
+  const [isSignedIn, setIsSignedIn] = useState(false);
   const [userJwt, setUserJwt] = useState(null);
   const [syncStageJwt, setSyncStageJwt] = useState(null);
   const [syncStage, setSyncStage] = useState(null);
@@ -68,8 +77,24 @@ const App = () => {
     setDesktopAgentAquired(false);
   };
 
+  async function amplifyFetchSyncStageToken() {
+    try {
+      const restOperation = get({
+        apiName: 'syncstagewebapi',
+        path: '/fetch-token',
+      });
+      const { body } = await restOperation.response;
+      const bodyText = await body.text();
+      console.log('GET call succeeded: ', bodyText);
+      return bodyText;
+    } catch (error) {
+      console.log('GET call failed: ', error);
+    }
+  }
+
   const onJwtExpired = async () => {
-    const { jwt } = await fetchSyncStageToken(userJwt);
+    // const { jwt } = await fetchSyncStageToken(userJwt);
+    const jwt = await amplifyFetchSyncStageToken();
     return jwt;
   };
 
@@ -91,16 +116,40 @@ const App = () => {
     }
   }, [syncStage]);
 
-  useEffect(() => {
-    if (!userJwt) {
-      setCurrentStep(PathEnum.LOGIN);
-    } else if (!desktopProvisioned) {
-      setCurrentStep(PathEnum.SETUP);
+  useEffect(async () => {
+    async function fetchData() {
+      let currentUser = null;
+      try {
+        currentUser = await getCurrentUser();
+      } catch (error) {
+        console.log('Could not fetch current user: ', error);
+      }
+      if (currentUser) {
+        setIsSignedIn(true);
+        setCurrentStep(PathEnum.SETUP);
+      } else {
+        setCurrentStep(PathEnum.LOGIN);
+      }
     }
+
+    fetchData();
+
+    // if (!isSignedIn) {
+    //   setCurrentStep(PathEnum.LOGIN);
+    // } else if (!desktopProvisioned) {
+    //   setCurrentStep(PathEnum.SETUP);
+    // }
   }, []);
 
   const signOut = async () => {
+    try {
+      await amplifySignOut();
+    } catch (error) {
+      console.log('error signing out: ', error);
+    }
+
     setUserJwt(null);
+    setIsSignedIn(false);
     setSyncStageJwt(null);
     setCurrentStep(PathEnum.LOGIN);
     setDesktopProvisioned(false);
@@ -134,6 +183,8 @@ const App = () => {
     userJwt,
     setUserJwt,
     signOut,
+    isSignedIn,
+    setIsSignedIn,
   };
 
   const goToProvisioningPageOnUnauthorized = () => {
@@ -144,7 +195,8 @@ const App = () => {
 
   const onProvisionSubmit = async () => {
     setBackdropOpen(true);
-    const { jwt } = await fetchSyncStageToken(userJwt);
+    // const { jwt } = await fetchSyncStageToken(userJwt);
+    const jwt = await amplifyFetchSyncStageToken();
     setSyncStageJwt(jwt);
     const errorCode = await syncStage.init(jwt);
     errorCodeToSnackbar(errorCode, 'Authorized to SyncStage services');
@@ -251,11 +303,11 @@ const App = () => {
           <GlobalStyle />
           <SnackbarProvider preventDuplicate />
           <AppWrapper inSession={inSession}>
-            <Router>
+            <HashRouter>
               <div className="bg" />
               <div className="gradient2" />
               <div className="gradient1" />
-              <Navigation hidden={userJwt === null} inSession={inSession} nicknameSetAndProvisioned={nicknameSetAndProvisioned} />
+              <Navigation hidden={!isSignedIn} inSession={inSession} nicknameSetAndProvisioned={nicknameSetAndProvisioned} />
 
               <Backdrop
                 sx={{
@@ -292,7 +344,7 @@ const App = () => {
                   />
                 </div>
               </div>
-            </Router>
+            </HashRouter>
           </AppWrapper>
         </ThemeProvider>
       </MuiThemeProvider>

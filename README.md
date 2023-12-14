@@ -32,3 +32,9 @@ You can view the server API Swagger definition under: http://localhost:3000/api-
 * The SyncStageSecret.json file contains sensitive information and should be handled securely.
 * The dummy user-db.json file stores user information in plaintext and should not be used in a production environment.
 * The server also contains a dummy implementation of generating and validating JWT tokens. This is for testing purposes only and should not be used in a production environment.
+
+## Amplify
+
+Create user in cognito:
+`aws cognito-idp admin-create-user --user-pool-id <value> --username <value> --temporary-password <value>`
+`aws cognito-idp admin-set-user-password --user-pool-id <value> --username <value> --password <value> --permanent`

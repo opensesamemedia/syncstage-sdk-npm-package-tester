@@ -1,15 +1,45 @@
 {
   "dev": {
     "awscloudformation": {
-      "AuthRoleName": "amplify-syncstageweb-dev-142718-authRole",
-      "UnauthRoleArn": "arn:aws:iam::016569422538:role/amplify-syncstageweb-dev-142718-unauthRole",
-      "AuthRoleArn": "arn:aws:iam::016569422538:role/amplify-syncstageweb-dev-142718-authRole",
+      "AuthRoleName": "amplify-syncstageweb-dev-151007-authRole",
+      "UnauthRoleArn": "arn:aws:iam::016569422538:role/amplify-syncstageweb-dev-151007-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::016569422538:role/amplify-syncstageweb-dev-151007-authRole",
       "Region": "us-east-1",
-      "DeploymentBucketName": "amplify-syncstageweb-dev-142718-deployment",
-      "UnauthRoleName": "amplify-syncstageweb-dev-142718-unauthRole",
-      "StackName": "amplify-syncstageweb-dev-142718",
-      "StackId": "arn:aws:cloudformation:us-east-1:016569422538:stack/amplify-syncstageweb-dev-142718/2e556500-98f2-11ee-b8a6-0eb07aa44edf",
-      "AmplifyAppId": "d3s2zomwn0qfoq"
+      "DeploymentBucketName": "amplify-syncstageweb-dev-151007-deployment",
+      "UnauthRoleName": "amplify-syncstageweb-dev-151007-unauthRole",
+      "StackName": "amplify-syncstageweb-dev-151007",
+      "StackId": "arn:aws:cloudformation:us-east-1:016569422538:stack/amplify-syncstageweb-dev-151007/543f8190-99c1-11ee-8d9f-1239a5676749",
+      "AmplifyAppId": "d3ogpheuya3vsb",
+      "APIGatewayAuthURL": "https://s3.amazonaws.com/amplify-syncstageweb-dev-151007-deployment/amplify-cfn-templates/api/APIGatewayAuthStack.json"
+    },
+    "categories": {
+      "function": {
+        "syncstagewebFetchToken": {
+          "secretsPathAmplifyAppId": "d3ogpheuya3vsb",
+          "deploymentBucketName": "amplify-syncstageweb-dev-151007-deployment",
+          "s3Key": "amplify-builds/syncstagewebFetchToken-75556c5a666836596643-build.zip",
+          "baseApiPath": "https://f55pesypsd.execute-api.us-east-1.amazonaws.com/dev"
+        },
+        "syncStageWebFetchSyncStageToken": {
+          "secretsPathAmplifyAppId": "d3ogpheuya3vsb",
+          "deploymentBucketName": "amplify-syncstageweb-dev-151007-deployment",
+          "s3Key": "amplify-builds/syncStageWebFetchSyncStageToken-74536b35597069374441-build.zip",
+          "baseApiPath": "https://f55pesypsd.execute-api.us-east-1.amazonaws.com/dev"
+        }
+      },
+      "auth": {
+        "syncstageweb": {},
+        "userPoolGroups": {}
+      },
+      "api": {
+        "syncstagewebapi": {}
+      },
+      "hosting": {
+        "amplifyhosting": {
+          "appId": "d3ogpheuya3vsb",
+          "type": "manual"
+        }
+      }
     }
   }
 }
