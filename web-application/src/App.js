@@ -187,8 +187,8 @@ const App = () => {
     setIsSignedIn,
   };
 
-  const goToProvisioningPageOnUnauthorized = () => {
-    setCurrentStep(PathEnum.LOGIN);
+  const goToSetupPageOnUnauthorized = () => {
+    setCurrentStep(PathEnum.SETUP);
     setDesktopProvisioned(false);
     setBackdropOpen(false);
   };
@@ -219,7 +219,7 @@ const App = () => {
     }
 
     if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
-      return goToProvisioningPageOnUnauthorized();
+      return goToSetupPageOnUnauthorized();
     }
 
     setBackdropOpen(false);
@@ -235,7 +235,7 @@ const App = () => {
     errorCodeToSnackbar(errorCode, `Created session ${createData.sessionCode}`);
 
     if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
-      return goToProvisioningPageOnUnauthorized();
+      return goToSetupPageOnUnauthorized();
     }
 
     setSessionCode(createData.sessionCode);
@@ -264,7 +264,7 @@ const App = () => {
     setBackdropOpen(false);
 
     if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
-      return goToProvisioningPageOnUnauthorized();
+      return goToSetupPageOnUnauthorized();
     }
 
     setCurrentStep(PathEnum.SESSIONS_JOIN);
@@ -278,7 +278,7 @@ const App = () => {
     setBackdropOpen(false);
 
     if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
-      return goToProvisioningPageOnUnauthorized();
+      return goToSetupPageOnUnauthorized();
     }
   };
 
@@ -289,7 +289,7 @@ const App = () => {
     setBackdropOpen(false);
 
     if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
-      return goToProvisioningPageOnUnauthorized();
+      return goToSetupPageOnUnauthorized();
     }
   };
 
@@ -307,7 +307,7 @@ const App = () => {
               <div className="bg" />
               <div className="gradient2" />
               <div className="gradient1" />
-              <Navigation hidden={!isSignedIn} inSession={inSession} nicknameSetAndProvisioned={nicknameSetAndProvisioned} />
+              <Navigation hidden={!isSignedIn || inSession} inSession={inSession} nicknameSetAndProvisioned={nicknameSetAndProvisioned} />
 
               <Backdrop
                 sx={{
