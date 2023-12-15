@@ -8,14 +8,6 @@
             "Arn"
           ],
           "category": "function",
-          "resourceName": "syncstagewebFetchToken"
-        },
-        {
-          "attributes": [
-            "Name",
-            "Arn"
-          ],
-          "category": "function",
           "resourceName": "syncStageWebFetchSyncStageToken"
         }
       ],
@@ -71,12 +63,6 @@
       "dependsOn": [],
       "providerPlugin": "awscloudformation",
       "service": "Lambda"
-    },
-    "syncstagewebFetchToken": {
-      "build": true,
-      "dependsOn": [],
-      "providerPlugin": "awscloudformation",
-      "service": "Lambda"
     }
   },
   "hosting": {
@@ -116,38 +102,6 @@
         {
           "category": "function",
           "resourceName": "syncStageWebFetchSyncStageToken"
-        }
-      ]
-    },
-    "AMPLIFY_function_syncstagewebFetchToken_baseApiPath": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "syncstagewebFetchToken"
-        }
-      ]
-    },
-    "AMPLIFY_function_syncstagewebFetchToken_deploymentBucketName": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "syncstagewebFetchToken"
-        }
-      ]
-    },
-    "AMPLIFY_function_syncstagewebFetchToken_s3Key": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "syncstagewebFetchToken"
-        }
-      ]
-    },
-    "AMPLIFY_function_syncstagewebFetchToken_secretsPathAmplifyAppId": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "syncstagewebFetchToken"
         }
       ]
     },

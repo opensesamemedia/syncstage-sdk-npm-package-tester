@@ -28,7 +28,7 @@ import RoutesComponent from './router/RoutesComponent';
 import './ui/animationStyles.css';
 import SyncStageDesktopAgentDelegate from './SyncStageDesktopAgentDelegate';
 
-import SyncStage, { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-package-development';
+import SyncStage, { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
 import modalStyle from './ui/ModalStyle';
 import Navigation from './components/Navigation/Navigation';
 
@@ -93,8 +93,17 @@ const App = () => {
   }
 
   const onJwtExpired = async () => {
-    // const { jwt } = await fetchSyncStageToken(userJwt);
-    const jwt = await amplifyFetchSyncStageToken();
+    let jwt;
+    // use local docke-compose backend
+    if (process.env.REACT_APP_BACKEND_BASE_PATH) {
+      const tokenResponse = await fetchSyncStageToken(userJwt);
+      jwt = tokenResponse.jwt;
+    }
+    // use amplify backend
+    else {
+      jwt = await amplifyFetchSyncStageToken();
+    }
+
     return jwt;
   };
 
@@ -117,13 +126,14 @@ const App = () => {
   }, [syncStage]);
 
   useEffect(async () => {
-    async function fetchData() {
+    async function confirmAmplifyUserSignedIn() {
       let currentUser = null;
       try {
         currentUser = await getCurrentUser();
       } catch (error) {
         console.log('Could not fetch current user: ', error);
       }
+
       if (currentUser) {
         setIsSignedIn(true);
         setCurrentStep(PathEnum.SETUP);
@@ -132,20 +142,25 @@ const App = () => {
       }
     }
 
-    fetchData();
-
-    // if (!isSignedIn) {
-    //   setCurrentStep(PathEnum.LOGIN);
-    // } else if (!desktopProvisioned) {
-    //   setCurrentStep(PathEnum.SETUP);
-    // }
+    // use local docke-compose backend
+    if (process.env.REACT_APP_BACKEND_BASE_PATH) {
+      if (!isSignedIn) {
+        setCurrentStep(PathEnum.LOGIN);
+      } else if (!desktopProvisioned) {
+        setCurrentStep(PathEnum.SETUP);
+      }
+    }
+    // use amplify backend
+    else {
+      confirmAmplifyUserSignedIn();
+    }
   }, []);
 
   const signOut = async () => {
     try {
       await amplifySignOut();
     } catch (error) {
-      console.log('error signing out: ', error);
+      console.log('error signing out from aplify backend: ', error);
     }
 
     setUserJwt(null);
@@ -195,8 +210,16 @@ const App = () => {
 
   const onProvisionSubmit = async () => {
     setBackdropOpen(true);
-    // const { jwt } = await fetchSyncStageToken(userJwt);
-    const jwt = await amplifyFetchSyncStageToken();
+    let jwt;
+    // use local docke-compose backend
+    if (process.env.REACT_APP_BACKEND_BASE_PATH) {
+      const tokenResponse = await fetchSyncStageToken(userJwt);
+      jwt = tokenResponse.jwt;
+    }
+    // use amplify backend
+    else {
+      jwt = await amplifyFetchSyncStageToken();
+    }
     setSyncStageJwt(jwt);
     const errorCode = await syncStage.init(jwt);
     errorCodeToSnackbar(errorCode, 'Authorized to SyncStage services');

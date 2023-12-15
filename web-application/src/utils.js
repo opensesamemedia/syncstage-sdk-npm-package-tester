@@ -1,4 +1,4 @@
-import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-package-development';
+import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
 import { enqueueSnackbar } from 'notistack';
 
 const syncStageErrorToMessageMap = new Map();
@@ -30,6 +30,6 @@ const errorCodeToSnackbar = (errorCode, msgOnOK) => {
   }
 };
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export { syncStageErrorToMessageMap, errorCodeToSnackbar, sleep };

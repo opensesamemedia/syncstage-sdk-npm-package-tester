@@ -14,12 +14,6 @@
     },
     "categories": {
       "function": {
-        "syncstagewebFetchToken": {
-          "secretsPathAmplifyAppId": "d3ogpheuya3vsb",
-          "deploymentBucketName": "amplify-syncstageweb-dev-151007-deployment",
-          "s3Key": "amplify-builds/syncstagewebFetchToken-75556c5a666836596643-build.zip",
-          "baseApiPath": "https://f55pesypsd.execute-api.us-east-1.amazonaws.com/dev"
-        },
         "syncStageWebFetchSyncStageToken": {
           "secretsPathAmplifyAppId": "d3ogpheuya3vsb",
           "deploymentBucketName": "amplify-syncstageweb-dev-151007-deployment",

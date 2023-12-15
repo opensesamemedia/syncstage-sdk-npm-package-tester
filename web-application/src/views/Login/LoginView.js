@@ -9,32 +9,37 @@ import { enqueueSnackbar } from 'notistack';
 import { signIn } from 'aws-amplify/auth';
 
 const LoginView = () => {
-  const { setCurrentStep, setUserJwt, isSignedIn, setIsSignedIn } = useContext(AppContext);
+  const { setCurrentStep, setUserJwt, setIsSignedIn } = useContext(AppContext);
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
   const handleSubmit = async () => {
-    // try {
-    //   const data = await login(username, password);
-    //   const { token } = data;
-    //   enqueueSnackbar('Login successful');
-    //   setUserJwt(token);
-    //   setIsSignedIn(true);
-    //   setCurrentStep(PathEnum.SETUP);
-    // } catch (error) {
-    //   console.error('Login failed:', error);
-    //   enqueueSnackbar('Unauthorized');
-    // }
-
-    try {
-      const { isSignedIn, nextStep } = await signIn({ username, password });
-      console.log(`isSignedIn: ${isSignedIn}, nexstStep: ${JSON.stringify(nextStep)}`);
-      setIsSignedIn(true);
-      setCurrentStep(PathEnum.SETUP);
-    } catch (error) {
-      console.error('Login failed:', error);
-      enqueueSnackbar('Unauthorized');
+    // use local docke-compose backend
+    if (process.env.REACT_APP_BACKEND_BASE_PATH) {
+      try {
+        const data = await login(username, password);
+        const { token } = data;
+        enqueueSnackbar('Login successful');
+        setUserJwt(token);
+        setIsSignedIn(true);
+        setCurrentStep(PathEnum.SETUP);
+      } catch (error) {
+        console.error('Login failed:', error);
+        enqueueSnackbar('Unauthorized');
+      }
+    }
+    // use local docke-compose backend
+    else {
+      try {
+        const { isSignedIn, nextStep } = await signIn({ username, password });
+        console.log(`isSignedIn: ${isSignedIn}, nexstStep: ${JSON.stringify(nextStep)}`);
+        setIsSignedIn(true);
+        setCurrentStep(PathEnum.SETUP);
+      } catch (error) {
+        console.error('Login failed:', error);
+        enqueueSnackbar('Unauthorized');
+      }
     }
   };
 
