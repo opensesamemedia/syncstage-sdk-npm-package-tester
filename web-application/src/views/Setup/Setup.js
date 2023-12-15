@@ -10,11 +10,9 @@ const Setup = ({ onProvisionSubmit }) => {
     const userAgent = window.navigator.userAgent;
     if (userAgent.indexOf('Mac') !== -1) {
       return 'https://public.sync-stage.com/agent/macos/prod/0.3.0/SyncStageAgent_0.3.0.dmg';
-    }
-    // else if (userAgent.indexOf('Win') !== -1) {
-    //   return 'https://public.sync-stage.com/agent/windows/prod/0.3.0/SyncStageAgent_0.3.0.exe';
-    // }
-    else {
+    } else if (userAgent.indexOf('Win') !== -1) {
+      return 'https://public.sync-stage.com/agent/windows/prod/0.3.0/SyncStageAgent_0.3.0.exe';
+    } else {
       return null;
     }
   };
