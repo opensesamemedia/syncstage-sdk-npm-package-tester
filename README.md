@@ -1,6 +1,6 @@
 # SyncStage Web Test Application
 
-This application is a test environment for SyncStage web SDK. It allows you to run the application using docker-compose or without it. 
+This application is a test environment for SyncStage web SDK. It allows you to run the application using docker-compose or AWS Amplify. 
 
 ## Running the application with Docker Compose - fast track
 
