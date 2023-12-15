@@ -14,4 +14,5 @@ services:
     volumes:
       - ./web-application/src:/usr/app/src
     environment:
+      - REACT_APP_DOCKER_COMPOSE_BACKEND=true
       - REACT_APP_BACKEND_BASE_PATH=http://localhost:3000/api

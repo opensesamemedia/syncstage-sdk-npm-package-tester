@@ -1,6 +1,5 @@
 // apiHandler.js
 import axios from 'axios';
-import { get } from 'aws-amplify/api';
 
 const BASE_API_PATH = process.env.REACT_APP_BACKEND_BASE_PATH || 'http://localhost:3000/api';
 
