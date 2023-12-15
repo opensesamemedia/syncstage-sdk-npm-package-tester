@@ -4,11 +4,18 @@ This application is a test environment for SyncStage web SDK. It allows you to r
 
 ## Running the application with Docker Compose - fast track
 
-1. Ensure Docker and docker-compose are installed on your machine.
-2. Copy the SyncStageSecret.json file into the backend/src path.
-3. Open a terminal and navigate to the root directory of the repository.
-4. Run the following command: docker-compose up
-5. The application will start and you can access it in your browser at http://localhost:3001 (it might take some time to load, because it runs in development mode)
+1. Create `.env` file within `web-applivation` directory and fill it with following variables:
+
+```
+REACT_APP_DOCKER_COMPOSE_BACKEND=true
+REACT_APP_BACKEND_BASE_PATH=http://localhost:3000/api
+```
+
+2. Ensure Docker and docker-compose are installed on your machine.
+3. Copy the SyncStageSecret.json file into the backend/src path.
+4. Open a terminal and navigate to the root directory of the repository.
+5. Run the following command: docker-compose up
+6. The application will start and you can access it in your browser at http://localhost:3001 (it might take some time to load, because it runs in development mode)
 
 ### Swagger
 
@@ -33,9 +40,10 @@ Amplify implementation solves problem of securing SyncStageSecret.json and provi
 ### Deployment
 
 1. Navigate to `web-application` directory
-2. Deploy amplify backend services running `amplify push`. You will be asked to provide SyncStageSecret.
-3. In another terminal run yarn start. That will trigger deployment development server for the react.js frontend application locally on the machine.
-4. To run production build and deploy the frontend on AWS Amplify run `amplify publish`
+2. Make sure `.env` is removed or `REACT_APP_DOCKER_COMPOSE_BACKEND=false`
+3. Deploy amplify backend services running `amplify push`. You will be asked to provide SyncStageSecret.
+4. In another terminal run yarn start. That will trigger deployment development server for the react.js frontend application locally on the machine.
+5. To run production build and deploy the frontend on AWS Amplify run `amplify publish`
 
 
 
