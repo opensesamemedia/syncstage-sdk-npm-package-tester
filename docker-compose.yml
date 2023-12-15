@@ -1,0 +1,15 @@
+version: "3"
+services:
+  backend:
+    build: ./backend
+    ports:
+      - 3000:3000
+    volumes:
+      - ./backend/src:/usr/app/src
+
+  frontend:
+    build: ./web-application
+    ports:
+      - 3001:3001
+    volumes:
+      - ./web-application/src:/usr/app/src
