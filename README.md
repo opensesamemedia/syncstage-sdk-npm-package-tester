@@ -47,7 +47,7 @@ Amplify implementation solves problem of securing SyncStageSecret.json and provi
 
 
 
-The exemplary application does not include views for user sign up. In order to create user in AWS COgnito user pool you need to run CLI commands with relevant `<values>`:
+The exemplary application does not include views for user sign up. In order to create user in AWS Cognito user pool you need to run CLI commands with relevant `<values>`:
 ```
 aws cognito-idp admin-create-user --user-pool-id <value> --username <value> --temporary-password <value>
 aws cognito-idp admin-set-user-password --user-pool-id <value> --username <value> --password <value> --permanent
