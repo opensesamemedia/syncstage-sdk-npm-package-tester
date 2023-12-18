@@ -17,7 +17,7 @@
         "syncStageWebFetchSyncStageToken": {
           "secretsPathAmplifyAppId": "d3ogpheuya3vsb",
           "deploymentBucketName": "amplify-syncstageweb-dev-151007-deployment",
-          "s3Key": "amplify-builds/syncStageWebFetchSyncStageToken-74536b35597069374441-build.zip",
+          "s3Key": "amplify-builds/syncStageWebFetchSyncStageToken-4c344744674a38317071-build.zip",
           "baseApiPath": "https://f55pesypsd.execute-api.us-east-1.amazonaws.com/dev"
         }
       },
