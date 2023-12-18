@@ -8,7 +8,7 @@ The exemplary project repository covers yellow-boxed part of the architecture. F
 
 ## Running the application with Docker Compose - fast track
 
-1. Create `.env` file within `web-applivation` directory and fill it with following variables:
+1. Create `.env` file within `web-application` directory and fill it with following variables:
 
 ```
 REACT_APP_DOCKER_COMPOSE_BACKEND=true
@@ -26,6 +26,7 @@ REACT_APP_BACKEND_BASE_PATH=http://localhost:3000/api
 You can view the server API Swagger definition under: http://localhost:3000/api-docs 
 
 ### Important Notes
+
 Please note that the backend code provided in this application is exemplary and should not be used as-is in a production environment.
 
 * The SyncStageSecret.json file contains sensitive information and should be handled securely.
