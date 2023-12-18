@@ -2,7 +2,7 @@
 
 This repository provides code to deploy a test environment for SyncStage Web SDK. It allows to run the services using docker-compose or AWS Amplify.
 
-The exemplary project repository covers yellow-boxed part of the architecture. For more information please visit [SyncStage Docs](https://docs.sync-stage.com/web/overview)
+The exemplary project repository covers yellow-boxed part of the architecture. For more information please visit [SyncStage Docs](https://docs.sync-stage.com/web/overview).
 
 ![alt Architecture](./assets/arch.png)
 
