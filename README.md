@@ -12,10 +12,10 @@ REACT_APP_BACKEND_BASE_PATH=http://localhost:3000/api
 ```
 
 2. Ensure Docker and docker-compose are installed on your machine.
-3. Copy the SyncStageSecret.json file into the backend/src path.
+3. Copy the SyncStageSecret.json file into the `backend/src` path.
 4. Open a terminal and navigate to the root directory of the repository.
-5. Run the following command: docker-compose up
-6. The application will start and you can access it in your browser at http://localhost:3001 (it might take some time to load, because it runs in development mode)
+5. Run the following command: `docker-compose up`
+6. The application will start and you can access it in your browser at `http://localhost:3001` (it might take some time to load, because it runs in development mode)
 
 ### Swagger
 
@@ -47,7 +47,7 @@ Amplify implementation solves problem of securing SyncStageSecret.json and provi
 
 
 
-The exemplary application does not include views for user sign up. In order to create user in AWS COgnito user pool you need to run CLI commands with relevant `<values>`:
+The exemplary application does not include views for user sign up. In order to create user in AWS Cognito user pool you need to run CLI commands with relevant `<values>`:
 ```
 aws cognito-idp admin-create-user --user-pool-id <value> --username <value> --temporary-password <value>
 aws cognito-idp admin-set-user-password --user-pool-id <value> --username <value> --password <value> --permanent
