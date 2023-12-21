@@ -28,7 +28,7 @@ import RoutesComponent from './router/RoutesComponent';
 import './ui/animationStyles.css';
 import SyncStageDesktopAgentDelegate from './SyncStageDesktopAgentDelegate';
 
-import SyncStage, { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
+import SyncStage, { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-package-development';
 import modalStyle from './ui/ModalStyle';
 import Navigation from './components/Navigation/Navigation';
 
@@ -77,6 +77,14 @@ const App = () => {
     setDesktopAgentAquired(false);
   };
 
+  const onDesktopAgentConnected = () => {
+    setDesktopConnected(true);
+  };
+
+  const onDesktopAgentDisconnected = () => {
+    setDesktopConnected(false);
+  };
+
   async function amplifyFetchSyncStageToken() {
     try {
       const restOperation = get({
@@ -108,15 +116,13 @@ const App = () => {
   };
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setDesktopConnected(syncStage ? syncStage.isDesktopAgentConnected() : false);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [syncStage]);
-
-  useEffect(() => {
     if (syncStage === null) {
-      const desktopAgentDelegate = new SyncStageDesktopAgentDelegate(onDesktopAgentAquired, onDesktopAgentReleased);
+      const desktopAgentDelegate = new SyncStageDesktopAgentDelegate(
+        onDesktopAgentAquired,
+        onDesktopAgentReleased,
+        onDesktopAgentConnected,
+        onDesktopAgentDisconnected,
+      );
       const ss = new SyncStage(null, null, null, desktopAgentDelegate, onJwtExpired);
 
       setSyncStageSDKVersion(ss.getSDKVersion());

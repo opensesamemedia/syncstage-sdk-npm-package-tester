@@ -10,7 +10,7 @@ For more information please visit [SyncStage documentation](https://docs.sync-st
 
 ## npm SDK package
 
-https://www.npmjs.com/package/@opensesamemedia/syncstage
+https://www.npmjs.com/package/@opensesamemedia/syncstage-sdk-npm-package-development
 
 ## Running project
 
@@ -23,6 +23,6 @@ https://www.npmjs.com/package/@opensesamemedia/syncstage
 To work with local sdk package run:
 
 ```
-yarn remove @opensesamemedia/syncstage
+yarn remove @opensesamemedia/syncstage-sdk-npm-package-development
 yarn add ../syncstage-sdk-npm-package
 ```
