@@ -5,7 +5,7 @@ const syncStageErrorToMessageMap = new Map();
 syncStageErrorToMessageMap.set(parseInt(SyncStageSDKErrorCode.API_UNAUTHORIZED), 'Unauthorized');
 syncStageErrorToMessageMap.set(
   parseInt(SyncStageSDKErrorCode.DESKTOP_AGENT_COMMUNICATION_ERROR),
-  'Desktop agent communication error. Please check if SyncStage desktop agent is running.',
+  'Please check if SyncStage desktop agent is running.',
 );
 syncStageErrorToMessageMap.set(parseInt(SyncStageSDKErrorCode.UNKNOWN_ERROR), 'Unknown error');
 syncStageErrorToMessageMap.set(parseInt(SyncStageSDKErrorCode.CONFIGURATION_ERROR), 'Configuration error');

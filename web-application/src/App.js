@@ -324,7 +324,7 @@ const App = () => {
       <MuiThemeProvider theme={muiTheme}>
         <ThemeProvider theme={theme}>
           <GlobalStyle />
-          <SnackbarProvider preventDuplicate />
+          <SnackbarProvider preventDuplicate maxSnack={2} />
           <AppWrapper inSession={inSession}>
             <HashRouter>
               <div className="bg" />
