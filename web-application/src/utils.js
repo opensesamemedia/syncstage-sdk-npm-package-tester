@@ -15,6 +15,7 @@ syncStageErrorToMessageMap.set(parseInt(SyncStageSDKErrorCode.BAD_VOLUME_VALUE),
 syncStageErrorToMessageMap.set(parseInt(SyncStageSDKErrorCode.NO_ZONE_AVAILABLE), 'No zone availible');
 syncStageErrorToMessageMap.set(parseInt(SyncStageSDKErrorCode.NO_STUDIO_SERVER_AVAILABLE), 'No studio server availible');
 syncStageErrorToMessageMap.set(parseInt(SyncStageSDKErrorCode.TOKEN_EXPIRED), 'Jwt expired');
+syncStageErrorToMessageMap.set(parseInt(SyncStageSDKErrorCode.NO_INPUT_DEVICE), 'No input device');
 
 const errorCodeToSnackbar = (errorCode, msgOnOK) => {
   if (errorCode !== SyncStageSDKErrorCode.OK) {

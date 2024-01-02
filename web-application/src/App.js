@@ -1,7 +1,6 @@
 import { Amplify } from 'aws-amplify';
 import { signOut as amplifySignOut, getCurrentUser } from 'aws-amplify/auth';
 
-import amplifyconfig from './amplifyconfiguration.json';
 import { get } from 'aws-amplify/api';
 
 import AppContext from './AppContext';
@@ -32,7 +31,15 @@ import SyncStage, { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk
 import modalStyle from './ui/ModalStyle';
 import Navigation from './components/Navigation/Navigation';
 
-Amplify.configure(amplifyconfig);
+if (!process.env.REACT_APP_BACKEND_BASE_PATH) {
+  import('./amplifyconfiguration.json')
+    .then((amplifyconfig) => {
+      Amplify.configure(amplifyconfig.default);
+    })
+    .catch((error) => {
+      console.error('Error importing amplifyconfiguration.json:', error);
+    });
+}
 
 const muiTheme = createTheme({
   typography: {
@@ -245,6 +252,7 @@ const App = () => {
       enqueueSnackbar(`Joined session ${sessionCode}`);
     } else {
       enqueueSnackbar(`Could not join the session ${sessionCode}`);
+      errorCodeToSnackbar(errorCode);
     }
 
     if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {

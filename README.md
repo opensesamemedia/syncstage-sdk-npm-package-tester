@@ -11,7 +11,6 @@ The exemplary project repository covers yellow-boxed part of the architecture. F
 1. Create `.env` file within `web-application` directory and fill it with following variables:
 
 ```
-REACT_APP_DOCKER_COMPOSE_BACKEND=true
 REACT_APP_BACKEND_BASE_PATH=http://localhost:3000/api
 ```
 
@@ -45,7 +44,7 @@ Amplify implementation solves problem of securing SyncStageSecret.json and provi
 ### Deployment
 
 1. Navigate to `web-application` directory
-2. Make sure `.env` is removed or `REACT_APP_DOCKER_COMPOSE_BACKEND=false`
+2. Make sure `.env` is removed or `REACT_APP_BACKEND_BASE_PATH` is removed from the .env file
 3. Deploy amplify backend services running `amplify push`. You will be asked to provide SyncStageSecret.
 4. In another terminal run yarn start. That will trigger deployment development server for the react.js frontend application locally on the machine.
 5. To run production build and deploy the frontend on AWS Amplify run `amplify publish`
