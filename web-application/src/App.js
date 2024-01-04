@@ -200,6 +200,7 @@ const App = () => {
     setCurrentStep,
     setBackdropOpen,
     desktopConnected,
+    setDesktopConnected,
     desktopProvisioned,
     setDesktopProvisioned,
     locationSelected,

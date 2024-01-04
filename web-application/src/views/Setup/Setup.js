@@ -1,10 +1,21 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { Grid } from '@mui/material';
 import AppContext from '../../AppContext';
 import ButtonContained from '../../components/StyledButtonContained';
 
 const Setup = ({ onProvisionSubmit }) => {
-  const { desktopAgentProtocolHandler, desktopConnected } = useContext(AppContext);
+  const { desktopAgentProtocolHandler, desktopConnected, setDesktopConnected, syncStage } = useContext(AppContext);
+
+  useEffect(() => {
+    const intervalId = setInterval(async () => {
+      setDesktopConnected(syncStage.isDesktopAgentConnected());
+    }, 500);
+
+    // Clean up the interval when the component unmounts
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [syncStage, setDesktopConnected]);
 
   const getDownloadLink = () => {
     const userAgent = window.navigator.userAgent;
