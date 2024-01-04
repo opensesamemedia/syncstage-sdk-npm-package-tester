@@ -8,17 +8,23 @@ The exemplary project repository covers yellow-boxed part of the architecture. F
 
 ## Running the application with Docker Compose - fast track
 
+### Prerequisities 
+
+1. Docker must be installed and running.
+2. docker-compose CLI tool must be installed.
+
+### Deployment
+
 1. Create `.env` file within `web-application` directory and fill it with following variables:
 
 ```
 REACT_APP_BACKEND_BASE_PATH=http://localhost:3000/api
 ```
 
-2. Ensure Docker and docker-compose are installed on your machine.
-3. Copy the SyncStageSecret.json file into the `backend/src` path.
-4. Open a terminal and navigate to the root directory of the repository.
-5. Run the following command: `docker-compose up`
-6. The application will start and you can access it in your browser at `http://localhost:3001` (it might take some time to load, because it runs in development mode)
+2. Copy the SyncStageSecret.json file into the `backend/src` path.
+3. Open a terminal and navigate to the root directory of the repository.
+4. Run the following command: `docker-compose up`
+5. The application will start and you can access it in your browser at `http://localhost:3001` (it might take some time to load, because it runs in development mode)
 
 ### Swagger
 
@@ -34,7 +40,7 @@ Please note that the backend code provided in this application is exemplary and 
 
 ## Running application using AWS Amplify
 
-Amplify implementation solves problem of securing SyncStageSecret.json and provides with user pool using AWS services. 
+Amplify implementation solves problem of securing SyncStageSecret.json and provides with user pool using AWS services. The purpose of this test implementation is to demonstrate a production-like deployment of the web application that incorporates the SyncStage SDK.
 
 ### Prerequisities 
 
