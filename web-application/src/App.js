@@ -157,7 +157,7 @@ const App = () => {
 
     console.log(`REACT_APP_BACKEND_BASE_PATH: ${process.env.REACT_APP_BACKEND_BASE_PATH}`);
     // use local docke-compose backend
-    if (process.env.REACT_APP_BACKEND_BASE_PATH != undefined) {
+    if (!process.env.REACT_APP_BACKEND_BASE_PATH) {
       if (!isSignedIn) {
         setCurrentStep(PathEnum.LOGIN);
       } else if (!desktopProvisioned) {
