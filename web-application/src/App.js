@@ -130,26 +130,28 @@ const App = () => {
 
   useEffect(async () => {
     async function confirmAmplifyUserSignedIn() {
-      try {
-        const amplifyconfig = await import('./amplifyconfiguration.json');
-        Amplify.configure(amplifyconfig.default);
-
-        let currentUser = null;
-
+      if (!process.env.REACT_APP_BACKEND_BASE_PATH) {
         try {
-          currentUser = await getCurrentUser();
-        } catch (error) {
-          console.log('Could not fetch current user: ', error);
-        }
+          const amplifyconfig = await import('./amplifyconfiguration.json');
+          Amplify.configure(amplifyconfig.default);
 
-        if (currentUser) {
-          setIsSignedIn(true);
-          setCurrentStep(PathEnum.SETUP);
-        } else {
-          setCurrentStep(PathEnum.LOGIN);
+          let currentUser = null;
+
+          try {
+            currentUser = await getCurrentUser();
+          } catch (error) {
+            console.log('Could not fetch current user: ', error);
+          }
+
+          if (currentUser) {
+            setIsSignedIn(true);
+            setCurrentStep(PathEnum.SETUP);
+          } else {
+            setCurrentStep(PathEnum.LOGIN);
+          }
+        } catch (error) {
+          console.error('Error importing amplifyconfiguration.json:', error);
         }
-      } catch (error) {
-        console.error('Error importing amplifyconfiguration.json:', error);
       }
     }
 
