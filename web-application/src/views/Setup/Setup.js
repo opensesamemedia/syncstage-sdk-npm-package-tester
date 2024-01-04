@@ -11,7 +11,7 @@ const Setup = ({ onProvisionSubmit }) => {
     if (userAgent.indexOf('Mac') !== -1) {
       return 'https://public.sync-stage.com/agent/macos/prod/0.3.0/SyncStageAgent_0.3.0.dmg';
     } else if (userAgent.indexOf('Win') !== -1) {
-      return 'https://public.sync-stage.com/agent/windows/prod/0.3.0/SyncStageAgent_0.3.0.exe';
+      return 'https://public.sync-stage.com/agent/windows/prod/0.1.0/SyncStageAgent_0.1.0.exe';
     } else {
       return null;
     }
