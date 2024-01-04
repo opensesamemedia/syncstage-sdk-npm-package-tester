@@ -155,8 +155,7 @@ const App = () => {
 
     console.log(`REACT_APP_BACKEND_BASE_PATH: ${process.env.REACT_APP_BACKEND_BASE_PATH}`);
     // use local docke-compose backend
-    if (process.env.REACT_APP_BACKEND_BASE_PATH != undefined) {
-      console.log('using docker-compose deployment');
+    if (process.env.REACT_APP_BACKEND_BASE_PATH) {
       if (!isSignedIn) {
         setCurrentStep(PathEnum.LOGIN);
       } else if (!desktopProvisioned) {
@@ -165,7 +164,6 @@ const App = () => {
     }
     // use amplify backend
     else {
-      console.log('using amplify deployment');
       confirmAmplifyUserSignedIn();
     }
   }, []);

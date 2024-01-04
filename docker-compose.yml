@@ -14,4 +14,3 @@ services:
     volumes:
       - ./web-application/public:/usr/app/public
       - ./web-application/src:/usr/app/src
-      - ./web-application/.env:/usr/app/.env
