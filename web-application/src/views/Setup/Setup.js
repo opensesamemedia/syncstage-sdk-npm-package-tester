@@ -4,18 +4,7 @@ import AppContext from '../../AppContext';
 import ButtonContained from '../../components/StyledButtonContained';
 
 const Setup = ({ onProvisionSubmit }) => {
-  const { desktopAgentProtocolHandler, desktopConnected, setDesktopConnected, syncStage } = useContext(AppContext);
-
-  useEffect(() => {
-    const intervalId = setInterval(async () => {
-      setDesktopConnected(syncStage.isDesktopAgentConnected());
-    }, 500);
-
-    // Clean up the interval when the component unmounts
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, [syncStage, setDesktopConnected]);
+  const { desktopAgentProtocolHandler, desktopConnected } = useContext(AppContext);
 
   const getDownloadLink = () => {
     const userAgent = window.navigator.userAgent;
