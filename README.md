@@ -18,7 +18,7 @@ The exemplary project repository covers yellow-boxed part of the architecture. F
 1. Copy the SyncStageSecret.json file into the `backend/src` path.
 2. Open a terminal and navigate to the root directory of the repository.
 3. Run the following command: `docker-compose up`
-4. The application will start and you can access it in your browser at `http://localhost:3001` (it might take some time to load, because it runs in development mode)
+4. The application will start and you can access it in your browser at http://localhost:3001 (it might take some time to load, because it runs in development mode)
 
 ### Swagger
 
