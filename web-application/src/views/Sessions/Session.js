@@ -191,17 +191,15 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     }
   };
 
-  const onDesktopAgentReconnected = useCallback(async () => {
-    console.log('onDesktopAgentReconnected in session');
+  const onWebsocketReconnected = useCallback(async () => {
+    console.log('onWebsocketReconnected in session');
     const [data, errorCode] = await syncStage.session();
     errorCodeToSnackbar(errorCode);
 
     if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
-      setCurrentStep(PathEnum.LOGIN);
+      setCurrentStep(PathEnum.SETUP);
       setDesktopProvisioned(false);
-    }
-
-    if (errorCode === SyncStageSDKErrorCode.OK) {
+    } else if (errorCode === SyncStageSDKErrorCode.OK) {
       setSessionData(data);
     }
 
@@ -270,7 +268,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
           onSessionOut,
         );
         syncStage.connectivityDelegate = new SyncStageConnectivityDelegate(onTransmitterConnectivityChanged, onReceiverConnectivityChanged);
-        syncStage.updateOnDesktopAgentReconnected(onDesktopAgentReconnected);
+        syncStage.updateOnWebsocketReconnected(onWebsocketReconnected);
 
         const [mutedState, errorCode] = await syncStage.isMicrophoneMuted();
         errorCodeToSnackbar(errorCode);

@@ -15,14 +15,3 @@ https://www.npmjs.com/package/@opensesamemedia/syncstage
 ## Running project
 
 `yarn start`
-
-## Switching to local SDK dependency
-
-`yarn install`
-
-To work with local sdk package run:
-
-```
-yarn remove @opensesamemedia/syncstage
-yarn add ../syncstage-sdk-npm-package
-```

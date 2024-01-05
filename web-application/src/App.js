@@ -1,7 +1,6 @@
 import { Amplify } from 'aws-amplify';
 import { signOut as amplifySignOut, getCurrentUser } from 'aws-amplify/auth';
 
-import amplifyconfig from './amplifyconfiguration.json';
 import { get } from 'aws-amplify/api';
 
 import AppContext from './AppContext';
@@ -32,8 +31,6 @@ import SyncStage, { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
 import modalStyle from './ui/ModalStyle';
 import Navigation from './components/Navigation/Navigation';
 
-Amplify.configure(amplifyconfig);
-
 const muiTheme = createTheme({
   typography: {
     fontFamily: ['Josefin Sans', 'sans-serif'].join(','),
@@ -60,7 +57,7 @@ const App = () => {
   const [currentStep, setCurrentStep] = useState(startPath);
   const [backdropOpen, setBackdropOpen] = useState(false);
 
-  const [desktopConnected, setDesktopConnected] = useState(syncStage ? syncStage.isDesktopAgentConnected() : false);
+  const [desktopConnected, setDesktopConnected] = useState(false);
 
   const [desktopProvisioned, setDesktopProvisioned] = useState(false);
   const [automatedLocationSelection, setAutomatedLocationSelection] = useState(true);
@@ -75,6 +72,14 @@ const App = () => {
   };
   const onDesktopAgentReleased = () => {
     setDesktopAgentAquired(false);
+  };
+
+  const onDesktopAgentConnected = () => {
+    setDesktopConnected(true);
+  };
+
+  const onDesktopAgentDisconnected = () => {
+    setDesktopConnected(false);
   };
 
   async function amplifyFetchSyncStageToken() {
@@ -95,7 +100,7 @@ const App = () => {
   const onJwtExpired = async () => {
     let jwt;
     // use local docke-compose backend
-    if (process.env.REACT_APP_BACKEND_BASE_PATH) {
+    if (process.env.REACT_APP_BACKEND_BASE_PATH !== undefined) {
       const tokenResponse = await fetchSyncStageToken(userJwt);
       jwt = tokenResponse.jwt;
     }
@@ -108,15 +113,13 @@ const App = () => {
   };
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setDesktopConnected(syncStage ? syncStage.isDesktopAgentConnected() : false);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [syncStage]);
-
-  useEffect(() => {
     if (syncStage === null) {
-      const desktopAgentDelegate = new SyncStageDesktopAgentDelegate(onDesktopAgentAquired, onDesktopAgentReleased);
+      const desktopAgentDelegate = new SyncStageDesktopAgentDelegate(
+        onDesktopAgentAquired,
+        onDesktopAgentReleased,
+        onDesktopAgentConnected,
+        onDesktopAgentDisconnected,
+      );
       const ss = new SyncStage(null, null, null, desktopAgentDelegate, onJwtExpired);
 
       setSyncStageSDKVersion(ss.getSDKVersion());
@@ -127,23 +130,36 @@ const App = () => {
 
   useEffect(async () => {
     async function confirmAmplifyUserSignedIn() {
-      let currentUser = null;
-      try {
-        currentUser = await getCurrentUser();
-      } catch (error) {
-        console.log('Could not fetch current user: ', error);
-      }
+      console.log('in useEffect confirmAmplifyUserSignedIn');
+      if (process.env.REACT_APP_BACKEND_BASE_PATH === undefined) {
+        try {
+          console.log('Reading amplify config');
+          const amplifyconfig = await import('./amplifyconfiguration.json');
+          Amplify.configure(amplifyconfig.default);
 
-      if (currentUser) {
-        setIsSignedIn(true);
-        setCurrentStep(PathEnum.SETUP);
-      } else {
-        setCurrentStep(PathEnum.LOGIN);
+          let currentUser = null;
+
+          try {
+            currentUser = await getCurrentUser();
+          } catch (error) {
+            console.log('Could not fetch current user: ', error);
+          }
+
+          if (currentUser) {
+            setIsSignedIn(true);
+            setCurrentStep(PathEnum.SETUP);
+          } else {
+            setCurrentStep(PathEnum.LOGIN);
+          }
+        } catch (error) {
+          console.error('Error importing amplifyconfiguration.json:', error);
+        }
       }
     }
 
+    console.log(`REACT_APP_BACKEND_BASE_PATH: ${process.env.REACT_APP_BACKEND_BASE_PATH}`);
     // use local docke-compose backend
-    if (process.env.REACT_APP_BACKEND_BASE_PATH) {
+    if (process.env.REACT_APP_BACKEND_BASE_PATH !== undefined) {
       if (!isSignedIn) {
         setCurrentStep(PathEnum.LOGIN);
       } else if (!desktopProvisioned) {
@@ -187,6 +203,7 @@ const App = () => {
     setCurrentStep,
     setBackdropOpen,
     desktopConnected,
+    setDesktopConnected,
     desktopProvisioned,
     setDesktopProvisioned,
     locationSelected,
@@ -212,7 +229,7 @@ const App = () => {
     setBackdropOpen(true);
     let jwt;
     // use local docke-compose backend
-    if (process.env.REACT_APP_BACKEND_BASE_PATH) {
+    if (process.env.REACT_APP_BACKEND_BASE_PATH !== undefined) {
       const tokenResponse = await fetchSyncStageToken(userJwt);
       jwt = tokenResponse.jwt;
     }
@@ -239,6 +256,7 @@ const App = () => {
       enqueueSnackbar(`Joined session ${sessionCode}`);
     } else {
       enqueueSnackbar(`Could not join the session ${sessionCode}`);
+      errorCodeToSnackbar(errorCode);
     }
 
     if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
@@ -324,7 +342,7 @@ const App = () => {
       <MuiThemeProvider theme={muiTheme}>
         <ThemeProvider theme={theme}>
           <GlobalStyle />
-          <SnackbarProvider preventDuplicate />
+          <SnackbarProvider preventDuplicate maxSnack={2} />
           <AppWrapper inSession={inSession}>
             <HashRouter>
               <div className="bg" />

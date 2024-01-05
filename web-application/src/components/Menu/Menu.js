@@ -55,10 +55,10 @@ const Menu = ({ nicknameSetAndProvisioned, drawerOpened, onCloseDrawer, isMobile
               <ListItemText primary="Setup" />
             </ListItemButton>
             <ListItemButton
-              selected={[PathEnum.SESSION_NICKNAME, PathEnum.LOGIN].includes(currentStep)}
+              selected={[PathEnum.SESSION_NICKNAME].includes(currentStep)}
               sx={selectedStyle}
               onClick={() => {
-                setCurrentStep(PathEnum.LOGIN);
+                setCurrentStep(PathEnum.SESSION_NICKNAME);
               }}
               disabled={!desktopProvisioned}
             >

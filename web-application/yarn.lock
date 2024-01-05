@@ -2530,10 +2530,10 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@opensesamemedia/syncstage@^0.3.0":
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/@opensesamemedia/syncstage/-/syncstage-0.3.0.tgz#6bd5ac11407b70e2aa9f6656ac2aae2f421203e4"
-  integrity sha512-vRrY30Bkj5GoU+kmIY0xD37afgFYMhNTtnQVlI5WKAALxg+nn/UdHfEXn2vTPLI61k4kNfYGIwWFNjJdsRCN/Q==
+"@opensesamemedia/syncstage
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/@opensesamemedia/syncstage4eb3289a4ff932bff5f28cd012efbd7f950"
+  integrity sha512-bMlZ3QPWPblVyY7/D0qc5gD0ZQWnbE5PqDnKYjmFZvpIlQopj6bEjRRc5sqgwiur6tykzYawQqc3whOIw7aSYQ==
   dependencies:
     async-mutex "^0.4.0"
     uuid "^9.0.0"
