@@ -16,7 +16,7 @@ const LoginView = () => {
 
   const handleSubmit = async () => {
     // use local docke-compose backend
-    if (process.env.REACT_APP_BACKEND_BASE_PATH) {
+    if (process.env.REACT_APP_BACKEND_BASE_PATH !== undefined) {
       try {
         const data = await login(username, password);
         const { token } = data;

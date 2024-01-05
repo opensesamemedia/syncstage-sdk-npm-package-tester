@@ -10,19 +10,8 @@ For more information please visit [SyncStage documentation](https://docs.sync-st
 
 ## npm SDK package
 
-https://www.npmjs.com/package/@opensesamemedia/syncstage-sdk-npm-package-development
+https://www.npmjs.com/package/@opensesamemedia/syncstage
 
 ## Running project
 
 `yarn start`
-
-## Switching to local SDK dependency
-
-`yarn install`
-
-To work with local sdk package run:
-
-```
-yarn remove @opensesamemedia/syncstage-sdk-npm-package-development
-yarn add ../syncstage-sdk-npm-package
-```
