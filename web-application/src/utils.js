@@ -1,8 +1,12 @@
-import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
+import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-package-development';
 import { enqueueSnackbar } from 'notistack';
 
 const syncStageErrorToMessageMap = new Map();
 syncStageErrorToMessageMap.set(parseInt(SyncStageSDKErrorCode.API_UNAUTHORIZED), 'Unauthorized');
+syncStageErrorToMessageMap.set(
+  parseInt(SyncStageSDKErrorCode.SYNCSTAGE_SERVICE_COMMUNICATION_ERROR),
+  'No communication with SyncStage service.',
+);
 syncStageErrorToMessageMap.set(
   parseInt(SyncStageSDKErrorCode.DESKTOP_AGENT_COMMUNICATION_ERROR),
   'Please check if SyncStage desktop agent is running.',
