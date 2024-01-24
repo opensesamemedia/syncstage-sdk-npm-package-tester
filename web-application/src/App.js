@@ -43,7 +43,7 @@ const App = () => {
   const [syncStageJwt, setSyncStageJwt] = useState(null);
   const [syncStage, setSyncStage] = useState(null);
   const [syncStageSDKVersion, setSyncStageSDKVersion] = useState('');
-  const [nickname, setNickname] = useState('');
+  const [nickname, setNickname] = useState(localStorage.getItem('nickname') ?? '');
   const [sessionCode, setSessionCode] = useState('');
   const [sessionData, setSessionData] = useState(null);
   const [selectedServer, setSelectedServer] = useState(null);
@@ -188,11 +188,16 @@ const App = () => {
     setSessionData(null);
   };
 
+  const setNicknameAndSave = (nickname) => {
+    localStorage.setItem('nickname', nickname);
+    setNickname(nickname);
+  };
+
   const sharedState = {
     syncStage,
     syncStageSDKVersion,
     nickname,
-    setNickname,
+    setNicknameAndSave,
     sessionCode,
     setSessionCode,
     sessionData,

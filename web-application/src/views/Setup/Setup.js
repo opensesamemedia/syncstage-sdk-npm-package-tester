@@ -39,7 +39,7 @@ const Setup = ({ onProvisionSubmit }) => {
               <Grid item>
                 <a target="_blank" href={desktopAgentProtocolHandler}>
                   {' '}
-                  Open Desktop Agent{' '}
+                  Pair Desktop Agent{' '}
                 </a>
               </Grid>
               <Grid item style={{ marginTop: '14px' }}>
