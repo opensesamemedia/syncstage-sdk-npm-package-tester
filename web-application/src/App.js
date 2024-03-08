@@ -42,9 +42,9 @@ const App = () => {
   const [userJwt, setUserJwt] = useState(null);
   const [syncStageJwt, setSyncStageJwt] = useState(null);
   const [syncStage, setSyncStage] = useState(null);
-  const [syncStageSDKVersion, setSyncStageSDKVersion] = useState('');
+  const [syncStageSDKVersion, setSyncStageSDKVersion] = useState();
   const [nickname, setNickname] = useState(localStorage.getItem('nickname') ?? '');
-  const [sessionCode, setSessionCode] = useState('');
+  const [sessionCode, setSessionCode] = useState(localStorage.getItem('sessionCode') ?? '');
   const [sessionData, setSessionData] = useState(null);
   const [selectedServer, setSelectedServer] = useState(null);
 
@@ -181,7 +181,8 @@ const App = () => {
 
     setUserJwt(null);
     setIsSignedIn(false);
-    setSyncStageJwt(null);
+    persistSyncStageJwt('');
+    persistSessionCode('');
     setCurrentStep(PathEnum.LOGIN);
     setDesktopProvisioned(false);
     await syncStage.leave();
@@ -193,41 +194,15 @@ const App = () => {
     setNickname(nickname);
   };
 
-  const sharedState = {
-    syncStage,
-    syncStageSDKVersion,
-    nickname,
-    setNicknameAndSave,
-    sessionCode,
-    setSessionCode,
-    sessionData,
-    setSessionData,
-    selectedServer,
-    setSelectedServer,
-    currentStep,
-    setCurrentStep,
-    setBackdropOpen,
-    desktopConnected,
-    setDesktopConnected,
-    desktopProvisioned,
-    setDesktopProvisioned,
-    locationSelected,
-    setLocationSelected,
-    automatedLocationSelection,
-    setAutomatedLocationSelection,
-    desktopAgentProtocolHandler,
-    setDesktopAgentProtocolHandler,
-    userJwt,
-    setUserJwt,
-    signOut,
-    isSignedIn,
-    setIsSignedIn,
-  };
-
   const goToSetupPageOnUnauthorized = () => {
     setCurrentStep(PathEnum.SETUP);
     setDesktopProvisioned(false);
     setBackdropOpen(false);
+  };
+
+  const persistSyncStageJwt = (jwt) => {
+    setSyncStageJwt(jwt);
+    localStorage.setItem('syncStageJwt', jwt);
   };
 
   const onProvisionSubmit = async () => {
@@ -242,7 +217,7 @@ const App = () => {
     else {
       jwt = await amplifyFetchSyncStageToken();
     }
-    setSyncStageJwt(jwt);
+    persistSyncStageJwt(jwt);
     const errorCode = await syncStage.init(jwt);
     errorCodeToSnackbar(errorCode, 'Authorized to SyncStage services');
     setBackdropOpen(false);
@@ -271,8 +246,13 @@ const App = () => {
     setBackdropOpen(false);
     if (errorCode === SyncStageSDKErrorCode.OK) {
       setSessionData(data);
-      setCurrentStep(PathEnum.SESSIONS_SESSION);
+      setCurrentStep(`${PathEnum.SESSIONS_SESSION_PREFIX}${sessionCode}`);
     }
+  };
+
+  const persistSessionCode = (sessionCode) => {
+    localStorage.setItem('sessionCode', sessionCode);
+    setSessionCode(sessionCode);
   };
 
   const onCreateSession = async () => {
@@ -284,7 +264,7 @@ const App = () => {
       return goToSetupPageOnUnauthorized();
     }
 
-    setSessionCode(createData.sessionCode);
+    persistSessionCode(createData.sessionCode);
 
     if (errorCode === SyncStageSDKErrorCode.OK) {
       const [joinData, errorCode] = await syncStage.join(
@@ -297,7 +277,7 @@ const App = () => {
       errorCodeToSnackbar(errorCode);
       if (errorCode === SyncStageSDKErrorCode.OK) {
         setSessionData(joinData);
-        setCurrentStep(PathEnum.SESSIONS_SESSION);
+        setCurrentStep(`${PathEnum.SESSIONS_SESSION_PREFIX}${createData.sessionCode}`);
       }
     }
     setBackdropOpen(false);
@@ -339,8 +319,42 @@ const App = () => {
     }
   };
 
-  const inSession = currentStep === PathEnum.SESSIONS_SESSION;
+  const regex = /session\/([a-z0-9]{9}|[a-z0-9]{3}-[a-z0-9]{3}-[a-z0-9]{3})/;
+  console.log(`Current step: ${currentStep}`);
+  const inSession = regex.test(currentStep);
+  console.log(`inSession: ${inSession}`);
   const nicknameSetAndProvisioned = nickname && syncStageJwt;
+
+  const sharedState = {
+    syncStage,
+    syncStageSDKVersion,
+    nickname,
+    setNicknameAndSave,
+    sessionCode,
+    persistSessionCode,
+    sessionData,
+    setSessionData,
+    selectedServer,
+    setSelectedServer,
+    currentStep,
+    setCurrentStep,
+    setBackdropOpen,
+    desktopConnected,
+    setDesktopConnected,
+    desktopProvisioned,
+    setDesktopProvisioned,
+    locationSelected,
+    setLocationSelected,
+    automatedLocationSelection,
+    setAutomatedLocationSelection,
+    desktopAgentProtocolHandler,
+    setDesktopAgentProtocolHandler,
+    userJwt,
+    setUserJwt,
+    signOut,
+    isSignedIn,
+    setIsSignedIn,
+  };
 
   return (
     <AppContext.Provider value={sharedState}>

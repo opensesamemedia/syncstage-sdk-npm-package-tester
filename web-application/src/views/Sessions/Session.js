@@ -25,6 +25,7 @@ import ButtonContained from '../../components/StyledButtonContained';
 const MEASUREMENTS_INTERVAL_MS = 5000;
 
 const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording }) => {
+  console.log('Session component');
   const { sessionCode, sessionData, setSessionData, syncStage, setCurrentStep, setDesktopProvisioned } = useContext(AppContext);
 
   const [settingsOpened, setSettingsOpened] = useState(false);
@@ -47,6 +48,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
 
   const onSessionOut = useCallback(() => {
     enqueueSnackbar('You have been disconnected from session');
+    setSessionData(null);
     setCurrentStep(PathEnum.SESSIONS_JOIN);
   }, [setCurrentStep]);
 
@@ -127,6 +129,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
   }, []);
 
   const onTransmitterConnectivityChanged = useCallback((connected) => {
+    console.log(`onTransmitterConnectivityChanged: ${connected}`);
     setConnected(connected);
   }, []);
 
@@ -199,12 +202,14 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
       setCurrentStep(PathEnum.SETUP);
       setDesktopProvisioned(false);
+    } else if (errorCode === SyncStageSDKErrorCode.NOT_IN_SESSION) {
+      onSessionOut();
     } else if (errorCode === SyncStageSDKErrorCode.OK) {
       setSessionData(data);
     }
 
     buildViewSessionState(data, setConnectedMap, syncStage, setCurrentStep, setDesktopProvisioned, setVolumeMap, updateMeasurements);
-  }, []);
+  }, [syncStage]);
 
   const updateMeasurements = async () => {
     let errorCode;

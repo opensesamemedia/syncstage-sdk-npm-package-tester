@@ -7,7 +7,7 @@ import AppContext from '../../AppContext';
 import { PathEnum } from '../../router/PathEnum';
 
 const JoinSession = ({ onJoinSession, onCreateSession }) => {
-  const { sessionCode, setSessionCode, setCurrentStep } = useContext(AppContext);
+  const { sessionCode, persistSessionCode, setCurrentStep } = useContext(AppContext);
 
   return (
     <Grid container direction="column" spacing={2}>
@@ -23,7 +23,7 @@ const JoinSession = ({ onJoinSession, onCreateSession }) => {
             label="Session code"
             value={sessionCode}
             fullWidth
-            onChange={(e) => setSessionCode(e.target.value)}
+            onChange={(e) => persistSessionCode(e.target.value)}
             placeholder="xyz-xyz-xyz"
           />
         </Grid>

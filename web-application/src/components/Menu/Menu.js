@@ -83,7 +83,7 @@ const Menu = ({ nicknameSetAndProvisioned, drawerOpened, onCloseDrawer, isMobile
             </ListItemButton>
 
             <ListItemButton
-              selected={[PathEnum.SESSIONS_JOIN, PathEnum.SESSIONS_REGIONS, PathEnum.SESSIONS_SESSION].includes(currentStep)}
+              selected={currentStep.startsWith(PathEnum.SESSIONS_SESSION_PREFIX)}
               sx={selectedStyle}
               onClick={() => setCurrentStep(PathEnum.SESSIONS_JOIN)}
               disabled={!nicknameSetAndProvisioned || !selectedServer}

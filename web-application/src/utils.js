@@ -3,6 +3,7 @@ import { enqueueSnackbar } from 'notistack';
 
 const syncStageErrorToMessageMap = new Map();
 syncStageErrorToMessageMap.set(parseInt(SyncStageSDKErrorCode.API_UNAUTHORIZED), 'Unauthorized');
+syncStageErrorToMessageMap.set(parseInt(SyncStageSDKErrorCode.NOT_IN_SESSION), 'Not in a session');
 syncStageErrorToMessageMap.set(
   parseInt(SyncStageSDKErrorCode.SYNCSTAGE_SERVICE_COMMUNICATION_ERROR),
   'No communication with SyncStage service.',

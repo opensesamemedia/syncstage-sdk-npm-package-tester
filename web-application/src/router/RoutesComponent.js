@@ -85,18 +85,14 @@ const RoutesComponent = ({
       />
 
       <Route
-        path={PathEnum.SESSIONS_SESSION}
+        path={PathEnum.SESSIONS_SESSION_CODE}
         element={
-          currentStep === PathEnum.SESSIONS_SESSION ? (
-            <Session
-              onLeaveSession={onLeaveSession}
-              inSession={inSession}
-              onStartRecording={onStartRecording}
-              onStopRecording={onStopRecording}
-            />
-          ) : (
-            <Navigate to={`/${currentStep}`} replace />
-          )
+          <Session
+            onLeaveSession={onLeaveSession}
+            inSession={inSession}
+            onStartRecording={onStartRecording}
+            onStopRecording={onStopRecording}
+          />
         }
       />
     </Routes>
