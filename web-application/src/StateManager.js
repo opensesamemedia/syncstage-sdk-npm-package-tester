@@ -3,7 +3,7 @@ import { signOut as amplifySignOut, getCurrentUser } from 'aws-amplify/auth';
 
 import { get } from 'aws-amplify/api';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import AppContext from './AppContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Backdrop from '@mui/material/Backdrop';
@@ -43,6 +43,7 @@ const StateManager = () => {
 
   const [backdropOpen, setBackdropOpen] = useState(false);
 
+  const desktopConnectedRef = useRef(false);
   const [desktopConnected, setDesktopConnected] = useState(false);
   const [desktopConnectedTimeout, setDesktopConnectedTimeout] = useState(false);
 
@@ -112,10 +113,14 @@ const StateManager = () => {
   };
 
   const setDesktopConnectedTimeoutIfNotConnected = () => {
-    if (!desktopConnected) {
+    if (!desktopConnectedRef.current) {
       setDesktopConnectedTimeout(true);
     }
   };
+
+  useEffect(() => {
+    desktopConnectedRef.current = desktopConnected;
+  }, [desktopConnected]);
 
   useEffect(() => {
     console.log(`Current location: ${location.pathname}`);
