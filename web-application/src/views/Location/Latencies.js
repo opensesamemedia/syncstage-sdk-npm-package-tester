@@ -1,4 +1,6 @@
 import React, { useContext, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+
 import { Grid } from '@mui/material';
 import ButtonContained from '../../components/StyledButtonContained';
 import Button from '../../components/StyledButton';
@@ -23,7 +25,9 @@ const Cell = styled.td`
 `;
 
 const Latencies = () => {
-  const { selectedServer, setSelectedServer, setCurrentStep, syncStage, setBackdropOpen } = useContext(AppContext);
+  const navigate = useNavigate();
+
+  const { selectedServer, persistSelectedServer, syncStage, setBackdropOpen } = useContext(AppContext);
 
   const [bestServer, setBestServer] = useState(null);
   const [bestServerMarkedOnList, setBestServerMarkedOnList] = useState(false);
@@ -68,7 +72,7 @@ const Latencies = () => {
       setBackdropOpen(false);
       if (errorCode === SyncStageSDKErrorCode.OK) {
         setBestServer(data);
-        setSelectedServer(data);
+        persistSelectedServer(data);
       } else {
         errorCodeToSnackbar(errorCode, '');
         setBestServer([]);
@@ -142,12 +146,12 @@ const Latencies = () => {
       <Grid item style={{ height: '80px' }} />
       <Grid container justifyContent="space-between">
         <Grid item>
-          <Button onClick={() => setCurrentStep(PathEnum.LOCATION)}>Previous</Button>
+          <Button onClick={() => navigate(PathEnum.LOCATION)}>Previous</Button>
         </Grid>
         <Grid item>
           <ButtonContained
             onClick={() => {
-              setCurrentStep(PathEnum.SESSIONS_JOIN);
+              navigate(PathEnum.SESSIONS_JOIN);
             }}
             disabled={!selectedServer}
           >

@@ -1,4 +1,6 @@
 import React, { useState, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
+
 import { login } from '../../apiHandler';
 import { Grid } from '@mui/material';
 import TextField from '../../components/StyledTextField';
@@ -9,7 +11,9 @@ import { enqueueSnackbar } from 'notistack';
 import { signIn } from 'aws-amplify/auth';
 
 const LoginView = () => {
-  const { setCurrentStep, setUserJwt, setIsSignedIn } = useContext(AppContext);
+  const navigate = useNavigate();
+
+  const { setUserJwt, setIsSignedIn } = useContext(AppContext);
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -23,7 +27,7 @@ const LoginView = () => {
         enqueueSnackbar('Login successful');
         setUserJwt(token);
         setIsSignedIn(true);
-        setCurrentStep(PathEnum.SETUP);
+        navigate(PathEnum.SETUP);
       } catch (error) {
         console.error('Login failed:', error);
         enqueueSnackbar('Unauthorized');
@@ -35,7 +39,7 @@ const LoginView = () => {
         const { isSignedIn, nextStep } = await signIn({ username, password });
         console.log(`isSignedIn: ${isSignedIn}, nexstStep: ${JSON.stringify(nextStep)}`);
         setIsSignedIn(true);
-        setCurrentStep(PathEnum.SETUP);
+        navigate(PathEnum.SETUP);
       } catch (error) {
         console.error('Login failed:', error);
         enqueueSnackbar('Unauthorized');

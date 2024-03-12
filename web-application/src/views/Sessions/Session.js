@@ -1,4 +1,5 @@
 import React, { useContext, useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Grid, Box, Modal, Typography } from '@mui/material';
 import AppContext from '../../AppContext';
 import { mountedStyle, unmountedStyle } from '../../ui/AnimationStyles';
@@ -25,8 +26,10 @@ import ButtonContained from '../../components/StyledButtonContained';
 const MEASUREMENTS_INTERVAL_MS = 5000;
 
 const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording }) => {
+  const navigate = useNavigate();
+
   console.log('Session component');
-  const { sessionCode, sessionData, setSessionData, syncStage, setCurrentStep, setDesktopProvisioned } = useContext(AppContext);
+  const { sessionCode, sessionData, setSessionData, syncStage, setDesktopProvisioned } = useContext(AppContext);
 
   const [settingsOpened, setSettingsOpened] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -42,15 +45,11 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
   const [connectedMap, setConnectedMap] = useState({});
   const [receiversMap, setReceiversMap] = useState({});
 
-  if (!sessionData) {
-    setCurrentStep(PathEnum.SESSION_NICKNAME);
-  }
-
   const onSessionOut = useCallback(() => {
     enqueueSnackbar('You have been disconnected from session');
     setSessionData(null);
-    setCurrentStep(PathEnum.SESSIONS_JOIN);
-  }, [setCurrentStep]);
+    navigate(PathEnum.SESSIONS_JOIN);
+  }, []);
 
   const onMutedToggle = useCallback(async () => {
     const mutedState = !muted;
@@ -150,44 +149,46 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     sessionData,
     setConnectedMap,
     syncStage,
-    setCurrentStep,
     setDesktopProvisioned,
     setVolumeMap,
     updateMeasurements,
   ) => {
-    if (sessionData != null) {
+    if (syncStage !== null && sessionData != null) {
       let errorCode;
       // initialize connection and volume, receivers map based on the sessionData state
       setVolumeMap({});
       setReceiversMap({});
 
-      sessionData.receivers.forEach(async (receiver) => {
-        setConnectedMap(
-          produce((draft) => {
-            const connectedReceiver = draft[receiver.identifier];
-            if (!connectedReceiver) {
-              draft[receiver.identifier] = undefined;
-            }
-          }),
-        );
+      if (sessionData.receivers) {
+        sessionData.receivers.forEach(async (receiver) => {
+          setConnectedMap(
+            produce((draft) => {
+              const connectedReceiver = draft[receiver.identifier];
+              if (!connectedReceiver) {
+                draft[receiver.identifier] = undefined;
+              }
+            }),
+          );
 
-        // Volume
-        let volumeValue;
-        [volumeValue, errorCode] = await syncStage.getReceiverVolume(receiver.identifier);
-        errorCodeToSnackbar(errorCode);
+          // Volume
+          let volumeValue;
+          [volumeValue, errorCode] = await syncStage.getReceiverVolume(receiver.identifier);
+          errorCodeToSnackbar(errorCode);
 
-        setVolumeMap(
-          produce((draft) => {
-            draft[receiver.identifier] = volumeValue;
-          }),
-        );
+          setVolumeMap(
+            produce((draft) => {
+              draft[receiver.identifier] = volumeValue;
+            }),
+          );
 
-        setReceiversMap(
-          produce((draft) => {
-            draft[receiver.identifier] = receiver;
-          }),
-        );
-      });
+          setReceiversMap(
+            produce((draft) => {
+              draft[receiver.identifier] = receiver;
+            }),
+          );
+        });
+      }
+
       await updateMeasurements();
 
       setIsRecording(sessionData.isRecording);
@@ -200,7 +201,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     errorCodeToSnackbar(errorCode);
 
     if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
-      setCurrentStep(PathEnum.SETUP);
+      navigate(PathEnum.SETUP);
       setDesktopProvisioned(false);
     } else if (errorCode === SyncStageSDKErrorCode.NOT_IN_SESSION) {
       onSessionOut();
@@ -208,10 +209,13 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
       setSessionData(data);
     }
 
-    buildViewSessionState(data, setConnectedMap, syncStage, setCurrentStep, setDesktopProvisioned, setVolumeMap, updateMeasurements);
+    buildViewSessionState(data, setConnectedMap, syncStage, setDesktopProvisioned, setVolumeMap, updateMeasurements);
   }, [syncStage]);
 
   const updateMeasurements = async () => {
+    if (syncStage === null) {
+      return;
+    }
     let errorCode;
     let measurements;
 
@@ -280,15 +284,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
         if (errorCode === SyncStageSDKErrorCode.OK) {
           setMuted(mutedState);
         }
-        await buildViewSessionState(
-          sessionData,
-          setConnectedMap,
-          syncStage,
-          setCurrentStep,
-          setDesktopProvisioned,
-          setVolumeMap,
-          updateMeasurements,
-        );
+        await buildViewSessionState(sessionData, setConnectedMap, syncStage, setDesktopProvisioned, setVolumeMap, updateMeasurements);
       }
     }
     executeAsync();
@@ -363,7 +359,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
               spacing={2}
             >
               <Grid item style={{ paddingRight: '32px' }}>
-                <Button style={{ color: theme.onSurfaceVariant }} onClick={async () => onLeaveSession()}>
+                <Button style={{ color: theme.onSurfaceVariant }} onClick={async () => await onLeaveSession()}>
                   <CallEndIcon />
                 </Button>
               </Grid>

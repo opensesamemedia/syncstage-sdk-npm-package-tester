@@ -1,4 +1,5 @@
 import React, { useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Grid } from '@mui/material';
 import TextField from '../../components/StyledTextField';
 import ButtonContained from '../../components/StyledButtonContained';
@@ -7,7 +8,9 @@ import { PathEnum } from '../../router/PathEnum';
 import Button from '../../components/StyledButton';
 
 const SessionNickname = () => {
-  const { nickname, setNicknameAndSave, setCurrentStep } = useContext(AppContext);
+  const navigate = useNavigate();
+
+  const { nickname, setNicknameAndSave } = useContext(AppContext);
 
   return (
     <Grid container direction="column" spacing={2}>
@@ -23,13 +26,13 @@ const SessionNickname = () => {
       <Grid item style={{ height: '140px' }} />
       <Grid container justifyContent="space-between">
         <Grid item>
-          <Button onClick={() => setCurrentStep(PathEnum.SETUP)}>Previous</Button>
+          <Button onClick={() => navigate(PathEnum.SETUP)}>Previous</Button>
         </Grid>
         <Grid item>
           <ButtonContained
             disabled={nickname === ''}
             onClick={() => {
-              setCurrentStep(PathEnum.LOCATION);
+              navigate(PathEnum.LOCATION);
             }}
           >
             Next

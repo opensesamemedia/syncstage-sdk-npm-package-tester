@@ -10,8 +10,8 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { enqueueSnackbar } from 'notistack';
 
 const InviteOthers = ({ sessionCode }) => {
-  const copySessionCodeToClipboard = () => {
-    navigator.clipboard.writeText(sessionCode);
+  const copySessionUrlToClipboard = () => {
+    navigator.clipboard.writeText(window.location.href);
     enqueueSnackbar('Copied to clipboard');
   };
 
@@ -54,12 +54,12 @@ const InviteOthers = ({ sessionCode }) => {
               <p style={{ margin: 0, marginTop: '8px', fontWeight: 'bold' }}>{sessionCode}</p>
             </Grid>
             <Grid item style={{ marginTop: '8px' }}>
-              <ButtonContained onClick={copySessionCodeToClipboard}>
+              <ButtonContained onClick={copySessionUrlToClipboard}>
                 <Grid container direction="row" justifyContent="flex-start" alignItems="center" style={{ height: '100%', width: '100%' }}>
                   <Grid item>
                     <ContentCopyIcon style={{ paddingRight: '8px' }} />
                   </Grid>
-                  <Grid item>Copy session code</Grid>
+                  <Grid item>Copy session URL</Grid>
                 </Grid>
               </ButtonContained>
             </Grid>

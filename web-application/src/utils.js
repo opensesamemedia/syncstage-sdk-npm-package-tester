@@ -29,6 +29,9 @@ const errorCodeToSnackbar = (errorCode, msgOnOK) => {
     if (errorCode === SyncStageSDKErrorCode.DESKTOP_AGENT_COMMUNICATION_ERROR && document.hidden) {
       return;
     }
+    if (errorCode === SyncStageSDKErrorCode.TOKEN_EXPIRED) {
+      return;
+    }
     console.log(snackbarMsg);
     enqueueSnackbar(snackbarMsg);
   } else if (msgOnOK) {
@@ -38,4 +41,25 @@ const errorCodeToSnackbar = (errorCode, msgOnOK) => {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-export { syncStageErrorToMessageMap, errorCodeToSnackbar, sleep };
+const willJwtBeExpiredIn = (jwt, secondTimeRemaning) => {
+  // check if token will be valid for at least the next 10 seconds
+  const dateInFuture = Date.now() + secondTimeRemaning * 1000;
+  try {
+    const jwtExp = JSON.parse(atob(jwt.split('.')[1])).exp * 1000;
+
+    const willBeExpired = dateInFuture >= jwtExp;
+    return willBeExpired;
+  } catch (error) {
+    console.log(`Error checking jwt: ${error}`);
+    return true;
+  }
+};
+
+const extractSessionCode = (path) => {
+  const match = path.match(/\/session\/([^/]*)/);
+  return match?.[1]; // Extract the first captured group
+};
+
+const SESSION_PATH_REGEX = /\/session\/([a-z0-9]{9}|[a-z0-9]{3}-[a-z0-9]{3}-[a-z0-9]{3})/;
+
+export { syncStageErrorToMessageMap, errorCodeToSnackbar, sleep, willJwtBeExpiredIn, extractSessionCode, SESSION_PATH_REGEX };
