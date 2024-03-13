@@ -27,8 +27,6 @@ const MEASUREMENTS_INTERVAL_MS = 5000;
 
 const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording }) => {
   const navigate = useNavigate();
-
-  console.log('Session component');
   const { sessionCode, sessionData, setSessionData, syncStage, setDesktopProvisioned } = useContext(AppContext);
 
   const [settingsOpened, setSettingsOpened] = useState(false);
