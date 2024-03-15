@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Grid, Box, Modal, Typography } from '@mui/material';
 import AppContext from '../../AppContext';
 import { mountedStyle, unmountedStyle } from '../../ui/AnimationStyles';
@@ -13,7 +13,7 @@ import { Mic } from '@mui/icons-material';
 import Button from '@mui/material/Button';
 import theme from '../../ui/theme';
 import InviteOthers from '../../components/UserCard/InviteOthers';
-import { errorCodeToSnackbar } from '../../utils';
+import { errorCodeToSnackbar, extractSessionCode } from '../../utils';
 import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-package-development';
 import SyncStageUserDelegate from '../../SyncStageUserDelegate';
 import SyncStageConnectivityDelegate from '../../SyncStageConnectivityDelegate';
@@ -27,8 +27,22 @@ const MEASUREMENTS_INTERVAL_MS = 5000;
 
 const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording }) => {
   const navigate = useNavigate();
-  const { sessionCode, sessionData, setSessionData, syncStage, setDesktopProvisioned } = useContext(AppContext);
+  const location = useLocation();
 
+  const {
+    sessionCode,
+    sessionData,
+    setSessionData,
+    syncStage,
+    desktopProvisioned,
+    setDesktopProvisioned,
+    selectedServer,
+    nickname,
+    setBackdropOpen,
+    persistSessionCode,
+  } = useContext(AppContext);
+
+  const [updateMeasurementsIntervalId, setUpdateMeasurementsIntervalId] = useState(false);
   const [settingsOpened, setSettingsOpened] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
 
@@ -62,7 +76,10 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
   const onUserJoined = useCallback(async (connection) => {
     console.log('onUserJoined');
     // Not adding self connection and avoid duplicates
-    if (sessionData.transmitter.identifier === connection.identifier || receiversMap[connection.identifier]) {
+    if (
+      (sessionData && sessionData.transmitter && sessionData.transmitter.identifier === connection.identifier) ||
+      receiversMap[connection.identifier]
+    ) {
       return;
     }
 
@@ -250,21 +267,129 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     });
   };
 
+  const clearDelegates = () => {
+    syncStage.userDelegate = new SyncStageUserDelegate(
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      () => {},
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      () => {},
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      () => {},
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      () => {},
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      () => {},
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      () => {},
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      () => {},
+    );
+  };
+
+  useEffect(() => {
+    const initializeSession = async () => {
+      console.log('initializeSession');
+      if (syncStage !== null && desktopProvisioned) {
+        const sessionCodeFromPath = extractSessionCode(location.pathname);
+        setBackdropOpen(true);
+        const [data, errorCode] = await syncStage.session();
+        if (errorCode === SyncStageSDKErrorCode.OK) {
+          console.log('Desktop agent in session');
+
+          persistSessionCode(sessionCodeFromPath);
+          if (data.sessionCode?.replace(/-/g, '').toLowerCase() !== sessionCodeFromPath.replace(/-/g, '').toLowerCase()) {
+            console.log(
+              // eslint-disable-next-line
+              `${data.sessionCode} sessionCode differs from the one in the path ${location.pathname}. Leaving session and joining the one from the path`,
+            );
+            clearDelegates();
+
+            const errorCodeLeave = await syncStage.leave();
+            if (errorCodeLeave === SyncStageSDKErrorCode.OK) {
+              const [data, errorCodeJoin] = await syncStage.join(
+                sessionCodeFromPath,
+                nickname,
+                selectedServer.zoneId,
+                selectedServer.studioServerId,
+                nickname,
+              );
+              if (errorCodeJoin === SyncStageSDKErrorCode.OK) {
+                setSessionData(data);
+                setBackdropOpen(false);
+                return undefined;
+              }
+            }
+
+            console.log('Could not join or leave session in initializeSession method');
+            if (selectedServer) {
+              navigate(PathEnum.SESSIONS_JOIN);
+            } else if (nickname) {
+              navigate(PathEnum.LOCATION);
+            } else {
+              navigate(PathEnum.SESSION_NICKNAME);
+            }
+            setBackdropOpen(false);
+            return undefined;
+          } else {
+            setSessionData(data);
+            console.log('Opened session screen with the same session code as the one in the Desktop Agent');
+          }
+        } else if (errorCode !== SyncStageSDKErrorCode.OK && selectedServer !== null) {
+          console.log('Desktop Agent not in session. Joining the session from the path');
+          const [data, errorCode] = await syncStage.join(
+            sessionCodeFromPath,
+            nickname,
+            selectedServer.zoneId,
+            selectedServer.studioServerId,
+            nickname,
+          );
+          if (errorCode === SyncStageSDKErrorCode.OK) {
+            console.log('Remaining on session Screen');
+            setSessionData(data);
+            setBackdropOpen(false);
+            return undefined;
+          }
+
+          console.log('Could not join session from the path.');
+          if (nickname) {
+            navigate(PathEnum.LOCATION);
+            setBackdropOpen(false);
+            return undefined;
+          } else {
+            navigate(PathEnum.SESSION_NICKNAME);
+            setBackdropOpen(false);
+            return undefined;
+          }
+        }
+        setBackdropOpen(false);
+      }
+    };
+
+    initializeSession();
+  }, [syncStage, desktopProvisioned, location.pathname]);
+
   useEffect(() => {
     // Set up the interval
-    const intervalId = setInterval(async () => {
+    if (updateMeasurementsIntervalId) {
+      clearInterval(updateMeasurementsIntervalId);
+    }
+    console.log('updateMeasurements interval init');
+    const localIntervalId = setInterval(async () => {
       await updateMeasurements();
     }, MEASUREMENTS_INTERVAL_MS);
 
+    setUpdateMeasurementsIntervalId(localIntervalId);
+
     // Clean up the interval when the component unmounts
     return () => {
-      clearInterval(intervalId);
+      clearInterval(updateMeasurementsIntervalId);
     };
   }, [receiversMap]);
 
   useEffect(() => {
     async function executeAsync() {
       if (syncStage !== null) {
+        console.log('Updating delegates');
         syncStage.userDelegate = new SyncStageUserDelegate(
           onUserJoined,
           onUserLeft,
@@ -293,6 +418,15 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
       }
     };
   }, [syncStage, sessionData]);
+
+  useEffect(() => {
+    //on component unmount.
+    return () => {
+      if (syncStage !== null) {
+        syncStage.leave();
+      }
+    };
+  }, []);
 
   return (
     <div style={inSession ? mountedStyle : unmountedStyle}>
@@ -357,7 +491,13 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
               spacing={2}
             >
               <Grid item style={{ paddingRight: '32px' }}>
-                <Button style={{ color: theme.onSurfaceVariant }} onClick={async () => await onLeaveSession()}>
+                <Button
+                  style={{ color: theme.onSurfaceVariant }}
+                  onClick={async () => {
+                    clearInterval(updateMeasurementsIntervalId);
+                    await onLeaveSession();
+                  }}
+                >
                   <CallEndIcon />
                 </Button>
               </Grid>

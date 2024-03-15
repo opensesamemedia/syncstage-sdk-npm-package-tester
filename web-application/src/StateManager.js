@@ -8,11 +8,10 @@ import AppContext from './AppContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
-import { errorCodeToSnackbar, willJwtBeExpiredIn, extractSessionCode, SESSION_PATH_REGEX } from './utils';
+import { errorCodeToSnackbar, willJwtBeExpiredIn, SESSION_PATH_REGEX } from './utils';
 import Box from '@mui/material/Box';
 import Modal from '@mui/material/Modal';
 import Typography from '@mui/material/Typography';
-import { enqueueSnackbar } from 'notistack';
 import { Online } from 'react-detect-offline';
 import { fetchSyncStageToken } from './apiHandler';
 
@@ -30,6 +29,7 @@ const StateManager = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const [previousLocation, setPreviousLocation] = useState(null);
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [userJwt, setUserJwt] = useState(null);
   const [syncStageJwt, setSyncStageJwt] = useState(localStorage.getItem('syncStageJwt') ?? '');
@@ -37,7 +37,6 @@ const StateManager = () => {
   const [syncStageSDKVersion, setSyncStageSDKVersion] = useState();
   const [nickname, setNickname] = useState(localStorage.getItem('nickname') ?? '');
   const [sessionCode, setSessionCode] = useState(localStorage.getItem('sessionCode') ?? '');
-  const [sessionCodeFromPath, setSessionCodeFromPath] = useState(null);
   const [sessionData, setSessionData] = useState(null);
   const [selectedServer, setSelectedServer] = useState(JSON.parse(localStorage.getItem('selectedServer')) ?? null);
 
@@ -62,10 +61,6 @@ const StateManager = () => {
     localStorage.setItem('sessionCode', sessionCode);
     setSessionCode(sessionCode);
   };
-
-  if (sessionCodeFromPath && sessionCodeFromPath !== sessionCode) {
-    persistSessionCode(sessionCodeFromPath);
-  }
 
   const onDesktopAgentAquired = () => {
     setDesktopAgentAquired(true);
@@ -123,12 +118,6 @@ const StateManager = () => {
   }, [desktopConnected]);
 
   useEffect(() => {
-    console.log(`Current location: ${location.pathname}`);
-    setSessionCodeFromPath(extractSessionCode(location.pathname));
-    console.log(`Code: ${sessionCodeFromPath}`);
-  }, []);
-
-  useEffect(() => {
     const timeout = setTimeout(() => {
       setDesktopConnectedTimeoutIfNotConnected();
     }, 5000);
@@ -137,11 +126,11 @@ const StateManager = () => {
     return () => clearTimeout(timeout);
   }, []);
 
-  const navigateIfLoading = (step) => {
-    if (location.pathname === `${PathEnum.LOADING}`) {
-      navigate(step);
-    }
-  };
+  // const navigateIfLoading = (step) => {
+  //   if (location.pathname === `${PathEnum.LOADING}`) {
+  //     navigate(step);
+  //   }
+  // };
 
   useEffect(() => {
     const confirmAmplifyUserSignedIn = async () => {
@@ -159,7 +148,7 @@ const StateManager = () => {
             console.log('Could not fetch current user: ', error);
           }
 
-          return !!currentUser; // Return true if currentUser is truthy, false otherwise
+          return !!currentUser;
         } catch (error) {
           console.error('Error importing amplifyconfiguration.json:', error);
         }
@@ -181,11 +170,42 @@ const StateManager = () => {
         console.log('User needs to be authenticated.');
       }
     };
-    navigate(PathEnum.LOADING);
+    if (!inSession) {
+      navigate(PathEnum.LOADING);
+    }
     initializeSignIn();
   }, []);
 
   useEffect(() => {
+    if (syncStage === null) {
+      console.log('initializeSyncStage useEffect syncStage instantiation');
+
+      const desktopAgentDelegate = new SyncStageDesktopAgentDelegate(
+        onDesktopAgentAquired,
+        onDesktopAgentReleased,
+        onDesktopAgentConnected,
+        onDesktopAgentDisconnected,
+      );
+      const ss = new SyncStage(null, null, null, desktopAgentDelegate, onJwtExpired);
+
+      setSyncStageSDKVersion(ss.getSDKVersion());
+      setSyncStage(ss);
+      setDesktopAgentProtocolHandler(ss.getDesktopAgentProtocolHandler());
+    }
+  }, []);
+
+  useEffect(() => {
+    const observeLocationChange = async () => {
+      if (location.pathname != previousLocation) {
+        console.log(`Location changed from ${previousLocation} to ${location.pathname}`);
+        setPreviousLocation(location.pathname);
+      }
+    };
+    observeLocationChange();
+  }, [location.pathname]);
+
+  useEffect(() => {
+    console.log('useEffect [syncStage, desktopConnected, desktopConnectedTimeout, isSignedIn]');
     const fetchJWT = async () => {
       let jwt = syncStageJwt;
 
@@ -201,21 +221,7 @@ const StateManager = () => {
     };
 
     const initializeSyncStage = async () => {
-      if (syncStage === null) {
-        console.log('initializeSyncStage useEffect syncStage instantiation');
-
-        const desktopAgentDelegate = new SyncStageDesktopAgentDelegate(
-          onDesktopAgentAquired,
-          onDesktopAgentReleased,
-          onDesktopAgentConnected,
-          onDesktopAgentDisconnected,
-        );
-        const ss = new SyncStage(null, null, null, desktopAgentDelegate, onJwtExpired);
-
-        setSyncStageSDKVersion(ss.getSDKVersion());
-        setSyncStage(ss);
-        setDesktopAgentProtocolHandler(ss.getDesktopAgentProtocolHandler());
-      } else if (syncStage !== null && desktopConnected && isSignedIn === true && desktopConnectedTimeout === false) {
+      if (syncStage !== null && desktopConnected && isSignedIn === true && desktopConnectedTimeout === false) {
         console.log('initializeSyncStage useEffect syncStage init');
         const jwt = await fetchJWT();
         console.log(`jwt to init ${jwt}`);
@@ -225,49 +231,19 @@ const StateManager = () => {
           setDesktopProvisioned(true);
         } else {
           console.log('Could not init SyncStage, invalid jwt');
-          navigateIfLoading(PathEnum.LOGIN);
+          signOut();
           return undefined;
         }
 
-        if (sessionCodeFromPath && nickname) {
-          const [errorCode] = await syncStage.session();
-          if (errorCode === SyncStageSDKErrorCode.OK) {
-            console.log('Switching to session Screen');
-
-            navigateIfLoading(`${PathEnum.SESSIONS_SESSION_PREFIX}${sessionCodeFromPath}`);
-            return undefined;
-          } else if (errorCode === SyncStageSDKErrorCode.NOT_IN_SESSION && selectedServer !== null) {
-            const [errorCode] = await syncStage.join(sessionCode, nickname, selectedServer.zoneId, selectedServer.studioServerId, nickname);
-            if (errorCode === SyncStageSDKErrorCode.OK) {
-              console.log('Switching to session Screen');
-
-              navigateIfLoading(`${PathEnum.SESSIONS_SESSION_PREFIX}${sessionCodeFromPath}`);
-              return undefined;
-            }
-
-            console.log('Could not join session');
-            if (selectedServer) {
-              navigateIfLoading(PathEnum.SESSIONS_JOIN);
-              return undefined;
-            } else if (nickname) {
-              navigateIfLoading(PathEnum.LOCATION);
-              return undefined;
-            } else {
-              navigateIfLoading(PathEnum.SESSION_NICKNAME);
-              return undefined;
-            }
-          }
-        } else {
+        if (!(nickname && SESSION_PATH_REGEX.test(location.pathname))) {
           if (selectedServer) {
-            navigateIfLoading(PathEnum.SESSIONS_JOIN);
-            return undefined;
+            navigate(PathEnum.SESSIONS_JOIN);
           } else if (nickname) {
-            navigateIfLoading(PathEnum.LOCATION);
-            return undefined;
+            navigate(PathEnum.LOCATION);
           } else {
-            navigateIfLoading(PathEnum.SESSION_NICKNAME);
-            return undefined;
+            navigate(PathEnum.SESSION_NICKNAME);
           }
+          return undefined;
         }
       } else if (syncStage !== null && desktopConnectedTimeout && isSignedIn) {
         console.log('initializeSyncStage useEffect desktopConnectedTimeout');
@@ -347,24 +323,7 @@ const StateManager = () => {
   };
 
   const onJoinSession = async () => {
-    setBackdropOpen(true);
-    const [data, errorCode] = await syncStage.join(sessionCode, nickname, selectedServer.zoneId, selectedServer.studioServerId, nickname);
-    if (errorCode === SyncStageSDKErrorCode.OK) {
-      enqueueSnackbar(`Joined session ${sessionCode}`);
-    } else {
-      enqueueSnackbar(`Could not join the session ${sessionCode}`);
-      errorCodeToSnackbar(errorCode);
-    }
-
-    if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
-      return goToSetupPageOnUnauthorized();
-    }
-
-    setBackdropOpen(false);
-    if (errorCode === SyncStageSDKErrorCode.OK) {
-      setSessionData(data);
-      navigate(`${PathEnum.SESSIONS_SESSION_PREFIX}${sessionCode}`);
-    }
+    navigate(`${PathEnum.SESSIONS_SESSION_PREFIX}${sessionCode}`);
   };
 
   const onCreateSession = async () => {

@@ -17,7 +17,7 @@ const Menu = ({ nicknameSetAndProvisioned, drawerOpened, onCloseDrawer, isMobile
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { syncStageSDKVersion, selectedServer, desktopProvisioned, signOut } = useContext(AppContext);
+  const { syncStageSDKVersion, selectedServer, desktopProvisioned, signOut, desktopConnected } = useContext(AppContext);
 
   const selectedStyle = {
     '&.Mui-selected': {
@@ -69,7 +69,7 @@ const Menu = ({ nicknameSetAndProvisioned, drawerOpened, onCloseDrawer, isMobile
               onClick={() => {
                 navigate(PathEnum.SESSION_NICKNAME);
               }}
-              disabled={!desktopProvisioned}
+              disabled={!desktopProvisioned || !desktopConnected}
             >
               <ListItemIcon sx={{ color: 'inherit' }}>
                 <AccountCircleOutlinedIcon />
@@ -85,7 +85,7 @@ const Menu = ({ nicknameSetAndProvisioned, drawerOpened, onCloseDrawer, isMobile
               onClick={() => {
                 navigate(PathEnum.LOCATION);
               }}
-              disabled={!nicknameSetAndProvisioned || !desktopProvisioned}
+              disabled={!nicknameSetAndProvisioned || !desktopProvisioned || !desktopConnected}
             >
               <ListItemIcon sx={{ color: 'inherit' }}>
                 <LocationOn />
@@ -97,7 +97,7 @@ const Menu = ({ nicknameSetAndProvisioned, drawerOpened, onCloseDrawer, isMobile
               selected={location.pathname === `${PathEnum.SESSIONS_SESSION_PREFIX}`}
               sx={selectedStyle}
               onClick={() => navigate(PathEnum.SESSIONS_JOIN)}
-              disabled={!nicknameSetAndProvisioned || !selectedServer || !desktopProvisioned}
+              disabled={!nicknameSetAndProvisioned || !selectedServer || !desktopProvisioned || !desktopConnected}
             >
               <ListItemIcon sx={{ color: 'inherit' }}>
                 <GroupsIcon />
