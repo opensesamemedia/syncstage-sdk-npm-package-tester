@@ -4,7 +4,7 @@ import AppContext from '../../AppContext';
 import ButtonContained from '../../components/StyledButtonContained';
 
 const Setup = ({ onProvisionSubmit }) => {
-  const { desktopAgentProtocolHandler, desktopConnected } = useContext(AppContext);
+  const { desktopAgentProtocolHandler, desktopAgentConnected } = useContext(AppContext);
 
   const getDownloadLink = () => {
     const userAgent = window.navigator.userAgent;
@@ -24,7 +24,7 @@ const Setup = ({ onProvisionSubmit }) => {
       <Grid item>
         <h2>Setup</h2>
       </Grid>
-      {desktopConnected ? (
+      {desktopAgentConnected ? (
         <Grid item>
           <p>Desktop agent is up and running.</p>
         </Grid>
@@ -66,7 +66,7 @@ const Setup = ({ onProvisionSubmit }) => {
             onClick={() => {
               onProvisionSubmit();
             }}
-            disabled={!desktopConnected}
+            disabled={!desktopAgentConnected}
           >
             Next
           </ButtonContained>

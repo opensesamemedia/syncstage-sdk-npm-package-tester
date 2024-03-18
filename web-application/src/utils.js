@@ -8,10 +8,7 @@ syncStageErrorToMessageMap.set(
   parseInt(SyncStageSDKErrorCode.SYNCSTAGE_SERVICE_COMMUNICATION_ERROR),
   'No communication with SyncStage service.',
 );
-syncStageErrorToMessageMap.set(
-  parseInt(SyncStageSDKErrorCode.DESKTOP_AGENT_COMMUNICATION_ERROR),
-  'Please check if SyncStage desktop agent is running.',
-);
+syncStageErrorToMessageMap.set(parseInt(SyncStageSDKErrorCode.TIMEOUT_ERROR), 'Desktop Agent timeout.');
 syncStageErrorToMessageMap.set(parseInt(SyncStageSDKErrorCode.UNKNOWN_ERROR), 'Unknown error');
 syncStageErrorToMessageMap.set(parseInt(SyncStageSDKErrorCode.CONFIGURATION_ERROR), 'Configuration error');
 syncStageErrorToMessageMap.set(parseInt(SyncStageSDKErrorCode.API_ERROR), 'API error');

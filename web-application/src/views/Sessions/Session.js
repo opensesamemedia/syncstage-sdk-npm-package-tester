@@ -34,8 +34,8 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     sessionData,
     setSessionData,
     syncStage,
-    desktopProvisioned,
-    setDesktopProvisioned,
+    desktopAgentProvisioned,
+    setDesktopAgentProvisioned,
     selectedServer,
     nickname,
     setBackdropOpen,
@@ -164,7 +164,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     sessionData,
     setConnectedMap,
     syncStage,
-    setDesktopProvisioned,
+    setDesktopAgentProvisioned,
     setVolumeMap,
     updateMeasurements,
   ) => {
@@ -217,14 +217,14 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
 
     if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
       navigate(PathEnum.SETUP);
-      setDesktopProvisioned(false);
+      setDesktopAgentProvisioned(false);
     } else if (errorCode === SyncStageSDKErrorCode.NOT_IN_SESSION) {
       onSessionOut();
     } else if (errorCode === SyncStageSDKErrorCode.OK) {
       setSessionData(data);
     }
 
-    buildViewSessionState(data, setConnectedMap, syncStage, setDesktopProvisioned, setVolumeMap, updateMeasurements);
+    buildViewSessionState(data, setConnectedMap, syncStage, setDesktopAgentProvisioned, setVolumeMap, updateMeasurements);
   }, [syncStage]);
 
   const updateMeasurements = async () => {
@@ -289,7 +289,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
   useEffect(() => {
     const initializeSession = async () => {
       console.log('initializeSession');
-      if (syncStage !== null && desktopProvisioned) {
+      if (syncStage !== null && desktopAgentProvisioned) {
         const sessionCodeFromPath = extractSessionCode(location.pathname);
         setBackdropOpen(true);
         const [data, errorCode] = await syncStage.session();
@@ -366,7 +366,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     };
 
     initializeSession();
-  }, [syncStage, desktopProvisioned, location.pathname]);
+  }, [syncStage, desktopAgentProvisioned, location.pathname]);
 
   useEffect(() => {
     // Set up the interval
@@ -407,7 +407,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
         if (errorCode === SyncStageSDKErrorCode.OK) {
           setMuted(mutedState);
         }
-        await buildViewSessionState(sessionData, setConnectedMap, syncStage, setDesktopProvisioned, setVolumeMap, updateMeasurements);
+        await buildViewSessionState(sessionData, setConnectedMap, syncStage, setDesktopAgentProvisioned, setVolumeMap, updateMeasurements);
       }
     }
     executeAsync();

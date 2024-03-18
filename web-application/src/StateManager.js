@@ -11,6 +11,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { errorCodeToSnackbar, willJwtBeExpiredIn, SESSION_PATH_REGEX } from './utils';
 import Box from '@mui/material/Box';
 import Modal from '@mui/material/Modal';
+
 import Typography from '@mui/material/Typography';
 import { Online } from 'react-detect-offline';
 import { fetchSyncStageToken } from './apiHandler';
@@ -42,11 +43,12 @@ const StateManager = () => {
 
   const [backdropOpen, setBackdropOpen] = useState(false);
 
-  const desktopConnectedRef = useRef(false);
-  const [desktopConnected, setDesktopConnected] = useState(false);
-  const [desktopConnectedTimeout, setDesktopConnectedTimeout] = useState(false);
+  const desktopAgentConnectedRef = useRef(false);
+  const [desktopAgentConnected, setDesktopAgentConnected] = useState(false);
+  const [desktopAgentConnectedTimeoutId, setDesktopAgentConnectedTimeoutId] = useState(false);
+  const [desktopAgentConnectedTimeout, setDesktopAgentConnectedTimeout] = useState(false);
 
-  const [desktopProvisioned, setDesktopProvisioned] = useState(false);
+  const [desktopAgentProvisioned, setDesktopAgentProvisioned] = useState(false);
   const [automatedLocationSelection, setAutomatedLocationSelection] = useState(true);
   const [locationSelected, setLocationSelected] = useState(false);
 
@@ -70,11 +72,20 @@ const StateManager = () => {
   };
 
   const onDesktopAgentConnected = () => {
-    setDesktopConnected(true);
+    setDesktopAgentConnected(true);
+    clearTimeout(desktopAgentConnectedTimeoutId);
   };
 
   const onDesktopAgentDisconnected = () => {
-    setDesktopConnected(false);
+    setDesktopAgentConnected(false);
+  };
+
+  const onDesktopAgentKeepAlive = () => {
+    setDesktopAgentConnected(true);
+  };
+
+  const onDesktopAgentLostConnection = () => {
+    setDesktopAgentConnected(false);
   };
 
   async function amplifyFetchSyncStageToken() {
@@ -107,23 +118,28 @@ const StateManager = () => {
     return jwt;
   };
 
-  const setDesktopConnectedTimeoutIfNotConnected = () => {
-    if (!desktopConnectedRef.current) {
-      setDesktopConnectedTimeout(true);
+  const setDesktopAgentConnectedTimeoutIfNotConnected = () => {
+    if (!desktopAgentConnectedRef.current) {
+      console.log('Desktop not connected. Setting timeout');
+
+      setDesktopAgentConnectedTimeout(true);
     }
   };
 
   useEffect(() => {
-    desktopConnectedRef.current = desktopConnected;
-  }, [desktopConnected]);
+    desktopAgentConnectedRef.current = desktopAgentConnected;
+  }, [desktopAgentConnected]);
 
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      setDesktopConnectedTimeoutIfNotConnected();
+    console.log('Desktop timeout useEffect');
+    const timeoutId = setTimeout(() => {
+      setDesktopAgentConnectedTimeoutIfNotConnected();
     }, 5000);
 
+    setDesktopAgentConnectedTimeoutId(timeoutId);
+
     // Clean up the timeout to avoid memory leaks
-    return () => clearTimeout(timeout);
+    return () => clearTimeout(desktopAgentConnectedTimeoutId);
   }, []);
 
   // const navigateIfLoading = (step) => {
@@ -185,6 +201,8 @@ const StateManager = () => {
         onDesktopAgentReleased,
         onDesktopAgentConnected,
         onDesktopAgentDisconnected,
+        onDesktopAgentKeepAlive,
+        onDesktopAgentLostConnection,
       );
       const ss = new SyncStage(null, null, null, desktopAgentDelegate, onJwtExpired);
 
@@ -205,7 +223,7 @@ const StateManager = () => {
   }, [location.pathname]);
 
   useEffect(() => {
-    console.log('useEffect [syncStage, desktopConnected, desktopConnectedTimeout, isSignedIn]');
+    console.log('useEffect [syncStage, desktopAgentConnected, desktopAgentConnectedTimeout, isSignedIn]');
     const fetchJWT = async () => {
       let jwt = syncStageJwt;
 
@@ -221,14 +239,14 @@ const StateManager = () => {
     };
 
     const initializeSyncStage = async () => {
-      if (syncStage !== null && desktopConnected && isSignedIn === true && desktopConnectedTimeout === false) {
+      if (syncStage !== null && desktopAgentConnected && isSignedIn === true && desktopAgentConnectedTimeout === false) {
         console.log('initializeSyncStage useEffect syncStage init');
         const jwt = await fetchJWT();
         console.log(`jwt to init ${jwt}`);
 
         const initErrorCode = await syncStage.init(jwt);
         if (initErrorCode == SyncStageSDKErrorCode.OK) {
-          setDesktopProvisioned(true);
+          setDesktopAgentProvisioned(true);
         } else {
           console.log('Could not init SyncStage, invalid jwt');
           signOut();
@@ -237,7 +255,26 @@ const StateManager = () => {
 
         if (!(nickname && SESSION_PATH_REGEX.test(location.pathname))) {
           if (selectedServer) {
-            navigate(PathEnum.SESSIONS_JOIN);
+            console.log('Validating cached selected server');
+            const [data, errorCode] = await syncStage.getServerInstances();
+
+            if (errorCode === SyncStageSDKErrorCode.OK) {
+              const zoneExists = data.some((obj) => obj.zoneId === selectedServer.zoneId);
+
+              if (zoneExists) {
+                console.log(`Zone with zoneId ${selectedServer.zoneId} exists in the server instances array.`);
+                navigate(PathEnum.SESSIONS_JOIN);
+              } else {
+                console.log(
+                  `Zone with zoneId ${selectedServer.zoneId} does not exist in the server instances array. ${JSON.stringify(data)}`,
+                );
+                persistSelectedServer(null);
+                navigate(PathEnum.SESSION_NICKNAME);
+              }
+            } else {
+              persistSelectedServer(null);
+              navigate(PathEnum.SESSION_NICKNAME);
+            }
           } else if (nickname) {
             navigate(PathEnum.LOCATION);
           } else {
@@ -245,15 +282,15 @@ const StateManager = () => {
           }
           return undefined;
         }
-      } else if (syncStage !== null && desktopConnectedTimeout && isSignedIn) {
-        console.log('initializeSyncStage useEffect desktopConnectedTimeout');
+      } else if (syncStage !== null && desktopAgentConnectedTimeout && isSignedIn) {
+        console.log('initializeSyncStage useEffect desktopAgentConnectedTimeout');
         console.log('Desktop connected timeout, going to setup screen');
         navigate(PathEnum.SETUP);
         return undefined;
       }
     };
     initializeSyncStage();
-  }, [syncStage, desktopConnected, desktopConnectedTimeout, isSignedIn]);
+  }, [syncStage, desktopAgentConnected, desktopAgentConnectedTimeout, isSignedIn]);
 
   const signOut = async () => {
     try {
@@ -266,7 +303,7 @@ const StateManager = () => {
     setIsSignedIn(false);
     persistSyncStageJwt('');
     navigate(PathEnum.LOGIN);
-    setDesktopProvisioned(false);
+    setDesktopAgentProvisioned(false);
     await syncStage.leave();
     setSessionData(null);
   };
@@ -278,7 +315,7 @@ const StateManager = () => {
 
   const goToSetupPageOnUnauthorized = () => {
     navigate(PathEnum.SETUP);
-    setDesktopProvisioned(false);
+    setDesktopAgentProvisioned(false);
     setBackdropOpen(false);
   };
 
@@ -316,9 +353,9 @@ const StateManager = () => {
     setBackdropOpen(false);
     if (errorCode === SyncStageSDKErrorCode.OK) {
       navigate(PathEnum.SESSION_NICKNAME);
-      setDesktopProvisioned(true);
+      setDesktopAgentProvisioned(true);
     } else {
-      setDesktopProvisioned(false);
+      setDesktopAgentProvisioned(false);
     }
   };
 
@@ -405,10 +442,10 @@ const StateManager = () => {
     selectedServer,
     persistSelectedServer,
     setBackdropOpen,
-    desktopConnected,
-    setDesktopConnected,
-    desktopProvisioned,
-    setDesktopProvisioned,
+    desktopAgentConnected,
+    setDesktopAgentConnected,
+    desktopAgentProvisioned,
+    setDesktopAgentProvisioned,
     locationSelected,
     setLocationSelected,
     automatedLocationSelection,
@@ -428,6 +465,26 @@ const StateManager = () => {
         <div className="bg" />
         <div className="gradient2" />
         <div className="gradient1" />
+        <div
+          style={{
+            position: 'fixed',
+            top: 20,
+            right: 10,
+            transform: 'translateY(-50%)',
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+          }}
+        >
+          {desktopAgentConnected ? (
+            <span style={{ fontSize: 10 }}> Desktop Agent Link </span>
+          ) : (
+            <a target="_blank" href={desktopAgentProtocolHandler}>
+              <span style={{ fontSize: 10 }}> Desktop Agent Link </span>
+            </a>
+          )}
+          <span class="dot" style={{ backgroundColor: desktopAgentConnected ? '#2ECC71' : '#C0392B' }}></span>
+        </div>
         <Navigation
           hidden={!isSignedIn || inSession || location.pathname == `${PathEnum.LOADING}`}
           inSession={inSession}
@@ -440,7 +497,6 @@ const StateManager = () => {
             zIndex: (theme) => theme.zIndex.drawer + 1,
           }}
           open={backdropOpen}
-          onClick={() => setBackdropOpen(false)}
         >
           <CircularProgress color="inherit" />
         </Backdrop>
