@@ -69,7 +69,6 @@ const StyledBadge = styled(Badge)(({ connected }) => {
 const UserCard = ({
   connected,
   displayName,
-  identifier,
   userId,
   isMuted,
   transmitter,

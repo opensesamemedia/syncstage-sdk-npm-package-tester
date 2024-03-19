@@ -7,7 +7,7 @@ import Button from '../../components/StyledButton';
 import AppContext from '../../AppContext';
 import { PathEnum } from '../../router/PathEnum';
 import { errorCodeToSnackbar } from '../../utils';
-import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-package-development';
+import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
 import SyncStageDicoveryDelegate from '../../SyncStageDiscoveryDelegate';
 import styled from 'styled-components';
 import { isInvalidLatency } from './utils';
