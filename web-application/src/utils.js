@@ -22,14 +22,15 @@ syncStageErrorToMessageMap.set(parseInt(SyncStageSDKErrorCode.NO_INPUT_DEVICE), 
 const errorCodeToSnackbar = (errorCode, msgOnOK) => {
   if (errorCode !== SyncStageSDKErrorCode.OK) {
     const snackbarMsg = syncStageErrorToMessageMap.get(errorCode);
+    console.log(snackbarMsg);
+
     // do not want to spam about websocket problems when tab in the browser is hidden
-    if (errorCode === SyncStageSDKErrorCode.DESKTOP_AGENT_COMMUNICATION_ERROR && document.hidden) {
+    if (errorCode === SyncStageSDKErrorCode.TIMEOUT_ERROR) {
       return;
     }
     if (errorCode === SyncStageSDKErrorCode.TOKEN_EXPIRED) {
       return;
     }
-    console.log(snackbarMsg);
     enqueueSnackbar(snackbarMsg);
   } else if (msgOnOK) {
     enqueueSnackbar(msgOnOK);

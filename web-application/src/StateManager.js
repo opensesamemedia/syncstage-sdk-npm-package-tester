@@ -299,13 +299,13 @@ const StateManager = () => {
       console.log('error signing out from aplify backend: ', error);
     }
 
+    setSessionData(null);
     setUserJwt(null);
     setIsSignedIn(false);
     persistSyncStageJwt('');
     navigate(PathEnum.LOGIN);
     setDesktopAgentProvisioned(false);
     await syncStage.leave();
-    setSessionData(null);
   };
 
   const setNicknameAndSave = (nickname) => {
@@ -374,20 +374,8 @@ const StateManager = () => {
 
     persistSessionCode(createData.sessionCode);
 
-    if (errorCode === SyncStageSDKErrorCode.OK) {
-      const [joinData, errorCode] = await syncStage.join(
-        createData.sessionCode,
-        nickname,
-        selectedServer.zoneId,
-        selectedServer.studioServerId,
-        nickname,
-      );
-      errorCodeToSnackbar(errorCode);
-      if (errorCode === SyncStageSDKErrorCode.OK) {
-        setSessionData(joinData);
-        navigate(`${PathEnum.SESSIONS_SESSION_PREFIX}${createData.sessionCode}`);
-      }
-    }
+    navigate(`${PathEnum.SESSIONS_SESSION_PREFIX}${createData.sessionCode}`);
+
     setBackdropOpen(false);
   };
 
@@ -405,7 +393,6 @@ const StateManager = () => {
     } else {
       navigate(PathEnum.LOCATION);
     }
-    setSessionData(null);
   };
 
   const onStartRecording = async () => {

@@ -58,7 +58,6 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
   const [receiversMap, setReceiversMap] = useState({});
 
   const onSessionOut = useCallback(() => {
-    enqueueSnackbar('You have been disconnected from session');
     setSessionData(null);
     navigate(PathEnum.SESSIONS_JOIN);
   }, []);
@@ -75,6 +74,9 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
 
   const onUserJoined = useCallback(async (connection) => {
     console.log('onUserJoined');
+    if (syncStage === null) {
+      return;
+    }
     // Not adding self connection and avoid duplicates
     if (
       (sessionData && sessionData.transmitter && sessionData.transmitter.identifier === connection.identifier) ||
@@ -171,8 +173,6 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     if (syncStage !== null && sessionData != null) {
       let errorCode;
       // initialize connection and volume, receivers map based on the sessionData state
-      setVolumeMap({});
-      setReceiversMap({});
 
       if (sessionData.receivers) {
         sessionData.receivers.forEach(async (receiver) => {
@@ -212,6 +212,9 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
 
   const onWebsocketReconnected = useCallback(async () => {
     console.log('onWebsocketReconnected in session');
+    if (syncStage === null) {
+      return;
+    }
     const [data, errorCode] = await syncStage.session();
     errorCodeToSnackbar(errorCode);
 
@@ -224,7 +227,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
       setSessionData(data);
     }
 
-    buildViewSessionState(data, setConnectedMap, syncStage, setDesktopAgentProvisioned, setVolumeMap, updateMeasurements);
+    await buildViewSessionState(data, setConnectedMap, syncStage, setDesktopAgentProvisioned, setVolumeMap, updateMeasurements);
   }, [syncStage]);
 
   const updateMeasurements = async () => {
@@ -268,6 +271,9 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
   };
 
   const clearDelegates = () => {
+    if (syncStage === null) {
+      return;
+    }
     syncStage.userDelegate = new SyncStageUserDelegate(
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       () => {},
@@ -384,7 +390,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     return () => {
       clearInterval(updateMeasurementsIntervalId);
     };
-  }, [receiversMap]);
+  }, []);
 
   useEffect(() => {
     async function executeAsync() {
