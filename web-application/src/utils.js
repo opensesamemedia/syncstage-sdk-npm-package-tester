@@ -24,11 +24,8 @@ const errorCodeToSnackbar = (errorCode, msgOnOK) => {
     const snackbarMsg = syncStageErrorToMessageMap.get(errorCode);
     console.log(snackbarMsg);
 
-    // do not want to spam about websocket problems when tab in the browser is hidden
-    if (errorCode === SyncStageSDKErrorCode.TIMEOUT_ERROR) {
-      return;
-    }
-    if (errorCode === SyncStageSDKErrorCode.TOKEN_EXPIRED) {
+    // Errors we do not want to show to the user, but we want to log
+    if (errorCode === SyncStageSDKErrorCode.TIMEOUT_ERROR || errorCode === SyncStageSDKErrorCode.TOKEN_EXPIRED) {
       return;
     }
     enqueueSnackbar(snackbarMsg);
