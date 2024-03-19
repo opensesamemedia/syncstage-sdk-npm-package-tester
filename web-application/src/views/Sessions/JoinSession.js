@@ -1,4 +1,6 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+
 import { Grid } from '@mui/material';
 import ButtonContained from '../../components/StyledButtonContained';
 import Button from '../../components/StyledButton';
@@ -7,7 +9,16 @@ import AppContext from '../../AppContext';
 import { PathEnum } from '../../router/PathEnum';
 
 const JoinSession = ({ onJoinSession, onCreateSession }) => {
-  const { sessionCode, setSessionCode, setCurrentStep } = useContext(AppContext);
+  const navigate = useNavigate();
+
+  const { sessionCode, persistSessionCode, selectedServer } = useContext(AppContext);
+
+  useEffect(() => {
+    if (!selectedServer) {
+      console.log('No server selected');
+      navigate(PathEnum.LOCATION);
+    }
+  }, []);
 
   return (
     <Grid container direction="column" spacing={2}>
@@ -23,7 +34,7 @@ const JoinSession = ({ onJoinSession, onCreateSession }) => {
             label="Session code"
             value={sessionCode}
             fullWidth
-            onChange={(e) => setSessionCode(e.target.value)}
+            onChange={(e) => persistSessionCode(e.target.value)}
             placeholder="xyz-xyz-xyz"
           />
         </Grid>
@@ -47,7 +58,7 @@ const JoinSession = ({ onJoinSession, onCreateSession }) => {
         <Grid item>
           <Button
             onClick={() => {
-              setCurrentStep(PathEnum.SESSION_NICKNAME);
+              navigate(PathEnum.SESSION_NICKNAME);
             }}
           >
             Previous

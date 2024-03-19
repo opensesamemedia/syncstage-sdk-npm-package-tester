@@ -29,15 +29,12 @@ class SyncStageUserDelegate {
   userUnmuted(identifier) {
     this.onUserUnmuted(identifier);
   }
-
   sessionRecordingStarted() {
     this.onRecordingStarted();
   }
-
   sessionRecordingStopped() {
     this.onRecordingStopped();
   }
-
   sessionOut() {
     this.onSessionOut();
   }

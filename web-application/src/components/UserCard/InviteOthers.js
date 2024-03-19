@@ -10,8 +10,31 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { enqueueSnackbar } from 'notistack';
 
 const InviteOthers = ({ sessionCode }) => {
-  const copySessionCodeToClipboard = () => {
-    navigator.clipboard.writeText(sessionCode);
+  const unsecuredCopyToClipboard = (text) => {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      document.execCommand('copy');
+    } catch (err) {
+      console.error('Unable to copy to clipboard', err);
+    }
+    document.body.removeChild(textArea);
+  };
+
+  /**
+   * Copies the text passed as param to the system clipboard
+   * Check if using HTTPS and navigator.clipboard is available
+   * Then uses standard clipboard API, otherwise uses fallback
+   */
+  const copySessionUrlToClipboard = () => {
+    if (window.isSecureContext && navigator.clipboard) {
+      navigator.clipboard.writeText(window.location.href);
+    } else {
+      unsecuredCopyToClipboard(window.location.href);
+    }
     enqueueSnackbar('Copied to clipboard');
   };
 
@@ -54,12 +77,12 @@ const InviteOthers = ({ sessionCode }) => {
               <p style={{ margin: 0, marginTop: '8px', fontWeight: 'bold' }}>{sessionCode}</p>
             </Grid>
             <Grid item style={{ marginTop: '8px' }}>
-              <ButtonContained onClick={copySessionCodeToClipboard}>
+              <ButtonContained onClick={copySessionUrlToClipboard}>
                 <Grid container direction="row" justifyContent="flex-start" alignItems="center" style={{ height: '100%', width: '100%' }}>
                   <Grid item>
                     <ContentCopyIcon style={{ paddingRight: '8px' }} />
                   </Grid>
-                  <Grid item>Copy session code</Grid>
+                  <Grid item>Copy session URL</Grid>
                 </Grid>
               </ButtonContained>
             </Grid>

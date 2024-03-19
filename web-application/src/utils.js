@@ -3,10 +3,12 @@ import { enqueueSnackbar } from 'notistack';
 
 const syncStageErrorToMessageMap = new Map();
 syncStageErrorToMessageMap.set(parseInt(SyncStageSDKErrorCode.API_UNAUTHORIZED), 'Unauthorized');
+syncStageErrorToMessageMap.set(parseInt(SyncStageSDKErrorCode.NOT_IN_SESSION), 'Not in a session');
 syncStageErrorToMessageMap.set(
-  parseInt(SyncStageSDKErrorCode.DESKTOP_AGENT_COMMUNICATION_ERROR),
-  'Please check if SyncStage desktop agent is running.',
+  parseInt(SyncStageSDKErrorCode.SYNCSTAGE_SERVICE_COMMUNICATION_ERROR),
+  'No communication with SyncStage service.',
 );
+syncStageErrorToMessageMap.set(parseInt(SyncStageSDKErrorCode.TIMEOUT_ERROR), 'Desktop Agent timeout.');
 syncStageErrorToMessageMap.set(parseInt(SyncStageSDKErrorCode.UNKNOWN_ERROR), 'Unknown error');
 syncStageErrorToMessageMap.set(parseInt(SyncStageSDKErrorCode.CONFIGURATION_ERROR), 'Configuration error');
 syncStageErrorToMessageMap.set(parseInt(SyncStageSDKErrorCode.API_ERROR), 'API error');
@@ -20,11 +22,12 @@ syncStageErrorToMessageMap.set(parseInt(SyncStageSDKErrorCode.NO_INPUT_DEVICE), 
 const errorCodeToSnackbar = (errorCode, msgOnOK) => {
   if (errorCode !== SyncStageSDKErrorCode.OK) {
     const snackbarMsg = syncStageErrorToMessageMap.get(errorCode);
-    // do not want to spam about websocket problems when tab in the browser is hidden
-    if (errorCode === SyncStageSDKErrorCode.DESKTOP_AGENT_COMMUNICATION_ERROR && document.hidden) {
+    console.log(snackbarMsg);
+
+    // Errors we do not want to show to the user, but we want to log
+    if (errorCode === SyncStageSDKErrorCode.TIMEOUT_ERROR || errorCode === SyncStageSDKErrorCode.TOKEN_EXPIRED) {
       return;
     }
-    console.log(snackbarMsg);
     enqueueSnackbar(snackbarMsg);
   } else if (msgOnOK) {
     enqueueSnackbar(msgOnOK);
@@ -33,4 +36,25 @@ const errorCodeToSnackbar = (errorCode, msgOnOK) => {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-export { syncStageErrorToMessageMap, errorCodeToSnackbar, sleep };
+const willJwtBeExpiredIn = (jwt, secondTimeRemaning) => {
+  // check if token will be valid for at least the next <secondTimeRemaning> seconds
+  const dateInFuture = Date.now() + secondTimeRemaning * 1000;
+  try {
+    const jwtExp = JSON.parse(atob(jwt.split('.')[1])).exp * 1000;
+
+    const willBeExpired = dateInFuture >= jwtExp;
+    return willBeExpired;
+  } catch (error) {
+    console.log(`Error checking jwt: ${error}`);
+    return true;
+  }
+};
+
+const extractSessionCode = (path) => {
+  const match = path.match(/\/session\/([^/]*)/);
+  return match?.[1]; // Extract the first captured group
+};
+
+const SESSION_PATH_REGEX = /\/session\/([a-z0-9]{9}|[a-z0-9]{3}-[a-z0-9]{3}-[a-z0-9]{3})/;
+
+export { syncStageErrorToMessageMap, errorCodeToSnackbar, sleep, willJwtBeExpiredIn, extractSessionCode, SESSION_PATH_REGEX };

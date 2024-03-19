@@ -1,4 +1,6 @@
 import React, { useContext } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+
 import MenuWrapper from './Menu.styled';
 import { List, ListItemText, ListItemIcon, Drawer } from '@mui/material';
 import ListItemButton from '../StyledListItemButton';
@@ -12,7 +14,10 @@ import { PathEnum } from '../../router/PathEnum';
 import theme from '../../ui/theme';
 
 const Menu = ({ nicknameSetAndProvisioned, drawerOpened, onCloseDrawer, isMobile }) => {
-  const { currentStep, setCurrentStep, syncStageSDKVersion, selectedServer, desktopProvisioned, signOut } = useContext(AppContext);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const { syncStageSDKVersion, selectedServer, desktopAgentProvisioned, signOut, desktopAgentConnected } = useContext(AppContext);
 
   const selectedStyle = {
     '&.Mui-selected': {
@@ -48,19 +53,23 @@ const Menu = ({ nicknameSetAndProvisioned, drawerOpened, onCloseDrawer, isMobile
       >
         <MenuWrapper>
           <List>
-            <ListItemButton selected={currentStep === PathEnum.SETUP} sx={selectedStyle} onClick={() => setCurrentStep(PathEnum.SETUP)}>
+            <ListItemButton
+              selected={location.pathname === `${PathEnum.SETUP}`}
+              sx={selectedStyle}
+              onClick={() => navigate(PathEnum.SETUP)}
+            >
               <ListItemIcon sx={{ color: 'inherit' }}>
                 <MenuBookOutlinedIcon />
               </ListItemIcon>
               <ListItemText primary="Setup" />
             </ListItemButton>
             <ListItemButton
-              selected={[PathEnum.SESSION_NICKNAME].includes(currentStep)}
+              selected={location.pathname === `${PathEnum.SESSION_NICKNAME}`}
               sx={selectedStyle}
               onClick={() => {
-                setCurrentStep(PathEnum.SESSION_NICKNAME);
+                navigate(PathEnum.SESSION_NICKNAME);
               }}
-              disabled={!desktopProvisioned}
+              disabled={!desktopAgentProvisioned || !desktopAgentConnected}
             >
               <ListItemIcon sx={{ color: 'inherit' }}>
                 <AccountCircleOutlinedIcon />
@@ -69,12 +78,14 @@ const Menu = ({ nicknameSetAndProvisioned, drawerOpened, onCloseDrawer, isMobile
             </ListItemButton>
 
             <ListItemButton
-              selected={[PathEnum.LOCATION, PathEnum.LOCATION_LATENCIES, PathEnum.LOCATION_MANUAL].includes(currentStep)}
+              selected={[PathEnum.LOCATION, PathEnum.LOCATION_LATENCIES, PathEnum.LOCATION_MANUAL].some((path) =>
+                location.pathname.includes(path),
+              )}
               sx={selectedStyle}
               onClick={() => {
-                setCurrentStep(PathEnum.LOCATION);
+                navigate(PathEnum.LOCATION);
               }}
-              disabled={!nicknameSetAndProvisioned}
+              disabled={!nicknameSetAndProvisioned || !desktopAgentProvisioned || !desktopAgentConnected}
             >
               <ListItemIcon sx={{ color: 'inherit' }}>
                 <LocationOn />
@@ -83,10 +94,10 @@ const Menu = ({ nicknameSetAndProvisioned, drawerOpened, onCloseDrawer, isMobile
             </ListItemButton>
 
             <ListItemButton
-              selected={[PathEnum.SESSIONS_JOIN, PathEnum.SESSIONS_REGIONS, PathEnum.SESSIONS_SESSION].includes(currentStep)}
+              selected={location.pathname === `${PathEnum.SESSIONS_SESSION_PREFIX}`}
               sx={selectedStyle}
-              onClick={() => setCurrentStep(PathEnum.SESSIONS_JOIN)}
-              disabled={!nicknameSetAndProvisioned || !selectedServer}
+              onClick={() => navigate(PathEnum.SESSIONS_JOIN)}
+              disabled={!nicknameSetAndProvisioned || !selectedServer || !desktopAgentProvisioned || !desktopAgentConnected}
             >
               <ListItemIcon sx={{ color: 'inherit' }}>
                 <GroupsIcon />
@@ -101,7 +112,9 @@ const Menu = ({ nicknameSetAndProvisioned, drawerOpened, onCloseDrawer, isMobile
               <ListItemText primary="Sign out" />
             </ListItemButton>
           </List>
-          <p style={{ paddingLeft: 16, paddingTop: 20, fontSize: 10 }}>SDK: {syncStageSDKVersion}</p>
+
+          <span style={{ paddingLeft: 16, paddingTop: 20, fontSize: 10 }}>SDK: {syncStageSDKVersion}</span>
+          {selectedServer ? <span style={{ paddingLeft: 8, fontSize: 10 }}>Location: {selectedServer.zoneName}</span> : <></>}
         </MenuWrapper>
       </Drawer>
     </>

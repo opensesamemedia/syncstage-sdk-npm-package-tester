@@ -1,15 +1,15 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { Route, Routes, Navigate } from 'react-router-dom';
 import Setup from '../views/Setup/Setup';
 import JoinSession from '../views/Sessions/JoinSession';
 import Session from '../views/Sessions/Session';
 import SessionNickname from '../views/SessionNickname/SessionNickname';
 import { PathEnum } from './PathEnum';
-import AppContext from '../AppContext';
 import Location from '../views/Location/Location';
 import Latencies from '../views/Location/Latencies';
 import ManualLocation from '../views/Location/ManualLocation';
 import LoginView from '../views/Login/LoginView';
+import BackdropView from '../views/Backdrop/BackdropView';
 
 const RoutesComponent = ({
   onJoinSession,
@@ -20,83 +20,35 @@ const RoutesComponent = ({
   onStopRecording,
   onProvisionSubmit,
 }) => {
-  const { currentStep } = useContext(AppContext);
-
   return (
     <Routes>
-      <Route path="/" element={<Navigate to={`/${currentStep}`} replace />} />
+      <Route path="/" element={<Navigate to={`${PathEnum.LOADING}`} />} />
 
-      <Route path={PathEnum.LOGIN} element={currentStep === PathEnum.LOGIN ? <LoginView /> : <Navigate to={`/${currentStep}`} replace />} />
+      <Route path={PathEnum.LOADING} element={<BackdropView />} />
+
+      <Route path={PathEnum.LOGIN} element={<LoginView />} />
+
+      <Route path={PathEnum.SESSION_NICKNAME} element={<SessionNickname />} />
+
+      <Route path={PathEnum.SETUP} element={<Setup onProvisionSubmit={onProvisionSubmit} />} />
+
+      <Route path={PathEnum.LOCATION} element={<Location />} />
+      <Route path={PathEnum.LOCATION_LATENCIES} element={<Latencies />} />
+      <Route path={PathEnum.LOCATION_MANUAL} element={<ManualLocation />} />
+      <Route path={PathEnum.SESSIONS_JOIN} element={<JoinSession onJoinSession={onJoinSession} onCreateSession={onCreateSession} />} />
+      <Route path={PathEnum.SESSIONS_JOIN} element={<JoinSession onJoinSession={onJoinSession} />} />
+
+      <Route path={PathEnum.SESSIONS_JOIN} element={<JoinSession onJoinSession={onJoinSession} />} />
 
       <Route
-        path={PathEnum.SESSION_NICKNAME}
-        element={currentStep === PathEnum.SESSION_NICKNAME ? <SessionNickname /> : <Navigate to={`/${currentStep}`} replace />}
-      />
-
-      <Route
-        path={PathEnum.SETUP}
+        path={PathEnum.SESSIONS_SESSION_CODE}
         element={
-          currentStep === PathEnum.SETUP ? <Setup onProvisionSubmit={onProvisionSubmit} /> : <Navigate to={`/${currentStep}`} replace />
-        }
-      />
-
-      <Route
-        path={PathEnum.LOCATION}
-        element={currentStep === PathEnum.LOCATION ? <Location /> : <Navigate to={`/${currentStep}`} replace />}
-      />
-      <Route
-        path={PathEnum.LOCATION_LATENCIES}
-        element={currentStep === PathEnum.LOCATION_LATENCIES ? <Latencies /> : <Navigate to={`/${currentStep}`} replace />}
-      />
-      <Route
-        path={PathEnum.LOCATION_MANUAL}
-        element={currentStep === PathEnum.LOCATION_MANUAL ? <ManualLocation /> : <Navigate to={`/${currentStep}`} replace />}
-      />
-      <Route
-        path={PathEnum.SESSIONS_JOIN}
-        element={
-          currentStep === PathEnum.SESSIONS_JOIN ? (
-            <JoinSession onJoinSession={onJoinSession} onCreateSession={onCreateSession} />
-          ) : (
-            <Navigate to={`/${currentStep}`} replace />
-          )
-        }
-      />
-      <Route
-        path={PathEnum.SESSIONS_JOIN}
-        element={
-          currentStep === PathEnum.SESSIONS_JOIN ? (
-            <JoinSession onJoinSession={onJoinSession} />
-          ) : (
-            <Navigate to={`/${currentStep}`} replace />
-          )
-        }
-      />
-
-      <Route
-        path={PathEnum.SESSIONS_JOIN}
-        element={
-          currentStep === PathEnum.SESSIONS_JOIN ? (
-            <JoinSession onJoinSession={onJoinSession} />
-          ) : (
-            <Navigate to={`/${currentStep}`} replace />
-          )
-        }
-      />
-
-      <Route
-        path={PathEnum.SESSIONS_SESSION}
-        element={
-          currentStep === PathEnum.SESSIONS_SESSION ? (
-            <Session
-              onLeaveSession={onLeaveSession}
-              inSession={inSession}
-              onStartRecording={onStartRecording}
-              onStopRecording={onStopRecording}
-            />
-          ) : (
-            <Navigate to={`/${currentStep}`} replace />
-          )
+          <Session
+            onLeaveSession={onLeaveSession}
+            inSession={inSession}
+            onStartRecording={onStartRecording}
+            onStopRecording={onStopRecording}
+          />
         }
       />
     </Routes>
