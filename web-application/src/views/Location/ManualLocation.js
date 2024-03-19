@@ -1,4 +1,5 @@
 import React, { useContext, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Grid } from '@mui/material';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
@@ -13,8 +14,8 @@ import { errorCodeToSnackbar } from '../../utils';
 import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
 
 const ManualLocation = () => {
-  const { selectedServer, setSelectedServer, setCurrentStep, syncStage, setBackdropOpen } = useContext(AppContext);
-
+  const navigate = useNavigate();
+  const { selectedServer, persistSelectedServer, syncStage, setBackdropOpen } = useContext(AppContext);
   const [instancesList, setInstancesList] = useState([]);
 
   useEffect(() => {
@@ -56,7 +57,7 @@ const ManualLocation = () => {
             <></>
           )}
 
-          <Select labelId="region-select-label" value={selectedServer} onChange={(e) => setSelectedServer(e.target.value)}>
+          <Select labelId="region-select-label" value={selectedServer} onChange={(e) => persistSelectedServer(e.target.value)}>
             {instancesList.map((server) => (
               <MenuItem value={server} key={server.studioServerId}>
                 {server.zoneName}
@@ -69,12 +70,12 @@ const ManualLocation = () => {
       <Grid item style={{ height: '80px' }} />
       <Grid container justifyContent="space-between">
         <Grid item>
-          <Button onClick={() => setCurrentStep(PathEnum.LOCATION)}>Previous</Button>
+          <Button onClick={() => navigate(PathEnum.LOCATION)}>Previous</Button>
         </Grid>
         <Grid item>
           <ButtonContained
             onClick={() => {
-              setCurrentStep(PathEnum.SESSIONS_JOIN);
+              navigate(PathEnum.SESSIONS_JOIN);
             }}
           >
             Next

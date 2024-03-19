@@ -48,6 +48,14 @@ const AppWrapper = styled.div`
     padding-top: ${(props) => (props.inSession ? '0' : '15vh')};
     width: 100%;
   }
+
+  .dot {
+    height: 8px;
+    width: 8px;
+    margin: 12px;
+    border-radius: 50%;
+    display: inline-block;
+  }
 `;
 
 export default AppWrapper;

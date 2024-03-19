@@ -1,4 +1,5 @@
 import React, { useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Grid } from '@mui/material';
 import TextField from '../../components/StyledTextField';
 import ButtonContained from '../../components/StyledButtonContained';
@@ -7,7 +8,9 @@ import { PathEnum } from '../../router/PathEnum';
 import Button from '../../components/StyledButton';
 
 const SessionNickname = () => {
-  const { nickname, setNickname, setCurrentStep } = useContext(AppContext);
+  const navigate = useNavigate();
+
+  const { nickname, persistNickname } = useContext(AppContext);
 
   return (
     <Grid container direction="column" spacing={2}>
@@ -18,18 +21,18 @@ const SessionNickname = () => {
         <p>Please enter your session nickname.</p>
       </Grid>
       <Grid item>
-        <TextField label="Nickname" value={nickname} onChange={(e) => setNickname(e.target.value)} style={{ width: '70%' }} />
+        <TextField label="Nickname" value={nickname} onChange={(e) => persistNickname(e.target.value)} style={{ width: '70%' }} />
       </Grid>
       <Grid item style={{ height: '140px' }} />
       <Grid container justifyContent="space-between">
         <Grid item>
-          <Button onClick={() => setCurrentStep(PathEnum.SETUP)}>Previous</Button>
+          <Button onClick={() => navigate(PathEnum.SETUP)}>Previous</Button>
         </Grid>
         <Grid item>
           <ButtonContained
             disabled={nickname === ''}
             onClick={() => {
-              setCurrentStep(PathEnum.LOCATION);
+              navigate(PathEnum.LOCATION);
             }}
           >
             Next

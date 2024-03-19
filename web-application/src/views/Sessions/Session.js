@@ -1,4 +1,5 @@
 import React, { useContext, useState, useEffect, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Grid, Box, Modal, Typography } from '@mui/material';
 import AppContext from '../../AppContext';
 import { mountedStyle, unmountedStyle } from '../../ui/AnimationStyles';
@@ -12,11 +13,10 @@ import { Mic } from '@mui/icons-material';
 import Button from '@mui/material/Button';
 import theme from '../../ui/theme';
 import InviteOthers from '../../components/UserCard/InviteOthers';
-import { errorCodeToSnackbar } from '../../utils';
+import { errorCodeToSnackbar, extractSessionCode } from '../../utils';
 import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
 import SyncStageUserDelegate from '../../SyncStageUserDelegate';
 import SyncStageConnectivityDelegate from '../../SyncStageConnectivityDelegate';
-import { enqueueSnackbar } from 'notistack';
 import { PathEnum } from '../../router/PathEnum';
 import produce from 'immer';
 import modalStyle from '../../ui/ModalStyle';
@@ -25,8 +25,23 @@ import ButtonContained from '../../components/StyledButtonContained';
 const MEASUREMENTS_INTERVAL_MS = 5000;
 
 const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording }) => {
-  const { sessionCode, sessionData, setSessionData, syncStage, setCurrentStep, setDesktopProvisioned } = useContext(AppContext);
+  const navigate = useNavigate();
+  const location = useLocation();
 
+  const {
+    sessionCode,
+    sessionData,
+    setSessionData,
+    syncStage,
+    desktopAgentProvisioned,
+    setDesktopAgentProvisioned,
+    selectedServer,
+    nickname,
+    setBackdropOpen,
+    persistSessionCode,
+  } = useContext(AppContext);
+
+  const [updateMeasurementsIntervalId, setUpdateMeasurementsIntervalId] = useState(false);
   const [settingsOpened, setSettingsOpened] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
 
@@ -41,14 +56,10 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
   const [connectedMap, setConnectedMap] = useState({});
   const [receiversMap, setReceiversMap] = useState({});
 
-  if (!sessionData) {
-    setCurrentStep(PathEnum.SESSION_NICKNAME);
-  }
-
   const onSessionOut = useCallback(() => {
-    enqueueSnackbar('You have been disconnected from session');
-    setCurrentStep(PathEnum.SESSIONS_JOIN);
-  }, [setCurrentStep]);
+    setSessionData(null);
+    navigate(PathEnum.SESSIONS_JOIN);
+  }, []);
 
   const onMutedToggle = useCallback(async () => {
     const mutedState = !muted;
@@ -62,8 +73,14 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
 
   const onUserJoined = useCallback(async (connection) => {
     console.log('onUserJoined');
+    if (syncStage === null) {
+      return;
+    }
     // Not adding self connection and avoid duplicates
-    if (sessionData.transmitter.identifier === connection.identifier || receiversMap[connection.identifier]) {
+    if (
+      (sessionData && sessionData.transmitter && sessionData.transmitter.identifier === connection.identifier) ||
+      receiversMap[connection.identifier]
+    ) {
       return;
     }
 
@@ -127,6 +144,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
   }, []);
 
   const onTransmitterConnectivityChanged = useCallback((connected) => {
+    console.log(`onTransmitterConnectivityChanged: ${connected}`);
     setConnected(connected);
   }, []);
 
@@ -147,44 +165,44 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     sessionData,
     setConnectedMap,
     syncStage,
-    setCurrentStep,
-    setDesktopProvisioned,
+    setDesktopAgentProvisioned,
     setVolumeMap,
     updateMeasurements,
   ) => {
-    if (sessionData != null) {
+    if (syncStage !== null && sessionData != null) {
       let errorCode;
       // initialize connection and volume, receivers map based on the sessionData state
-      setVolumeMap({});
-      setReceiversMap({});
 
-      sessionData.receivers.forEach(async (receiver) => {
-        setConnectedMap(
-          produce((draft) => {
-            const connectedReceiver = draft[receiver.identifier];
-            if (!connectedReceiver) {
-              draft[receiver.identifier] = undefined;
-            }
-          }),
-        );
+      if (sessionData.receivers) {
+        sessionData.receivers.forEach(async (receiver) => {
+          setConnectedMap(
+            produce((draft) => {
+              const connectedReceiver = draft[receiver.identifier];
+              if (!connectedReceiver) {
+                draft[receiver.identifier] = undefined;
+              }
+            }),
+          );
 
-        // Volume
-        let volumeValue;
-        [volumeValue, errorCode] = await syncStage.getReceiverVolume(receiver.identifier);
-        errorCodeToSnackbar(errorCode);
+          // Volume
+          let volumeValue;
+          [volumeValue, errorCode] = await syncStage.getReceiverVolume(receiver.identifier);
+          errorCodeToSnackbar(errorCode);
 
-        setVolumeMap(
-          produce((draft) => {
-            draft[receiver.identifier] = volumeValue;
-          }),
-        );
+          setVolumeMap(
+            produce((draft) => {
+              draft[receiver.identifier] = volumeValue;
+            }),
+          );
 
-        setReceiversMap(
-          produce((draft) => {
-            draft[receiver.identifier] = receiver;
-          }),
-        );
-      });
+          setReceiversMap(
+            produce((draft) => {
+              draft[receiver.identifier] = receiver;
+            }),
+          );
+        });
+      }
+
       await updateMeasurements();
 
       setIsRecording(sessionData.isRecording);
@@ -193,20 +211,28 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
 
   const onWebsocketReconnected = useCallback(async () => {
     console.log('onWebsocketReconnected in session');
+    if (syncStage === null) {
+      return;
+    }
     const [data, errorCode] = await syncStage.session();
     errorCodeToSnackbar(errorCode);
 
     if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
-      setCurrentStep(PathEnum.SETUP);
-      setDesktopProvisioned(false);
+      navigate(PathEnum.SETUP);
+      setDesktopAgentProvisioned(false);
+    } else if (errorCode === SyncStageSDKErrorCode.NOT_IN_SESSION) {
+      onSessionOut();
     } else if (errorCode === SyncStageSDKErrorCode.OK) {
       setSessionData(data);
     }
 
-    buildViewSessionState(data, setConnectedMap, syncStage, setCurrentStep, setDesktopProvisioned, setVolumeMap, updateMeasurements);
-  }, []);
+    await buildViewSessionState(data, setConnectedMap, syncStage, setDesktopAgentProvisioned, setVolumeMap, updateMeasurements);
+  }, [syncStage]);
 
   const updateMeasurements = async () => {
+    if (syncStage === null) {
+      return;
+    }
     let errorCode;
     let measurements;
 
@@ -243,21 +269,132 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     });
   };
 
+  const clearDelegates = () => {
+    if (syncStage === null) {
+      return;
+    }
+    syncStage.userDelegate = new SyncStageUserDelegate(
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      () => {},
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      () => {},
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      () => {},
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      () => {},
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      () => {},
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      () => {},
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      () => {},
+    );
+  };
+
+  useEffect(() => {
+    const initializeSession = async () => {
+      console.log('initializeSession');
+      if (syncStage !== null && desktopAgentProvisioned) {
+        const sessionCodeFromPath = extractSessionCode(location.pathname);
+        setBackdropOpen(true);
+        const [data, errorCode] = await syncStage.session();
+        if (errorCode === SyncStageSDKErrorCode.OK) {
+          console.log('Desktop agent in session');
+
+          persistSessionCode(sessionCodeFromPath);
+          if (data.sessionCode?.replace(/-/g, '').toLowerCase() !== sessionCodeFromPath.replace(/-/g, '').toLowerCase()) {
+            console.log(
+              // eslint-disable-next-line
+              `${data.sessionCode} sessionCode differs from the one in the path ${location.pathname}. Leaving session and joining the one from the path`,
+            );
+            clearDelegates();
+
+            const errorCodeLeave = await syncStage.leave();
+            if (errorCodeLeave === SyncStageSDKErrorCode.OK) {
+              const [data, errorCodeJoin] = await syncStage.join(
+                sessionCodeFromPath,
+                nickname,
+                selectedServer.zoneId,
+                selectedServer.studioServerId,
+                nickname,
+              );
+              if (errorCodeJoin === SyncStageSDKErrorCode.OK) {
+                setSessionData(data);
+                setBackdropOpen(false);
+                return undefined;
+              }
+            }
+
+            console.log('Could not join or leave session in initializeSession method');
+            if (selectedServer) {
+              navigate(PathEnum.SESSIONS_JOIN);
+            } else if (nickname) {
+              navigate(PathEnum.LOCATION);
+            } else {
+              navigate(PathEnum.SESSION_NICKNAME);
+            }
+            setBackdropOpen(false);
+            return undefined;
+          } else {
+            setSessionData(data);
+            console.log('Opened session screen with the same session code as the one in the Desktop Agent');
+          }
+        } else if (errorCode !== SyncStageSDKErrorCode.OK && selectedServer !== null) {
+          console.log('Desktop Agent not in session. Joining the session from the path');
+          const [data, errorCode] = await syncStage.join(
+            sessionCodeFromPath,
+            nickname,
+            selectedServer.zoneId,
+            selectedServer.studioServerId,
+            nickname,
+          );
+          if (errorCode === SyncStageSDKErrorCode.OK) {
+            console.log('Remaining on session Screen');
+            setSessionData(data);
+            setBackdropOpen(false);
+            return undefined;
+          }
+
+          console.log('Could not join session from the path.');
+          if (nickname) {
+            navigate(PathEnum.LOCATION);
+            setBackdropOpen(false);
+            return undefined;
+          } else {
+            navigate(PathEnum.SESSION_NICKNAME);
+            setBackdropOpen(false);
+            return undefined;
+          }
+        }
+        setBackdropOpen(false);
+      }
+    };
+
+    initializeSession();
+  }, [syncStage, desktopAgentProvisioned, location.pathname]);
+
   useEffect(() => {
     // Set up the interval
-    const intervalId = setInterval(async () => {
+    if (updateMeasurementsIntervalId) {
+      clearInterval(updateMeasurementsIntervalId);
+    }
+    console.log('updateMeasurements interval init');
+    const localIntervalId = setInterval(async () => {
       await updateMeasurements();
     }, MEASUREMENTS_INTERVAL_MS);
 
+    setUpdateMeasurementsIntervalId(localIntervalId);
+
     // Clean up the interval when the component unmounts
     return () => {
-      clearInterval(intervalId);
+      clearInterval(updateMeasurementsIntervalId);
     };
-  }, [receiversMap]);
+  }, []);
 
   useEffect(() => {
     async function executeAsync() {
       if (syncStage !== null) {
+        console.log('Updating delegates');
         syncStage.userDelegate = new SyncStageUserDelegate(
           onUserJoined,
           onUserLeft,
@@ -275,15 +412,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
         if (errorCode === SyncStageSDKErrorCode.OK) {
           setMuted(mutedState);
         }
-        await buildViewSessionState(
-          sessionData,
-          setConnectedMap,
-          syncStage,
-          setCurrentStep,
-          setDesktopProvisioned,
-          setVolumeMap,
-          updateMeasurements,
-        );
+        await buildViewSessionState(sessionData, setConnectedMap, syncStage, setDesktopAgentProvisioned, setVolumeMap, updateMeasurements);
       }
     }
     executeAsync();
@@ -295,18 +424,33 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     };
   }, [syncStage, sessionData]);
 
+  useEffect(() => {
+    //on component unmount.
+    return () => {
+      if (syncStage !== null) {
+        syncStage.leave();
+      }
+    };
+  }, []);
+
   return (
     <div style={inSession ? mountedStyle : unmountedStyle}>
       <SessionWrapper>
         <Grid item container flexDirection="row" rowGap={2} columnGap={8} alignItems="flex-start" style={{ marginBottom: '90px' }}>
           {!!sessionData && !!sessionData.transmitter && (
-            <UserCard transmitter {...sessionData.transmitter} connected={connected} {...measurements} />
+            <UserCard
+              transmitter
+              {...sessionData.transmitter}
+              connected={connected ?? false}
+              {...measurements}
+              key={sessionData.transmitter.identifier}
+            />
           )}
           {Object.entries(receiversMap).map(([identifier, connection]) => (
             <UserCard
               {...connection}
               {...measurementsMap[identifier]}
-              connected={connectedMap[identifier]}
+              connected={connectedMap[identifier] ?? false}
               volume={volumeMap[identifier]}
               onVolumeChanged={async (volume) => {
                 setVolumeMap({
@@ -321,6 +465,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
                   [identifier]: volume,
                 });
               }}
+              key={identifier}
             />
           ))}
           <InviteOthers sessionCode={sessionCode} />
@@ -358,7 +503,13 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
               spacing={2}
             >
               <Grid item style={{ paddingRight: '32px' }}>
-                <Button style={{ color: theme.onSurfaceVariant }} onClick={async () => onLeaveSession()}>
+                <Button
+                  style={{ color: theme.onSurfaceVariant }}
+                  onClick={async () => {
+                    clearInterval(updateMeasurementsIntervalId);
+                    await onLeaveSession();
+                  }}
+                >
                   <CallEndIcon />
                 </Button>
               </Grid>

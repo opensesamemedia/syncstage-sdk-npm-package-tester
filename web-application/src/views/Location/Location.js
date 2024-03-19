@@ -1,4 +1,6 @@
 import React, { useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
+
 import { FormControlLabel, FormGroup, Grid, Switch } from '@mui/material';
 import FormControl from '@mui/material/FormControl';
 import ButtonContained from '../../components/StyledButtonContained';
@@ -7,7 +9,9 @@ import AppContext from '../../AppContext';
 import { PathEnum } from '../../router/PathEnum';
 
 const Location = () => {
-  const { setCurrentStep, automatedLocationSelection, setAutomatedLocationSelection } = useContext(AppContext);
+  const navigate = useNavigate();
+
+  const { automatedLocationSelection, setAutomatedLocationSelection } = useContext(AppContext);
 
   return (
     <Grid container direction="column" spacing={2}>
@@ -39,12 +43,12 @@ const Location = () => {
       <Grid item style={{ height: '80px' }} />
       <Grid container justifyContent="space-between">
         <Grid item>
-          <Button onClick={() => setCurrentStep(PathEnum.SESSION_NICKNAME)}>Previous</Button>
+          <Button onClick={() => navigate(PathEnum.SESSION_NICKNAME)}>Previous</Button>
         </Grid>
         <Grid item>
           <ButtonContained
             onClick={() => {
-              automatedLocationSelection ? setCurrentStep(PathEnum.LOCATION_LATENCIES) : setCurrentStep(PathEnum.LOCATION_MANUAL);
+              automatedLocationSelection ? navigate(PathEnum.LOCATION_LATENCIES) : navigate(PathEnum.LOCATION_MANUAL);
             }}
           >
             Next
