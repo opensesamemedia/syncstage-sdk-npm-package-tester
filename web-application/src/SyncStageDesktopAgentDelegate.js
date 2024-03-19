@@ -31,11 +31,9 @@ class SyncStageDesktopAgentDelegate {
   desktopAgentConnected() {
     this.onDesktopAgentConnected();
   }
-
   desktopAgentDisconnected() {
     this.onDesktopAgentDisconnected();
   }
-
   desktopAgentLostConnection() {
     this.onDesktopAgentLostConnection();
   }

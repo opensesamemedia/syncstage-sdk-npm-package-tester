@@ -37,7 +37,7 @@ const errorCodeToSnackbar = (errorCode, msgOnOK) => {
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const willJwtBeExpiredIn = (jwt, secondTimeRemaning) => {
-  // check if token will be valid for at least the next 10 seconds
+  // check if token will be valid for at least the next <secondTimeRemaning> seconds
   const dateInFuture = Date.now() + secondTimeRemaning * 1000;
   try {
     const jwtExp = JSON.parse(atob(jwt.split('.')[1])).exp * 1000;

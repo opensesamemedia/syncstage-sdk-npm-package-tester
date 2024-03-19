@@ -10,7 +10,7 @@ import Button from '../../components/StyledButton';
 const SessionNickname = () => {
   const navigate = useNavigate();
 
-  const { nickname, setNicknameAndSave } = useContext(AppContext);
+  const { nickname, persistNickname } = useContext(AppContext);
 
   return (
     <Grid container direction="column" spacing={2}>
@@ -21,7 +21,7 @@ const SessionNickname = () => {
         <p>Please enter your session nickname.</p>
       </Grid>
       <Grid item>
-        <TextField label="Nickname" value={nickname} onChange={(e) => setNicknameAndSave(e.target.value)} style={{ width: '70%' }} />
+        <TextField label="Nickname" value={nickname} onChange={(e) => persistNickname(e.target.value)} style={{ width: '70%' }} />
       </Grid>
       <Grid item style={{ height: '140px' }} />
       <Grid container justifyContent="space-between">

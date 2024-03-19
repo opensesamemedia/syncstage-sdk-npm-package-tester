@@ -41,8 +41,6 @@ const StateManager = () => {
   const [sessionData, setSessionData] = useState(null);
   const [selectedServer, setSelectedServer] = useState(JSON.parse(localStorage.getItem('selectedServer')) ?? null);
 
-  const [backdropOpen, setBackdropOpen] = useState(false);
-
   const desktopAgentConnectedRef = useRef(false);
   const [desktopAgentConnected, setDesktopAgentConnected] = useState(false);
   const [desktopAgentConnectedTimeoutId, setDesktopAgentConnectedTimeoutId] = useState(false);
@@ -55,6 +53,7 @@ const StateManager = () => {
   const [desktopAgentAquired, setDesktopAgentAquired] = useState(false);
 
   const [desktopAgentProtocolHandler, setDesktopAgentProtocolHandler] = useState('');
+  const [backdropOpen, setBackdropOpen] = useState(false);
 
   const nicknameSetAndProvisioned = nickname && syncStageJwt;
   const inSession = SESSION_PATH_REGEX.test(location.pathname);
@@ -138,15 +137,8 @@ const StateManager = () => {
 
     setDesktopAgentConnectedTimeoutId(timeoutId);
 
-    // Clean up the timeout to avoid memory leaks
     return () => clearTimeout(desktopAgentConnectedTimeoutId);
   }, []);
-
-  // const navigateIfLoading = (step) => {
-  //   if (location.pathname === `${PathEnum.LOADING}`) {
-  //     navigate(step);
-  //   }
-  // };
 
   useEffect(() => {
     const confirmAmplifyUserSignedIn = async () => {
@@ -194,7 +186,7 @@ const StateManager = () => {
 
   useEffect(() => {
     if (syncStage === null) {
-      console.log('initializeSyncStage useEffect syncStage instantiation');
+      console.log('initializeSyncStage create SyncStage object');
 
       const desktopAgentDelegate = new SyncStageDesktopAgentDelegate(
         onDesktopAgentAquired,
@@ -223,7 +215,6 @@ const StateManager = () => {
   }, [location.pathname]);
 
   useEffect(() => {
-    console.log('useEffect [syncStage, desktopAgentConnected, desktopAgentConnectedTimeout, isSignedIn]');
     const fetchJWT = async () => {
       let jwt = syncStageJwt;
 
@@ -308,7 +299,7 @@ const StateManager = () => {
     await syncStage.leave();
   };
 
-  const setNicknameAndSave = (nickname) => {
+  const persistNickname = (nickname) => {
     localStorage.setItem('nickname', nickname);
     setNickname(nickname);
   };
@@ -421,7 +412,7 @@ const StateManager = () => {
     syncStage,
     syncStageSDKVersion,
     nickname,
-    setNicknameAndSave,
+    persistNickname,
     sessionCode,
     persistSessionCode,
     sessionData,
@@ -470,7 +461,7 @@ const StateManager = () => {
               <span style={{ fontSize: 10 }}> Desktop Agent Link </span>
             </a>
           )}
-          <span class="dot" style={{ backgroundColor: desktopAgentConnected ? '#2ECC71' : '#C0392B' }}></span>
+          <span className="dot" style={{ backgroundColor: desktopAgentConnected ? '#2ECC71' : '#C0392B' }}></span>
         </div>
         <Navigation
           hidden={!isSignedIn || inSession || location.pathname == `${PathEnum.LOADING}`}

@@ -17,7 +17,6 @@ import { errorCodeToSnackbar, extractSessionCode } from '../../utils';
 import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-package-development';
 import SyncStageUserDelegate from '../../SyncStageUserDelegate';
 import SyncStageConnectivityDelegate from '../../SyncStageConnectivityDelegate';
-import { enqueueSnackbar } from 'notistack';
 import { PathEnum } from '../../router/PathEnum';
 import produce from 'immer';
 import modalStyle from '../../ui/ModalStyle';
@@ -439,13 +438,19 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
       <SessionWrapper>
         <Grid item container flexDirection="row" rowGap={2} columnGap={8} alignItems="flex-start" style={{ marginBottom: '90px' }}>
           {!!sessionData && !!sessionData.transmitter && (
-            <UserCard transmitter {...sessionData.transmitter} connected={connected} {...measurements} />
+            <UserCard
+              transmitter
+              {...sessionData.transmitter}
+              connected={connected ?? false}
+              {...measurements}
+              key={sessionData.transmitter.identifier}
+            />
           )}
           {Object.entries(receiversMap).map(([identifier, connection]) => (
             <UserCard
               {...connection}
               {...measurementsMap[identifier]}
-              connected={connectedMap[identifier]}
+              connected={connectedMap[identifier] ?? false}
               volume={volumeMap[identifier]}
               onVolumeChanged={async (volume) => {
                 setVolumeMap({
@@ -460,6 +465,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
                   [identifier]: volume,
                 });
               }}
+              key={identifier}
             />
           ))}
           <InviteOthers sessionCode={sessionCode} />

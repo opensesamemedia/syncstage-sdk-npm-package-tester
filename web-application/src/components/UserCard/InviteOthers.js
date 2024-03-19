@@ -29,7 +29,7 @@ const InviteOthers = ({ sessionCode }) => {
    * Check if using HTTPS and navigator.clipboard is available
    * Then uses standard clipboard API, otherwise uses fallback
    */
-  const copySessionUrlToClipboard = (content) => {
+  const copySessionUrlToClipboard = () => {
     if (window.isSecureContext && navigator.clipboard) {
       navigator.clipboard.writeText(window.location.href);
     } else {
