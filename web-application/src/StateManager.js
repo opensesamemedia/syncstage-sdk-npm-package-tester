@@ -466,6 +466,7 @@ const StateManager = () => {
         <Navigation
           hidden={!isSignedIn || inSession || location.pathname == `${PathEnum.LOADING}`}
           inSession={inSession}
+          isSignedIn={isSignedIn}
           nicknameSetAndProvisioned={nicknameSetAndProvisioned}
         />
 
