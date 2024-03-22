@@ -2564,10 +2564,10 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@opensesamemedia/syncstage@^0.4.2":
-  version "0.4.2"
-  resolved "https://registry.yarnpkg.com/@opensesamemedia/syncstage/-/syncstage-0.4.2.tgz#5ba2cdea33c60e0da74b2a24ec88f6d6793ce68d"
-  integrity sha512-mgFBUzpG4IR7+mc78mhauOYD3uT/YChR9bdc6rSKuwe8flfuD3ev4BIxqKlogUU+al/UmDBUzbLcPvSXHEXiaA==
+"@opensesamemedia/syncstage@^0.4.3":
+  version "0.4.3"
+  resolved "https://registry.yarnpkg.com/@opensesamemedia/syncstage/-/syncstage-0.4.3.tgz#29b2afaa739ee19315bc3a6d026c91aca77bfeca"
+  integrity sha512-V7YawEhuqfSLZ751HbHY1IBipIeOmZEfmeUBYgzyUebB1WIPpenNmFefsecATjkZX/JdaPgpryY69M6ldG5P4w==
   dependencies:
     "@anephenix/sarus" "^0.4.6"
     async-mutex "^0.4.0"
@@ -9943,6 +9943,11 @@ react-scripts@5.0.1:
     workbox-webpack-plugin "^6.4.1"
   optionalDependencies:
     fsevents "^2.3.2"
+
+react-timing-hooks@^4.0.2:
+  version "4.0.2"
+  resolved "https://registry.yarnpkg.com/react-timing-hooks/-/react-timing-hooks-4.0.2.tgz#738f2a516f5f0a25c322f4cbb1d79789725aa089"
+  integrity sha512-wjzu6e/H1ouyhSu0YRLkECGChvnQswJoq7HSKLc39gxiJeQv48CC9SGK02E6vHfXcCxH/Yx6XhSZJHPg3RBtdQ==
 
 react-transition-group@^4.4.5:
   version "4.4.5"

@@ -1,4 +1,6 @@
 import React, { useContext, useState, useEffect, useCallback } from 'react';
+import { useInterval } from 'react-timing-hooks';
+
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Grid, Box, Modal, Typography } from '@mui/material';
 import AppContext from '../../AppContext';
@@ -41,7 +43,6 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     persistSessionCode,
   } = useContext(AppContext);
 
-  const [updateMeasurementsIntervalId, setUpdateMeasurementsIntervalId] = useState(false);
   const [settingsOpened, setSettingsOpened] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
 
@@ -55,6 +56,49 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
   const [volumeMap, setVolumeMap] = useState({});
   const [connectedMap, setConnectedMap] = useState({});
   const [receiversMap, setReceiversMap] = useState({});
+
+  const updateMeasurements = async () => {
+    if (syncStage === null) {
+      return;
+    }
+    let errorCode;
+    let measurements;
+
+    //Tx measurements
+    [measurements, errorCode] = await syncStage.getTransmitterMeasurements();
+    errorCodeToSnackbar(errorCode);
+
+    if (measurements) {
+      setMeasurements({
+        delay: measurements.networkDelayMs,
+        jitter: measurements.networkJitterMs,
+        quality: measurements.quality,
+      });
+    }
+    //Rx measurements
+    // console.log(`Receivers map: ${JSON.stringify(receiversMap)}`);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    Object.entries(receiversMap).forEach(async ([_, receiver]) => {
+      let errorCode;
+      let measurements;
+      [measurements, errorCode] = await syncStage.getReceiverMeasurements(receiver.identifier);
+      errorCodeToSnackbar(errorCode);
+      if (measurements) {
+        setMeasurementsMap(
+          produce((draft) => {
+            draft[receiver.identifier] = {
+              delay: measurements.networkDelayMs,
+              jitter: measurements.networkJitterMs,
+              quality: measurements.quality,
+            };
+          }),
+        );
+      }
+    });
+  };
+
+  // eslint-disable-next-line
+  const { start, pause } = useInterval(updateMeasurements, MEASUREMENTS_INTERVAL_MS, { startOnMount: true });
 
   const onSessionOut = useCallback(() => {
     setSessionData(null);
@@ -229,46 +273,6 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     await buildViewSessionState(data, setConnectedMap, syncStage, setDesktopAgentProvisioned, setVolumeMap, updateMeasurements);
   }, [syncStage]);
 
-  const updateMeasurements = async () => {
-    if (syncStage === null) {
-      return;
-    }
-    let errorCode;
-    let measurements;
-
-    //Tx measurements
-    [measurements, errorCode] = await syncStage.getTransmitterMeasurements();
-    errorCodeToSnackbar(errorCode);
-
-    if (measurements) {
-      setMeasurements({
-        delay: measurements.networkDelayMs,
-        jitter: measurements.networkJitterMs,
-        quality: measurements.quality,
-      });
-    }
-    //Rx measurements
-    // console.log(`Receivers map: ${JSON.stringify(receiversMap)}`);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    Object.entries(receiversMap).forEach(async ([_, receiver]) => {
-      let errorCode;
-      let measurements;
-      [measurements, errorCode] = await syncStage.getReceiverMeasurements(receiver.identifier);
-      errorCodeToSnackbar(errorCode);
-      if (measurements) {
-        setMeasurementsMap(
-          produce((draft) => {
-            draft[receiver.identifier] = {
-              delay: measurements.networkDelayMs,
-              jitter: measurements.networkJitterMs,
-              quality: measurements.quality,
-            };
-          }),
-        );
-      }
-    });
-  };
-
   const clearDelegates = () => {
     if (syncStage === null) {
       return;
@@ -374,24 +378,6 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
   }, [syncStage, desktopAgentProvisioned, location.pathname]);
 
   useEffect(() => {
-    // Set up the interval
-    if (updateMeasurementsIntervalId) {
-      clearInterval(updateMeasurementsIntervalId);
-    }
-    console.log('updateMeasurements interval init');
-    const localIntervalId = setInterval(async () => {
-      await updateMeasurements();
-    }, MEASUREMENTS_INTERVAL_MS);
-
-    setUpdateMeasurementsIntervalId(localIntervalId);
-
-    // Clean up the interval when the component unmounts
-    return () => {
-      clearInterval(updateMeasurementsIntervalId);
-    };
-  }, []);
-
-  useEffect(() => {
     async function executeAsync() {
       if (syncStage !== null) {
         console.log('Updating delegates');
@@ -428,6 +414,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     //on component unmount.
     return () => {
       if (syncStage !== null) {
+        pause(); // stop measurements
         syncStage.leave();
       }
     };
@@ -506,7 +493,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
                 <Button
                   style={{ color: theme.onSurfaceVariant }}
                   onClick={async () => {
-                    clearInterval(updateMeasurementsIntervalId);
+                    pause(); // stop measurements
                     await onLeaveSession();
                   }}
                 >
