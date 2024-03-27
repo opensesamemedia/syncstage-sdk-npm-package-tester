@@ -16,7 +16,7 @@ import Button from '@mui/material/Button';
 import theme from '../../ui/theme';
 import InviteOthers from '../../components/UserCard/InviteOthers';
 import { errorCodeToSnackbar, extractSessionCode } from '../../utils';
-import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
+import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-package-development';
 import SyncStageUserDelegate from '../../SyncStageUserDelegate';
 import SyncStageConnectivityDelegate from '../../SyncStageConnectivityDelegate';
 import { PathEnum } from '../../router/PathEnum';
@@ -37,7 +37,6 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     syncStage,
     desktopAgentProvisioned,
     setDesktopAgentProvisioned,
-    selectedServer,
     nickname,
     setBackdropOpen,
     persistSessionCode,
@@ -315,13 +314,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
 
             const errorCodeLeave = await syncStage.leave();
             if (errorCodeLeave === SyncStageSDKErrorCode.OK) {
-              const [data, errorCodeJoin] = await syncStage.join(
-                sessionCodeFromPath,
-                nickname,
-                selectedServer.zoneId,
-                selectedServer.studioServerId,
-                nickname,
-              );
+              const [data, errorCodeJoin] = await syncStage.join(sessionCodeFromPath, nickname, nickname);
               if (errorCodeJoin === SyncStageSDKErrorCode.OK) {
                 setSessionData(data);
                 setBackdropOpen(false);
@@ -330,28 +323,16 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
             }
 
             console.log('Could not join or leave session in initializeSession method');
-            if (selectedServer) {
-              navigate(PathEnum.SESSIONS_JOIN);
-            } else if (nickname) {
-              navigate(PathEnum.LOCATION);
-            } else {
-              navigate(PathEnum.SESSION_NICKNAME);
-            }
+            navigate(PathEnum.SESSIONS_JOIN);
             setBackdropOpen(false);
             return undefined;
           } else {
             setSessionData(data);
             console.log('Opened session screen with the same session code as the one in the Desktop Agent');
           }
-        } else if (errorCode !== SyncStageSDKErrorCode.OK && selectedServer !== null) {
+        } else if (errorCode !== SyncStageSDKErrorCode.OK) {
           console.log('Desktop Agent not in session. Joining the session from the path');
-          const [data, errorCode] = await syncStage.join(
-            sessionCodeFromPath,
-            nickname,
-            selectedServer.zoneId,
-            selectedServer.studioServerId,
-            nickname,
-          );
+          const [data, errorCode] = await syncStage.join(sessionCodeFromPath, nickname, nickname);
           if (errorCode === SyncStageSDKErrorCode.OK) {
             console.log('Remaining on session Screen');
             setSessionData(data);
@@ -361,7 +342,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
 
           console.log('Could not join session from the path.');
           if (nickname) {
-            navigate(PathEnum.LOCATION);
+            navigate(PathEnum.SESSIONS_JOIN);
             setBackdropOpen(false);
             return undefined;
           } else {
@@ -371,6 +352,8 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
           }
         }
         setBackdropOpen(false);
+      } else if (!desktopAgentProvisioned) {
+        setBackdropOpen(true);
       }
     };
 

@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { Grid } from '@mui/material';
@@ -11,14 +11,7 @@ import { PathEnum } from '../../router/PathEnum';
 const JoinSession = ({ onJoinSession, onCreateSession }) => {
   const navigate = useNavigate();
 
-  const { sessionCode, persistSessionCode, selectedServer } = useContext(AppContext);
-
-  useEffect(() => {
-    if (!selectedServer) {
-      console.log('No server selected');
-      navigate(PathEnum.LOCATION);
-    }
-  }, []);
+  const { sessionCode, persistSessionCode } = useContext(AppContext);
 
   return (
     <Grid container direction="column" spacing={2}>

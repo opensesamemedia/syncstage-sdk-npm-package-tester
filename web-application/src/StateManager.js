@@ -22,7 +22,7 @@ import RoutesComponent from './router/RoutesComponent';
 import './ui/animationStyles.css';
 import SyncStageDesktopAgentDelegate from './SyncStageDesktopAgentDelegate';
 
-import SyncStage, { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
+import SyncStage, { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-package-development';
 import modalStyle from './ui/ModalStyle';
 import Navigation from './components/Navigation/Navigation';
 
@@ -39,7 +39,6 @@ const StateManager = () => {
   const [nickname, setNickname] = useState(localStorage.getItem('nickname') ?? '');
   const [sessionCode, setSessionCode] = useState(localStorage.getItem('sessionCode') ?? '');
   const [sessionData, setSessionData] = useState(null);
-  const [selectedServer, setSelectedServer] = useState(JSON.parse(localStorage.getItem('selectedServer')) ?? null);
 
   const desktopAgentConnectedRef = useRef(false);
   const [desktopAgentConnected, setDesktopAgentConnected] = useState(false);
@@ -76,14 +75,6 @@ const StateManager = () => {
   };
 
   const onDesktopAgentDisconnected = () => {
-    setDesktopAgentConnected(false);
-  };
-
-  const onDesktopAgentKeepAlive = () => {
-    setDesktopAgentConnected(true);
-  };
-
-  const onDesktopAgentLostConnection = () => {
     setDesktopAgentConnected(false);
   };
 
@@ -193,10 +184,8 @@ const StateManager = () => {
         onDesktopAgentReleased,
         onDesktopAgentConnected,
         onDesktopAgentDisconnected,
-        onDesktopAgentKeepAlive,
-        onDesktopAgentLostConnection,
       );
-      const ss = new SyncStage(null, null, null, desktopAgentDelegate, onJwtExpired);
+      const ss = new SyncStage(null, null, desktopAgentDelegate, onJwtExpired);
 
       setSyncStageSDKVersion(ss.getSDKVersion());
       setSyncStage(ss);
@@ -238,39 +227,15 @@ const StateManager = () => {
         const initErrorCode = await syncStage.init(jwt);
         if (initErrorCode == SyncStageSDKErrorCode.OK) {
           setDesktopAgentProvisioned(true);
+          if (!inSession)
+            if (nickname) {
+              navigate(PathEnum.SESSIONS_JOIN);
+            } else {
+              navigate(PathEnum.SESSION_NICKNAME);
+            }
         } else {
           console.log('Could not init SyncStage, invalid jwt');
           signOut();
-          return undefined;
-        }
-
-        if (!(nickname && SESSION_PATH_REGEX.test(location.pathname))) {
-          if (selectedServer) {
-            console.log('Validating cached selected server');
-            const [data, errorCode] = await syncStage.getServerInstances();
-
-            if (errorCode === SyncStageSDKErrorCode.OK) {
-              const zoneExists = data.some((obj) => obj.zoneId === selectedServer.zoneId);
-
-              if (zoneExists) {
-                console.log(`Zone with zoneId ${selectedServer.zoneId} exists in the server instances array.`);
-                navigate(PathEnum.SESSIONS_JOIN);
-              } else {
-                console.log(
-                  `Zone with zoneId ${selectedServer.zoneId} does not exist in the server instances array. ${JSON.stringify(data)}`,
-                );
-                persistSelectedServer(null);
-                navigate(PathEnum.SESSION_NICKNAME);
-              }
-            } else {
-              persistSelectedServer(null);
-              navigate(PathEnum.SESSION_NICKNAME);
-            }
-          } else if (nickname) {
-            navigate(PathEnum.LOCATION);
-          } else {
-            navigate(PathEnum.SESSION_NICKNAME);
-          }
           return undefined;
         }
       } else if (syncStage !== null && desktopAgentConnectedTimeout && isSignedIn) {
@@ -315,11 +280,6 @@ const StateManager = () => {
     localStorage.setItem('syncStageJwt', jwt);
   };
 
-  const persistSelectedServer = (server) => {
-    setSelectedServer(server);
-    localStorage.setItem('selectedServer', JSON.stringify(server));
-  };
-
   async function fetchNewSyncStageToken() {
     let jwt;
     // use local docke-compose backend
@@ -341,8 +301,9 @@ const StateManager = () => {
     setBackdropOpen(true);
     const errorCode = await fetchNewSyncStageToken();
     errorCodeToSnackbar(errorCode, 'Authorized to SyncStage services');
-    setBackdropOpen(false);
+
     if (errorCode === SyncStageSDKErrorCode.OK) {
+      setBackdropOpen(false);
       navigate(PathEnum.SESSION_NICKNAME);
       setDesktopAgentProvisioned(true);
     } else {
@@ -356,7 +317,7 @@ const StateManager = () => {
 
   const onCreateSession = async () => {
     setBackdropOpen(true);
-    const [createData, errorCode] = await syncStage.createSession(selectedServer.zoneId, selectedServer.studioServerId, nickname);
+    const [createData, errorCode] = await syncStage.createSession(nickname);
     errorCodeToSnackbar(errorCode, `Created session ${createData.sessionCode}`);
 
     if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
@@ -366,8 +327,6 @@ const StateManager = () => {
     persistSessionCode(createData.sessionCode);
 
     navigate(`${PathEnum.SESSIONS_SESSION_PREFIX}${createData.sessionCode}`);
-
-    setBackdropOpen(false);
   };
 
   const onLeaveSession = async () => {
@@ -379,11 +338,7 @@ const StateManager = () => {
     if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
       return goToSetupPageOnUnauthorized();
     }
-    if (selectedServer) {
-      navigate(PathEnum.SESSIONS_JOIN);
-    } else {
-      navigate(PathEnum.LOCATION);
-    }
+    navigate(PathEnum.SESSIONS_JOIN);
   };
 
   const onStartRecording = async () => {
@@ -417,8 +372,6 @@ const StateManager = () => {
     persistSessionCode,
     sessionData,
     setSessionData,
-    selectedServer,
-    persistSelectedServer,
     setBackdropOpen,
     desktopAgentConnected,
     setDesktopAgentConnected,

@@ -32,7 +32,7 @@ const SessionNickname = () => {
           <ButtonContained
             disabled={nickname === ''}
             onClick={() => {
-              navigate(PathEnum.LOCATION);
+              navigate(PathEnum.SESSIONS_JOIN);
             }}
           >
             Next
