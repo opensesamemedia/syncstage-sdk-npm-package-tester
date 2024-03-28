@@ -80,7 +80,7 @@ const Menu = ({ nicknameSetAndProvisioned, drawerOpened, onCloseDrawer, isMobile
               selected={location.pathname === `${PathEnum.SESSIONS_SESSION_PREFIX}`}
               sx={selectedStyle}
               onClick={() => navigate(PathEnum.SESSIONS_JOIN)}
-              disabled={!nicknameSetAndProvisioned  || !desktopAgentProvisioned || !desktopAgentConnected}
+              disabled={!nicknameSetAndProvisioned || !desktopAgentProvisioned || !desktopAgentConnected}
             >
               <ListItemIcon sx={{ color: 'inherit' }}>
                 <GroupsIcon />

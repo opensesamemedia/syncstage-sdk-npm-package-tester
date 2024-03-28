@@ -242,6 +242,7 @@ const StateManager = () => {
         console.log('initializeSyncStage useEffect desktopAgentConnectedTimeout');
         console.log('Desktop connected timeout, going to setup screen');
         navigate(PathEnum.SETUP);
+        setBackdropOpen(false);
         return undefined;
       }
     };
@@ -261,6 +262,7 @@ const StateManager = () => {
     persistSyncStageJwt('');
     navigate(PathEnum.LOGIN);
     setDesktopAgentProvisioned(false);
+    setBackdropOpen(false);
     await syncStage.leave();
   };
 
