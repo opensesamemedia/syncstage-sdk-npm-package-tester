@@ -43,7 +43,7 @@ const StateManager = () => {
   const desktopAgentConnectedRef = useRef(false);
   const [desktopAgentConnected, setDesktopAgentConnected] = useState(false);
   const [desktopAgentConnectedTimeoutId, setDesktopAgentConnectedTimeoutId] = useState(false);
-  const [desktopAgentConnectedTimeout, setDesktopAgentConnectedTimeout] = useState(false);
+  const [desktopAgentConnectedTimeout, setDesktopAgentConnectedTimeout] = useState(null);
 
   const [desktopAgentProvisioned, setDesktopAgentProvisioned] = useState(false);
   const [automatedLocationSelection, setAutomatedLocationSelection] = useState(true);
@@ -113,6 +113,8 @@ const StateManager = () => {
       console.log('Desktop not connected. Setting timeout');
 
       setDesktopAgentConnectedTimeout(true);
+    } else {
+      setDesktopAgentConnectedTimeout(false);
     }
   };
 
@@ -122,12 +124,13 @@ const StateManager = () => {
 
   useEffect(() => {
     console.log('Desktop timeout useEffect');
-    const timeoutId = setTimeout(() => {
-      setDesktopAgentConnectedTimeoutIfNotConnected();
-    }, 5000);
+    if (desktopAgentConnectedTimeout === null) {
+      const timeoutId = setTimeout(() => {
+        setDesktopAgentConnectedTimeoutIfNotConnected();
+      }, 5000);
 
-    setDesktopAgentConnectedTimeoutId(timeoutId);
-
+      setDesktopAgentConnectedTimeoutId(timeoutId);
+    }
     return () => clearTimeout(desktopAgentConnectedTimeoutId);
   }, []);
 
@@ -219,10 +222,9 @@ const StateManager = () => {
     };
 
     const initializeSyncStage = async () => {
-      if (syncStage !== null && desktopAgentConnected && isSignedIn === true && desktopAgentConnectedTimeout === false) {
+      if (syncStage !== null && desktopAgentConnected && isSignedIn === true && desktopAgentConnectedTimeout === null) {
         console.log('initializeSyncStage useEffect syncStage init');
         const jwt = await fetchJWT();
-        console.log(`jwt to init ${jwt}`);
 
         const initErrorCode = await syncStage.init(jwt);
         if (initErrorCode == SyncStageSDKErrorCode.OK) {

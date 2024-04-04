@@ -63,6 +63,8 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     let errorCode;
     let measurements;
 
+    console.log(`updateMeasurements execution time: ${new Date().toISOString()}`);
+
     //Tx measurements
     [measurements, errorCode] = await syncStage.getTransmitterMeasurements();
     errorCodeToSnackbar(errorCode);
@@ -204,14 +206,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     );
   }, []);
 
-  const buildViewSessionState = async (
-    sessionData,
-    setConnectedMap,
-    syncStage,
-    setDesktopAgentProvisioned,
-    setVolumeMap,
-    updateMeasurements,
-  ) => {
+  const buildViewSessionState = async (sessionData, setConnectedMap, syncStage, setDesktopAgentProvisioned, setVolumeMap) => {
     if (syncStage !== null && sessionData != null) {
       let errorCode;
       // initialize connection and volume, receivers map based on the sessionData state
@@ -246,14 +241,12 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
         });
       }
 
-      await updateMeasurements();
-
       setIsRecording(sessionData.isRecording);
     }
   };
 
   const onWebsocketReconnected = useCallback(async () => {
-    console.log('onWebsocketReconnected in session');
+    console.log(`onWebsocketReconnected in session at time: ${new Date().toISOString()}`);
     if (syncStage === null) {
       return;
     }
@@ -269,7 +262,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
       setSessionData(data);
     }
 
-    await buildViewSessionState(data, setConnectedMap, syncStage, setDesktopAgentProvisioned, setVolumeMap, updateMeasurements);
+    await buildViewSessionState(data, setConnectedMap, syncStage, setDesktopAgentProvisioned, setVolumeMap);
   }, [syncStage]);
 
   const clearDelegates = () => {
@@ -381,7 +374,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
         if (errorCode === SyncStageSDKErrorCode.OK) {
           setMuted(mutedState);
         }
-        await buildViewSessionState(sessionData, setConnectedMap, syncStage, setDesktopAgentProvisioned, setVolumeMap, updateMeasurements);
+        await buildViewSessionState(sessionData, setConnectedMap, syncStage, setDesktopAgentProvisioned, setVolumeMap);
       }
     }
     executeAsync();
