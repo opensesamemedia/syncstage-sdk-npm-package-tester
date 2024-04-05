@@ -391,7 +391,6 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     return () => {
       if (syncStage !== null) {
         pause(); // stop measurements
-        syncStage.leave();
       }
     };
   }, []);

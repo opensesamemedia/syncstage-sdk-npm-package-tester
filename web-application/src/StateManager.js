@@ -41,6 +41,7 @@ const StateManager = () => {
   const [sessionData, setSessionData] = useState(null);
 
   const desktopAgentConnectedRef = useRef(false);
+  const desktopAgentConnectedTimeoutRef = useRef(null);
   const [desktopAgentConnected, setDesktopAgentConnected] = useState(false);
   const [desktopAgentConnectedTimeoutId, setDesktopAgentConnectedTimeoutId] = useState(false);
   const [desktopAgentConnectedTimeout, setDesktopAgentConnectedTimeout] = useState(null);
@@ -109,7 +110,8 @@ const StateManager = () => {
   };
 
   const setDesktopAgentConnectedTimeoutIfNotConnected = () => {
-    if (!desktopAgentConnectedRef.current) {
+    console.log(`desktopAgentConnectedTimeoutRef.current: ${desktopAgentConnectedTimeoutRef.current}`);
+    if (!desktopAgentConnectedRef.current && desktopAgentConnectedTimeoutRef.current === null) {
       console.log('Desktop not connected. Setting timeout');
 
       setDesktopAgentConnectedTimeout(true);
@@ -123,8 +125,13 @@ const StateManager = () => {
   }, [desktopAgentConnected]);
 
   useEffect(() => {
-    console.log('Desktop timeout useEffect');
-    if (desktopAgentConnectedTimeout === null) {
+    desktopAgentConnectedTimeoutRef.current = desktopAgentConnectedTimeout;
+  }, [desktopAgentConnectedTimeoutRef]);
+
+  useEffect(() => {
+    if (!desktopAgentConnectedTimeoutId) {
+      console.log('Desktop timeout useEffect');
+
       const timeoutId = setTimeout(() => {
         setDesktopAgentConnectedTimeoutIfNotConnected();
       }, 5000);
