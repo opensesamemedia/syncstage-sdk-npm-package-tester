@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-empty-function */
 import React, { useContext, useState, useEffect, useCallback } from 'react';
 import { useInterval } from 'react-timing-hooks';
 
@@ -40,6 +41,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     nickname,
     setBackdropOpen,
     persistSessionCode,
+    manuallySelectedInstance,
   } = useContext(AppContext);
 
   const [settingsOpened, setSettingsOpened] = useState(false);
@@ -270,19 +272,12 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
       return;
     }
     syncStage.userDelegate = new SyncStageUserDelegate(
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
       () => {},
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
       () => {},
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
       () => {},
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
       () => {},
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
       () => {},
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
       () => {},
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
       () => {},
     );
   };
@@ -290,6 +285,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
   useEffect(() => {
     const initializeSession = async () => {
       console.log('initializeSession');
+      console.log(`Manually selected instance: ${JSON.stringify(manuallySelectedInstance)}`);
       if (syncStage !== null && desktopAgentProvisioned) {
         const sessionCodeFromPath = extractSessionCode(location.pathname);
         setBackdropOpen(true);
@@ -307,7 +303,13 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
 
             const errorCodeLeave = await syncStage.leave();
             if (errorCodeLeave === SyncStageSDKErrorCode.OK) {
-              const [data, errorCodeJoin] = await syncStage.join(sessionCodeFromPath, nickname, nickname);
+              const [data, errorCodeJoin] = await syncStage.join(
+                sessionCodeFromPath,
+                nickname,
+                nickname,
+                manuallySelectedInstance.zoneId,
+                manuallySelectedInstance.studioServerId,
+              );
               if (errorCodeJoin === SyncStageSDKErrorCode.OK) {
                 setSessionData(data);
                 setBackdropOpen(false);
@@ -325,7 +327,13 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
           }
         } else if (errorCode !== SyncStageSDKErrorCode.OK) {
           console.log('Desktop Agent not in session. Joining the session from the path');
-          const [data, errorCode] = await syncStage.join(sessionCodeFromPath, nickname, nickname);
+          const [data, errorCode] = await syncStage.join(
+            sessionCodeFromPath,
+            nickname,
+            nickname,
+            manuallySelectedInstance.zoneId,
+            manuallySelectedInstance.studioServerId,
+          );
           if (errorCode === SyncStageSDKErrorCode.OK) {
             console.log('Remaining on session Screen');
             setSessionData(data);

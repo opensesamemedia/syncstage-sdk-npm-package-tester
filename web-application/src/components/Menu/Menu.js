@@ -97,8 +97,6 @@ const Menu = ({ nicknameSetAndProvisioned, drawerOpened, onCloseDrawer, isMobile
           </List>
 
           <span style={{ paddingLeft: 16, paddingTop: 20, fontSize: 10 }}>SDK: {syncStageSDKVersion}</span>
-          {/* TODO */}
-          {/* {selectedServer ? <span style={{ paddingLeft: 8, fontSize: 10 }}>Location: {selectedServer.zoneName}</span> : <></>} */}
         </MenuWrapper>
       </Drawer>
     </>

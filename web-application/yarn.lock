@@ -2564,10 +2564,10 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@opensesamemedia/syncstage-sdk-npm-package-development@^0.4.4-rc18":
-  version "0.4.4-rc18"
-  resolved "https://registry.yarnpkg.com/@opensesamemedia/syncstage-sdk-npm-package-development/-/syncstage-sdk-npm-package-development-0.4.4-rc18.tgz#734164c2d911ff9f3f023b00200dbe624f102d69"
-  integrity sha512-pjsaDFD9LZMKdsceRdkgDK3g+SMdk87JeKOEL39FokgSLuz/Tr1HegXKPUDscFh3/sDrreZ9jcZDIMx489+3Qw==
+"@opensesamemedia/syncstage-sdk-npm-package-development@^0.4.4-rc21":
+  version "0.4.4-rc21"
+  resolved "https://registry.yarnpkg.com/@opensesamemedia/syncstage-sdk-npm-package-development/-/syncstage-sdk-npm-package-development-0.4.4-rc21.tgz#64763c0f663daeb4f5c0d007d02ea7a5cafca3eb"
+  integrity sha512-eMfGUWZPD3KM5jATjNfu7Wbdor5JuB6VSdc6+hhZkHH4xEBmjfokeN66JOUJqe6hn62dEVE//0ty1b3rhRkMyA==
   dependencies:
     "@anephenix/sarus" "^0.4.6"
     async-mutex "^0.4.0"

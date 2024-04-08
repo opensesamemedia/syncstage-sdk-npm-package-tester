@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-empty-function */
 import { Amplify } from 'aws-amplify';
 import { signOut as amplifySignOut, getCurrentUser } from 'aws-amplify/auth';
 
@@ -21,6 +22,7 @@ import { PathEnum } from './router/PathEnum';
 import RoutesComponent from './router/RoutesComponent';
 import './ui/animationStyles.css';
 import SyncStageDesktopAgentDelegate from './SyncStageDesktopAgentDelegate';
+import SyncStageDiscoveryDelegate from './SyncStageDiscoveryDelegate';
 
 import SyncStage, { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-package-development';
 import modalStyle from './ui/ModalStyle';
@@ -37,6 +39,7 @@ const StateManager = () => {
   const [syncStage, setSyncStage] = useState(null);
   const [syncStageSDKVersion, setSyncStageSDKVersion] = useState();
   const [nickname, setNickname] = useState(localStorage.getItem('nickname') ?? '');
+  const [selectedServerName, setSelectedServerName] = useState(undefined);
   const [sessionCode, setSessionCode] = useState(localStorage.getItem('sessionCode') ?? '');
   const [sessionData, setSessionData] = useState(null);
 
@@ -57,6 +60,8 @@ const StateManager = () => {
 
   const nicknameSetAndProvisioned = nickname && syncStageJwt;
   const inSession = SESSION_PATH_REGEX.test(location.pathname);
+  const [serverInstancesList, setServerInstancesList] = useState([{ zoneId: null, zoneName: 'auto', studioServerId: null }]);
+  const [manuallySelectedInstance, setManuallySelectedInstance] = useState(serverInstancesList[0]);
 
   const persistSessionCode = (sessionCode) => {
     localStorage.setItem('sessionCode', sessionCode);
@@ -79,6 +84,10 @@ const StateManager = () => {
     setDesktopAgentConnected(false);
   };
 
+  const onServerSelected = (serverSelected) => {
+    setSelectedServerName(serverSelected.zoneName);
+  };
+
   async function amplifyFetchSyncStageToken() {
     try {
       const restOperation = get({
@@ -93,7 +102,6 @@ const StateManager = () => {
       console.log('GET call failed: ', error);
     }
   }
-
   const onJwtExpired = async () => {
     let jwt;
     // use local docke-compose backend
@@ -140,6 +148,21 @@ const StateManager = () => {
     }
     return () => clearTimeout(desktopAgentConnectedTimeoutId);
   }, []);
+
+  useEffect(() => {
+    async function fetchData() {
+      const [data, errorCode] = await syncStage.getServerInstances();
+      console.log(`Available server instances: ${JSON.stringify(data)}`);
+      if (errorCode === SyncStageSDKErrorCode.OK) {
+        setServerInstancesList((serverInstances) => [...serverInstances, ...data]);
+      } else {
+        errorCodeToSnackbar(errorCode);
+      }
+    }
+    if (syncStage && desktopAgentProvisioned) {
+      fetchData();
+    }
+  }, [syncStage, desktopAgentProvisioned]);
 
   useEffect(() => {
     const confirmAmplifyUserSignedIn = async () => {
@@ -189,13 +212,24 @@ const StateManager = () => {
     if (syncStage === null) {
       console.log('initializeSyncStage create SyncStage object');
 
+      const syncStageDiscoveryDelegate = new SyncStageDiscoveryDelegate(
+        (zones) => {
+          console.log(JSON.stringify(zones));
+        },
+        (results) => {
+          console.log(JSON.stringify(results));
+        },
+        onServerSelected,
+      );
+
       const desktopAgentDelegate = new SyncStageDesktopAgentDelegate(
         onDesktopAgentAquired,
         onDesktopAgentReleased,
         onDesktopAgentConnected,
         onDesktopAgentDisconnected,
       );
-      const ss = new SyncStage(null, null, desktopAgentDelegate, onJwtExpired);
+
+      const ss = new SyncStage(null, null, syncStageDiscoveryDelegate, desktopAgentDelegate, onJwtExpired);
 
       setSyncStageSDKVersion(ss.getSDKVersion());
       setSyncStage(ss);
@@ -328,7 +362,11 @@ const StateManager = () => {
 
   const onCreateSession = async () => {
     setBackdropOpen(true);
-    const [createData, errorCode] = await syncStage.createSession(nickname);
+    const [createData, errorCode] = await syncStage.createSession(
+      nickname,
+      manuallySelectedInstance.zoneId,
+      manuallySelectedInstance.studioServerId,
+    );
     errorCodeToSnackbar(errorCode, `Created session ${createData.sessionCode}`);
 
     if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
@@ -399,6 +437,10 @@ const StateManager = () => {
     signOut,
     isSignedIn,
     setIsSignedIn,
+    selectedServerName,
+    serverInstancesList,
+    manuallySelectedInstance,
+    setManuallySelectedInstance,
   };
 
   return (
