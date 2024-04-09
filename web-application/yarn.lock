@@ -2574,10 +2574,10 @@
     is-online "^10.0.0"
     uuid "^9.0.0"
 
-"@opensesamemedia/syncstage@^0.4.3":
-  version "0.4.3"
-  resolved "https://registry.yarnpkg.com/@opensesamemedia/syncstage/-/syncstage-0.4.3.tgz#29b2afaa739ee19315bc3a6d026c91aca77bfeca"
-  integrity sha512-V7YawEhuqfSLZ751HbHY1IBipIeOmZEfmeUBYgzyUebB1WIPpenNmFefsecATjkZX/JdaPgpryY69M6ldG5P4w==
+"@opensesamemedia/syncstage@^0.5.0":
+  version "0.5.0"
+  resolved "https://registry.yarnpkg.com/@opensesamemedia/syncstage/-/syncstage-0.5.0.tgz#6cee51c9c76c045d423e2884af9f576ca43b819a"
+  integrity sha512-AZxZbBeGvn3XHTyaKfm+ENhqsHK1IMO2TsYX5YlrbgZNNRsuH13Nwmtn9wU4vitCB2vXUWkp0GGqeIyUd/1Jig==
   dependencies:
     "@anephenix/sarus" "^0.4.6"
     async-mutex "^0.4.0"
