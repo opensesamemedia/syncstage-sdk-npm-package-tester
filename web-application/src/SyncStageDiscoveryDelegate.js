@@ -1,10 +1,12 @@
-class SyncStageDicoveryDelegate {
+class SyncStageDiscoveryDelegate {
   onDiscoveryResults;
   onDiscoveryLatencyTestResults;
+  onServerSelected;
 
-  constructor(onDiscoveryResults, onDiscoveryLatencyTestResults) {
+  constructor(onDiscoveryResults, onDiscoveryLatencyTestResults, onServerSelected) {
     this.onDiscoveryResults = onDiscoveryResults;
     this.onDiscoveryLatencyTestResults = onDiscoveryLatencyTestResults;
+    this.onServerSelected = onServerSelected;
   }
 
   discoveryResults(zones) {
@@ -13,6 +15,9 @@ class SyncStageDicoveryDelegate {
   discoveryLatencyTestResults(results) {
     this.onDiscoveryLatencyTestResults(results);
   }
+  serverSelected(selectedServer) {
+    this.onServerSelected(selectedServer);
+  }
 }
 
-export default SyncStageDicoveryDelegate;
+export default SyncStageDiscoveryDelegate;

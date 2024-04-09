@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-empty-function */
 import { Amplify } from 'aws-amplify';
 import { signOut as amplifySignOut, getCurrentUser } from 'aws-amplify/auth';
 
@@ -21,6 +22,7 @@ import { PathEnum } from './router/PathEnum';
 import RoutesComponent from './router/RoutesComponent';
 import './ui/animationStyles.css';
 import SyncStageDesktopAgentDelegate from './SyncStageDesktopAgentDelegate';
+import SyncStageDiscoveryDelegate from './SyncStageDiscoveryDelegate';
 
 import SyncStage, { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
 import modalStyle from './ui/ModalStyle';
@@ -37,14 +39,15 @@ const StateManager = () => {
   const [syncStage, setSyncStage] = useState(null);
   const [syncStageSDKVersion, setSyncStageSDKVersion] = useState();
   const [nickname, setNickname] = useState(localStorage.getItem('nickname') ?? '');
+  const [selectedServerName, setSelectedServerName] = useState(undefined);
   const [sessionCode, setSessionCode] = useState(localStorage.getItem('sessionCode') ?? '');
   const [sessionData, setSessionData] = useState(null);
-  const [selectedServer, setSelectedServer] = useState(JSON.parse(localStorage.getItem('selectedServer')) ?? null);
 
   const desktopAgentConnectedRef = useRef(false);
+  const desktopAgentConnectedTimeoutRef = useRef(null);
   const [desktopAgentConnected, setDesktopAgentConnected] = useState(false);
   const [desktopAgentConnectedTimeoutId, setDesktopAgentConnectedTimeoutId] = useState(false);
-  const [desktopAgentConnectedTimeout, setDesktopAgentConnectedTimeout] = useState(false);
+  const [desktopAgentConnectedTimeout, setDesktopAgentConnectedTimeout] = useState(null);
 
   const [desktopAgentProvisioned, setDesktopAgentProvisioned] = useState(false);
   const [automatedLocationSelection, setAutomatedLocationSelection] = useState(true);
@@ -57,6 +60,8 @@ const StateManager = () => {
 
   const nicknameSetAndProvisioned = nickname && syncStageJwt;
   const inSession = SESSION_PATH_REGEX.test(location.pathname);
+  const [serverInstancesList, setServerInstancesList] = useState([{ zoneId: null, zoneName: 'auto', studioServerId: null }]);
+  const [manuallySelectedInstance, setManuallySelectedInstance] = useState(serverInstancesList[0]);
 
   const persistSessionCode = (sessionCode) => {
     localStorage.setItem('sessionCode', sessionCode);
@@ -79,12 +84,8 @@ const StateManager = () => {
     setDesktopAgentConnected(false);
   };
 
-  const onDesktopAgentKeepAlive = () => {
-    setDesktopAgentConnected(true);
-  };
-
-  const onDesktopAgentLostConnection = () => {
-    setDesktopAgentConnected(false);
+  const onServerSelected = (serverSelected) => {
+    setSelectedServerName(serverSelected.zoneName);
   };
 
   async function amplifyFetchSyncStageToken() {
@@ -101,7 +102,6 @@ const StateManager = () => {
       console.log('GET call failed: ', error);
     }
   }
-
   const onJwtExpired = async () => {
     let jwt;
     // use local docke-compose backend
@@ -118,10 +118,13 @@ const StateManager = () => {
   };
 
   const setDesktopAgentConnectedTimeoutIfNotConnected = () => {
-    if (!desktopAgentConnectedRef.current) {
+    console.log(`desktopAgentConnectedTimeoutRef.current: ${desktopAgentConnectedTimeoutRef.current}`);
+    if (!desktopAgentConnectedRef.current && desktopAgentConnectedTimeoutRef.current === null) {
       console.log('Desktop not connected. Setting timeout');
 
       setDesktopAgentConnectedTimeout(true);
+    } else {
+      setDesktopAgentConnectedTimeout(false);
     }
   };
 
@@ -130,15 +133,36 @@ const StateManager = () => {
   }, [desktopAgentConnected]);
 
   useEffect(() => {
-    console.log('Desktop timeout useEffect');
-    const timeoutId = setTimeout(() => {
-      setDesktopAgentConnectedTimeoutIfNotConnected();
-    }, 5000);
+    desktopAgentConnectedTimeoutRef.current = desktopAgentConnectedTimeout;
+  }, [desktopAgentConnectedTimeoutRef]);
 
-    setDesktopAgentConnectedTimeoutId(timeoutId);
+  useEffect(() => {
+    if (!desktopAgentConnectedTimeoutId) {
+      console.log('Desktop timeout useEffect');
 
+      const timeoutId = setTimeout(() => {
+        setDesktopAgentConnectedTimeoutIfNotConnected();
+      }, 5000);
+
+      setDesktopAgentConnectedTimeoutId(timeoutId);
+    }
     return () => clearTimeout(desktopAgentConnectedTimeoutId);
   }, []);
+
+  useEffect(() => {
+    async function fetchData() {
+      const [data, errorCode] = await syncStage.getServerInstances();
+      console.log(`Available server instances: ${JSON.stringify(data)}`);
+      if (errorCode === SyncStageSDKErrorCode.OK) {
+        setServerInstancesList((serverInstances) => [...serverInstances, ...data]);
+      } else {
+        errorCodeToSnackbar(errorCode);
+      }
+    }
+    if (syncStage && desktopAgentProvisioned) {
+      fetchData();
+    }
+  }, [syncStage, desktopAgentProvisioned]);
 
   useEffect(() => {
     const confirmAmplifyUserSignedIn = async () => {
@@ -188,15 +212,24 @@ const StateManager = () => {
     if (syncStage === null) {
       console.log('initializeSyncStage create SyncStage object');
 
+      const syncStageDiscoveryDelegate = new SyncStageDiscoveryDelegate(
+        (zones) => {
+          console.log(JSON.stringify(zones));
+        },
+        (results) => {
+          console.log(JSON.stringify(results));
+        },
+        onServerSelected,
+      );
+
       const desktopAgentDelegate = new SyncStageDesktopAgentDelegate(
         onDesktopAgentAquired,
         onDesktopAgentReleased,
         onDesktopAgentConnected,
         onDesktopAgentDisconnected,
-        onDesktopAgentKeepAlive,
-        onDesktopAgentLostConnection,
       );
-      const ss = new SyncStage(null, null, null, desktopAgentDelegate, onJwtExpired);
+
+      const ss = new SyncStage(null, null, syncStageDiscoveryDelegate, desktopAgentDelegate, onJwtExpired);
 
       setSyncStageSDKVersion(ss.getSDKVersion());
       setSyncStage(ss);
@@ -230,53 +263,29 @@ const StateManager = () => {
     };
 
     const initializeSyncStage = async () => {
-      if (syncStage !== null && desktopAgentConnected && isSignedIn === true && desktopAgentConnectedTimeout === false) {
+      if (syncStage !== null && desktopAgentConnected && isSignedIn === true && desktopAgentConnectedTimeout === null) {
         console.log('initializeSyncStage useEffect syncStage init');
         const jwt = await fetchJWT();
-        console.log(`jwt to init ${jwt}`);
 
         const initErrorCode = await syncStage.init(jwt);
         if (initErrorCode == SyncStageSDKErrorCode.OK) {
           setDesktopAgentProvisioned(true);
+          if (!inSession)
+            if (nickname) {
+              navigate(PathEnum.SESSIONS_JOIN);
+            } else {
+              navigate(PathEnum.SESSION_NICKNAME);
+            }
         } else {
           console.log('Could not init SyncStage, invalid jwt');
           signOut();
-          return undefined;
-        }
-
-        if (!(nickname && SESSION_PATH_REGEX.test(location.pathname))) {
-          if (selectedServer) {
-            console.log('Validating cached selected server');
-            const [data, errorCode] = await syncStage.getServerInstances();
-
-            if (errorCode === SyncStageSDKErrorCode.OK) {
-              const zoneExists = data.some((obj) => obj.zoneId === selectedServer.zoneId);
-
-              if (zoneExists) {
-                console.log(`Zone with zoneId ${selectedServer.zoneId} exists in the server instances array.`);
-                navigate(PathEnum.SESSIONS_JOIN);
-              } else {
-                console.log(
-                  `Zone with zoneId ${selectedServer.zoneId} does not exist in the server instances array. ${JSON.stringify(data)}`,
-                );
-                persistSelectedServer(null);
-                navigate(PathEnum.SESSION_NICKNAME);
-              }
-            } else {
-              persistSelectedServer(null);
-              navigate(PathEnum.SESSION_NICKNAME);
-            }
-          } else if (nickname) {
-            navigate(PathEnum.LOCATION);
-          } else {
-            navigate(PathEnum.SESSION_NICKNAME);
-          }
           return undefined;
         }
       } else if (syncStage !== null && desktopAgentConnectedTimeout && isSignedIn) {
         console.log('initializeSyncStage useEffect desktopAgentConnectedTimeout');
         console.log('Desktop connected timeout, going to setup screen');
         navigate(PathEnum.SETUP);
+        setBackdropOpen(false);
         return undefined;
       }
     };
@@ -296,6 +305,7 @@ const StateManager = () => {
     persistSyncStageJwt('');
     navigate(PathEnum.LOGIN);
     setDesktopAgentProvisioned(false);
+    setBackdropOpen(false);
     await syncStage.leave();
   };
 
@@ -313,11 +323,6 @@ const StateManager = () => {
   const persistSyncStageJwt = (jwt) => {
     setSyncStageJwt(jwt);
     localStorage.setItem('syncStageJwt', jwt);
-  };
-
-  const persistSelectedServer = (server) => {
-    setSelectedServer(server);
-    localStorage.setItem('selectedServer', JSON.stringify(server));
   };
 
   async function fetchNewSyncStageToken() {
@@ -341,8 +346,9 @@ const StateManager = () => {
     setBackdropOpen(true);
     const errorCode = await fetchNewSyncStageToken();
     errorCodeToSnackbar(errorCode, 'Authorized to SyncStage services');
-    setBackdropOpen(false);
+
     if (errorCode === SyncStageSDKErrorCode.OK) {
+      setBackdropOpen(false);
       navigate(PathEnum.SESSION_NICKNAME);
       setDesktopAgentProvisioned(true);
     } else {
@@ -356,7 +362,11 @@ const StateManager = () => {
 
   const onCreateSession = async () => {
     setBackdropOpen(true);
-    const [createData, errorCode] = await syncStage.createSession(selectedServer.zoneId, selectedServer.studioServerId, nickname);
+    const [createData, errorCode] = await syncStage.createSession(
+      nickname,
+      manuallySelectedInstance.zoneId,
+      manuallySelectedInstance.studioServerId,
+    );
     errorCodeToSnackbar(errorCode, `Created session ${createData.sessionCode}`);
 
     if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
@@ -366,8 +376,6 @@ const StateManager = () => {
     persistSessionCode(createData.sessionCode);
 
     navigate(`${PathEnum.SESSIONS_SESSION_PREFIX}${createData.sessionCode}`);
-
-    setBackdropOpen(false);
   };
 
   const onLeaveSession = async () => {
@@ -379,11 +387,7 @@ const StateManager = () => {
     if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
       return goToSetupPageOnUnauthorized();
     }
-    if (selectedServer) {
-      navigate(PathEnum.SESSIONS_JOIN);
-    } else {
-      navigate(PathEnum.LOCATION);
-    }
+    navigate(PathEnum.SESSIONS_JOIN);
   };
 
   const onStartRecording = async () => {
@@ -417,8 +421,6 @@ const StateManager = () => {
     persistSessionCode,
     sessionData,
     setSessionData,
-    selectedServer,
-    persistSelectedServer,
     setBackdropOpen,
     desktopAgentConnected,
     setDesktopAgentConnected,
@@ -435,6 +437,10 @@ const StateManager = () => {
     signOut,
     isSignedIn,
     setIsSignedIn,
+    selectedServerName,
+    serverInstancesList,
+    manuallySelectedInstance,
+    setManuallySelectedInstance,
   };
 
   return (

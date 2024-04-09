@@ -5,9 +5,6 @@ import JoinSession from '../views/Sessions/JoinSession';
 import Session from '../views/Sessions/Session';
 import SessionNickname from '../views/SessionNickname/SessionNickname';
 import { PathEnum } from './PathEnum';
-import Location from '../views/Location/Location';
-import Latencies from '../views/Location/Latencies';
-import ManualLocation from '../views/Location/ManualLocation';
 import LoginView from '../views/Login/LoginView';
 import BackdropView from '../views/Backdrop/BackdropView';
 
@@ -32,9 +29,6 @@ const RoutesComponent = ({
 
       <Route path={PathEnum.SETUP} element={<Setup onProvisionSubmit={onProvisionSubmit} />} />
 
-      <Route path={PathEnum.LOCATION} element={<Location />} />
-      <Route path={PathEnum.LOCATION_LATENCIES} element={<Latencies />} />
-      <Route path={PathEnum.LOCATION_MANUAL} element={<ManualLocation />} />
       <Route path={PathEnum.SESSIONS_JOIN} element={<JoinSession onJoinSession={onJoinSession} onCreateSession={onCreateSession} />} />
       <Route path={PathEnum.SESSIONS_JOIN} element={<JoinSession onJoinSession={onJoinSession} />} />
 

@@ -6,7 +6,6 @@ import { List, ListItemText, ListItemIcon, Drawer } from '@mui/material';
 import ListItemButton from '../StyledListItemButton';
 import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
 import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
-import LocationOn from '@mui/icons-material/LocationOn';
 import GroupsIcon from '@mui/icons-material/Groups';
 import LogoutIcon from '@mui/icons-material/Logout';
 import AppContext from '../../AppContext';
@@ -17,7 +16,7 @@ const Menu = ({ nicknameSetAndProvisioned, drawerOpened, onCloseDrawer, isMobile
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { syncStageSDKVersion, selectedServer, desktopAgentProvisioned, signOut, desktopAgentConnected } = useContext(AppContext);
+  const { syncStageSDKVersion, desktopAgentProvisioned, signOut, desktopAgentConnected } = useContext(AppContext);
 
   const selectedStyle = {
     '&.Mui-selected': {
@@ -78,26 +77,10 @@ const Menu = ({ nicknameSetAndProvisioned, drawerOpened, onCloseDrawer, isMobile
             </ListItemButton>
 
             <ListItemButton
-              selected={[PathEnum.LOCATION, PathEnum.LOCATION_LATENCIES, PathEnum.LOCATION_MANUAL].some((path) =>
-                location.pathname.includes(path),
-              )}
-              sx={selectedStyle}
-              onClick={() => {
-                navigate(PathEnum.LOCATION);
-              }}
-              disabled={!nicknameSetAndProvisioned || !desktopAgentProvisioned || !desktopAgentConnected}
-            >
-              <ListItemIcon sx={{ color: 'inherit' }}>
-                <LocationOn />
-              </ListItemIcon>
-              <ListItemText primary="Location" />
-            </ListItemButton>
-
-            <ListItemButton
               selected={location.pathname === `${PathEnum.SESSIONS_SESSION_PREFIX}`}
               sx={selectedStyle}
               onClick={() => navigate(PathEnum.SESSIONS_JOIN)}
-              disabled={!nicknameSetAndProvisioned || !selectedServer || !desktopAgentProvisioned || !desktopAgentConnected}
+              disabled={!nicknameSetAndProvisioned || !desktopAgentProvisioned || !desktopAgentConnected}
             >
               <ListItemIcon sx={{ color: 'inherit' }}>
                 <GroupsIcon />
@@ -114,7 +97,6 @@ const Menu = ({ nicknameSetAndProvisioned, drawerOpened, onCloseDrawer, isMobile
           </List>
 
           <span style={{ paddingLeft: 16, paddingTop: 20, fontSize: 10 }}>SDK: {syncStageSDKVersion}</span>
-          {selectedServer ? <span style={{ paddingLeft: 8, fontSize: 10 }}>Location: {selectedServer.zoneName}</span> : <></>}
         </MenuWrapper>
       </Drawer>
     </>
