@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-empty-function */
 import React, { useContext, useState, useEffect, useCallback } from 'react';
 import { useInterval } from 'react-timing-hooks';
 
@@ -37,10 +38,10 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     syncStage,
     desktopAgentProvisioned,
     setDesktopAgentProvisioned,
-    selectedServer,
     nickname,
     setBackdropOpen,
     persistSessionCode,
+    manuallySelectedInstance,
   } = useContext(AppContext);
 
   const [settingsOpened, setSettingsOpened] = useState(false);
@@ -63,6 +64,8 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     }
     let errorCode;
     let measurements;
+
+    console.log(`updateMeasurements execution time: ${new Date().toISOString()}`);
 
     //Tx measurements
     [measurements, errorCode] = await syncStage.getTransmitterMeasurements();
@@ -205,14 +208,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     );
   }, []);
 
-  const buildViewSessionState = async (
-    sessionData,
-    setConnectedMap,
-    syncStage,
-    setDesktopAgentProvisioned,
-    setVolumeMap,
-    updateMeasurements,
-  ) => {
+  const buildViewSessionState = async (sessionData, setConnectedMap, syncStage, setDesktopAgentProvisioned, setVolumeMap) => {
     if (syncStage !== null && sessionData != null) {
       let errorCode;
       // initialize connection and volume, receivers map based on the sessionData state
@@ -247,14 +243,12 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
         });
       }
 
-      await updateMeasurements();
-
       setIsRecording(sessionData.isRecording);
     }
   };
 
   const onWebsocketReconnected = useCallback(async () => {
-    console.log('onWebsocketReconnected in session');
+    console.log(`onWebsocketReconnected in session at time: ${new Date().toISOString()}`);
     if (syncStage === null) {
       return;
     }
@@ -270,7 +264,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
       setSessionData(data);
     }
 
-    await buildViewSessionState(data, setConnectedMap, syncStage, setDesktopAgentProvisioned, setVolumeMap, updateMeasurements);
+    await buildViewSessionState(data, setConnectedMap, syncStage, setDesktopAgentProvisioned, setVolumeMap);
   }, [syncStage]);
 
   const clearDelegates = () => {
@@ -278,19 +272,12 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
       return;
     }
     syncStage.userDelegate = new SyncStageUserDelegate(
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
       () => {},
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
       () => {},
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
       () => {},
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
       () => {},
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
       () => {},
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
       () => {},
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
       () => {},
     );
   };
@@ -298,6 +285,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
   useEffect(() => {
     const initializeSession = async () => {
       console.log('initializeSession');
+      console.log(`Manually selected instance: ${JSON.stringify(manuallySelectedInstance)}`);
       if (syncStage !== null && desktopAgentProvisioned) {
         const sessionCodeFromPath = extractSessionCode(location.pathname);
         setBackdropOpen(true);
@@ -318,9 +306,9 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
               const [data, errorCodeJoin] = await syncStage.join(
                 sessionCodeFromPath,
                 nickname,
-                selectedServer.zoneId,
-                selectedServer.studioServerId,
                 nickname,
+                manuallySelectedInstance.zoneId,
+                manuallySelectedInstance.studioServerId,
               );
               if (errorCodeJoin === SyncStageSDKErrorCode.OK) {
                 setSessionData(data);
@@ -330,27 +318,21 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
             }
 
             console.log('Could not join or leave session in initializeSession method');
-            if (selectedServer) {
-              navigate(PathEnum.SESSIONS_JOIN);
-            } else if (nickname) {
-              navigate(PathEnum.LOCATION);
-            } else {
-              navigate(PathEnum.SESSION_NICKNAME);
-            }
+            navigate(PathEnum.SESSIONS_JOIN);
             setBackdropOpen(false);
             return undefined;
           } else {
             setSessionData(data);
             console.log('Opened session screen with the same session code as the one in the Desktop Agent');
           }
-        } else if (errorCode !== SyncStageSDKErrorCode.OK && selectedServer !== null) {
+        } else if (errorCode !== SyncStageSDKErrorCode.OK) {
           console.log('Desktop Agent not in session. Joining the session from the path');
           const [data, errorCode] = await syncStage.join(
             sessionCodeFromPath,
             nickname,
-            selectedServer.zoneId,
-            selectedServer.studioServerId,
             nickname,
+            manuallySelectedInstance.zoneId,
+            manuallySelectedInstance.studioServerId,
           );
           if (errorCode === SyncStageSDKErrorCode.OK) {
             console.log('Remaining on session Screen');
@@ -361,7 +343,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
 
           console.log('Could not join session from the path.');
           if (nickname) {
-            navigate(PathEnum.LOCATION);
+            navigate(PathEnum.SESSIONS_JOIN);
             setBackdropOpen(false);
             return undefined;
           } else {
@@ -371,6 +353,8 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
           }
         }
         setBackdropOpen(false);
+      } else if (!desktopAgentProvisioned) {
+        setBackdropOpen(true);
       }
     };
 
@@ -398,7 +382,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
         if (errorCode === SyncStageSDKErrorCode.OK) {
           setMuted(mutedState);
         }
-        await buildViewSessionState(sessionData, setConnectedMap, syncStage, setDesktopAgentProvisioned, setVolumeMap, updateMeasurements);
+        await buildViewSessionState(sessionData, setConnectedMap, syncStage, setDesktopAgentProvisioned, setVolumeMap);
       }
     }
     executeAsync();
@@ -415,7 +399,6 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     return () => {
       if (syncStage !== null) {
         pause(); // stop measurements
-        syncStage.leave();
       }
     };
   }, []);
