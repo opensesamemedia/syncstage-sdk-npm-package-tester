@@ -17,7 +17,7 @@ import Button from '@mui/material/Button';
 import theme from '../../ui/theme';
 import InviteOthers from '../../components/UserCard/InviteOthers';
 import { errorCodeToSnackbar, extractSessionCode } from '../../utils';
-import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
+import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-package-development';
 import SyncStageUserDelegate from '../../SyncStageUserDelegate';
 import SyncStageConnectivityDelegate from '../../SyncStageConnectivityDelegate';
 import { PathEnum } from '../../router/PathEnum';
@@ -35,7 +35,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     sessionCode,
     sessionData,
     setSessionData,
-    syncStage,
+    syncStageWorkerWrapper,
     desktopAgentProvisioned,
     setDesktopAgentProvisioned,
     nickname,
@@ -59,7 +59,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
   const [receiversMap, setReceiversMap] = useState({});
 
   const updateMeasurements = async () => {
-    if (syncStage === null) {
+    if (syncStageWorkerWrapper === null) {
       return;
     }
     let errorCode;
@@ -68,7 +68,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     console.log(`updateMeasurements execution time: ${new Date().toISOString()}`);
 
     //Tx measurements
-    [measurements, errorCode] = await syncStage.getTransmitterMeasurements();
+    [measurements, errorCode] = await syncStageWorkerWrapper.getTransmitterMeasurements();
     errorCodeToSnackbar(errorCode);
 
     if (measurements) {
@@ -84,7 +84,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     Object.entries(receiversMap).forEach(async ([_, receiver]) => {
       let errorCode;
       let measurements;
-      [measurements, errorCode] = await syncStage.getReceiverMeasurements(receiver.identifier);
+      [measurements, errorCode] = await syncStageWorkerWrapper.getReceiverMeasurements(receiver.identifier);
       errorCodeToSnackbar(errorCode);
       if (measurements) {
         setMeasurementsMap(
@@ -111,16 +111,16 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
   const onMutedToggle = useCallback(async () => {
     const mutedState = !muted;
     setMuted(mutedState);
-    const errorCode = await syncStage.toggleMicrophone(mutedState);
+    const errorCode = await syncStageWorkerWrapper.toggleMicrophone(mutedState);
     errorCodeToSnackbar(errorCode);
     if (errorCode !== SyncStageSDKErrorCode.OK) {
       setMuted(!mutedState);
     }
-  }, [syncStage, muted]);
+  }, [syncStageWorkerWrapper, muted]);
 
   const onUserJoined = useCallback(async (connection) => {
     console.log('onUserJoined');
-    if (syncStage === null) {
+    if (syncStageWorkerWrapper === null) {
       return;
     }
     // Not adding self connection and avoid duplicates
@@ -138,7 +138,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     );
     // Volume
 
-    const [volumeValue, errorCode] = await syncStage.getReceiverVolume(connection.identifier);
+    const [volumeValue, errorCode] = await syncStageWorkerWrapper.getReceiverVolume(connection.identifier);
     errorCodeToSnackbar(errorCode);
 
     setVolumeMap(
@@ -208,8 +208,8 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     );
   }, []);
 
-  const buildViewSessionState = async (sessionData, setConnectedMap, syncStage, setDesktopAgentProvisioned, setVolumeMap) => {
-    if (syncStage !== null && sessionData != null) {
+  const buildViewSessionState = async (sessionData, setConnectedMap, syncStageWorkerWrapper, setDesktopAgentProvisioned, setVolumeMap) => {
+    if (syncStageWorkerWrapper !== null && sessionData != null) {
       let errorCode;
       // initialize connection and volume, receivers map based on the sessionData state
 
@@ -226,7 +226,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
 
           // Volume
           let volumeValue;
-          [volumeValue, errorCode] = await syncStage.getReceiverVolume(receiver.identifier);
+          [volumeValue, errorCode] = await syncStageWorkerWrapper.getReceiverVolume(receiver.identifier);
           errorCodeToSnackbar(errorCode);
 
           setVolumeMap(
@@ -249,10 +249,10 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
 
   const onWebsocketReconnected = useCallback(async () => {
     console.log(`onWebsocketReconnected in session at time: ${new Date().toISOString()}`);
-    if (syncStage === null) {
+    if (syncStageWorkerWrapper === null) {
       return;
     }
-    const [data, errorCode] = await syncStage.session();
+    const [data, errorCode] = await syncStageWorkerWrapper.session();
     errorCodeToSnackbar(errorCode);
 
     if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
@@ -264,14 +264,14 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
       setSessionData(data);
     }
 
-    await buildViewSessionState(data, setConnectedMap, syncStage, setDesktopAgentProvisioned, setVolumeMap);
-  }, [syncStage]);
+    await buildViewSessionState(data, setConnectedMap, syncStageWorkerWrapper, setDesktopAgentProvisioned, setVolumeMap);
+  }, [syncStageWorkerWrapper]);
 
   const clearDelegates = () => {
-    if (syncStage === null) {
+    if (syncStageWorkerWrapper === null) {
       return;
     }
-    syncStage.userDelegate = new SyncStageUserDelegate(
+    syncStageWorkerWrapper.userDelegate = new SyncStageUserDelegate(
       () => {},
       () => {},
       () => {},
@@ -286,10 +286,10 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     const initializeSession = async () => {
       console.log('initializeSession');
       console.log(`Manually selected instance: ${JSON.stringify(manuallySelectedInstance)}`);
-      if (syncStage !== null && desktopAgentProvisioned) {
+      if (syncStageWorkerWrapper !== null && desktopAgentProvisioned) {
         const sessionCodeFromPath = extractSessionCode(location.pathname);
         setBackdropOpen(true);
-        const [data, errorCode] = await syncStage.session();
+        const [data, errorCode] = await syncStageWorkerWrapper.session();
         if (errorCode === SyncStageSDKErrorCode.OK) {
           console.log('Desktop agent in session');
 
@@ -301,9 +301,9 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
             );
             clearDelegates();
 
-            const errorCodeLeave = await syncStage.leave();
+            const errorCodeLeave = await syncStageWorkerWrapper.leave();
             if (errorCodeLeave === SyncStageSDKErrorCode.OK) {
-              const [data, errorCodeJoin] = await syncStage.join(
+              const [data, errorCodeJoin] = await syncStageWorkerWrapper.join(
                 sessionCodeFromPath,
                 nickname,
                 nickname,
@@ -327,7 +327,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
           }
         } else if (errorCode !== SyncStageSDKErrorCode.OK) {
           console.log('Desktop Agent not in session. Joining the session from the path');
-          const [data, errorCode] = await syncStage.join(
+          const [data, errorCode] = await syncStageWorkerWrapper.join(
             sessionCodeFromPath,
             nickname,
             nickname,
@@ -359,13 +359,13 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     };
 
     initializeSession();
-  }, [syncStage, desktopAgentProvisioned, location.pathname]);
+  }, [syncStageWorkerWrapper, desktopAgentProvisioned, location.pathname]);
 
   useEffect(() => {
     async function executeAsync() {
-      if (syncStage !== null) {
+      if (syncStageWorkerWrapper !== null) {
         console.log('Updating delegates');
-        syncStage.userDelegate = new SyncStageUserDelegate(
+        syncStageWorkerWrapper.userDelegate = new SyncStageUserDelegate(
           onUserJoined,
           onUserLeft,
           onUserMuted,
@@ -374,30 +374,33 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
           onRecordingStopped,
           onSessionOut,
         );
-        syncStage.connectivityDelegate = new SyncStageConnectivityDelegate(onTransmitterConnectivityChanged, onReceiverConnectivityChanged);
-        syncStage.updateOnWebsocketReconnected(onWebsocketReconnected);
+        syncStageWorkerWrapper.connectivityDelegate = new SyncStageConnectivityDelegate(
+          onTransmitterConnectivityChanged,
+          onReceiverConnectivityChanged,
+        );
+        syncStageWorkerWrapper.updateOnWebsocketReconnected(onWebsocketReconnected);
 
-        const [mutedState, errorCode] = await syncStage.isMicrophoneMuted();
+        const [mutedState, errorCode] = await syncStageWorkerWrapper.isMicrophoneMuted();
         errorCodeToSnackbar(errorCode);
         if (errorCode === SyncStageSDKErrorCode.OK) {
           setMuted(mutedState);
         }
-        await buildViewSessionState(sessionData, setConnectedMap, syncStage, setDesktopAgentProvisioned, setVolumeMap);
+        await buildViewSessionState(sessionData, setConnectedMap, syncStageWorkerWrapper, setDesktopAgentProvisioned, setVolumeMap);
       }
     }
     executeAsync();
     return () => {
-      if (syncStage !== null) {
-        syncStage.userDelegate = null;
-        syncStage.connectivityDelegate = null;
+      if (syncStageWorkerWrapper !== null) {
+        syncStageWorkerWrapper.userDelegate = null;
+        syncStageWorkerWrapper.connectivityDelegate = null;
       }
     };
-  }, [syncStage, sessionData]);
+  }, [syncStageWorkerWrapper, sessionData]);
 
   useEffect(() => {
     //on component unmount.
     return () => {
-      if (syncStage !== null) {
+      if (syncStageWorkerWrapper !== null) {
         pause(); // stop measurements
       }
     };
@@ -429,7 +432,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
                 });
               }}
               onVolumeChangeCommited={async (volume) => {
-                syncStage.changeReceiverVolume(identifier, volume);
+                syncStageWorkerWrapper.changeReceiverVolume(identifier, volume);
                 setVolumeMap({
                   ...volumeMap,
                   [identifier]: volume,
