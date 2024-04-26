@@ -43,7 +43,6 @@ self.onmessage = function (e) {
 
   const discoveryDelegate = new SyncStageDiscoveryDelegate(
     (zones) => {
-      console.log('in onDiscoveryResults worker.js');
       self.postMessage({ id: -1, result: { callback: 'onDiscoveryResults', data: zones } });
     }, //onDiscoveryResults
     (results) => {
@@ -77,12 +76,10 @@ self.onmessage = function (e) {
     syncStage.onWebsocketReconnected = () => {
       self.postMessage({ id: -1, result: { callback: 'onWebsocketReconnected' } });
     };
-    console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
-    console.log(syncStage);
     // eslint-disable-next-line
     self.postMessage({ id, result: 'SyncStage initialized in worker.' });
   } else if (syncStage && typeof syncStage[method] === 'function') {
-    console.log(`received function in worker: ${method}`);
+    // console.log(`received function in worker: ${method}`);
     Promise.resolve(syncStage[method](...args))
       .then((result) => {
         // eslint-disable-next-line

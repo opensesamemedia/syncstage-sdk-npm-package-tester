@@ -27,7 +27,7 @@ import ButtonContained from '../../components/StyledButtonContained';
 
 const MEASUREMENTS_INTERVAL_MS = 5000;
 
-const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording }) => {
+const Session = ({ inSession }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -42,6 +42,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     setBackdropOpen,
     persistSessionCode,
     manuallySelectedInstance,
+    goToSetupPageOnUnauthorized,
   } = useContext(AppContext);
 
   const [settingsOpened, setSettingsOpened] = useState(false);
@@ -57,6 +58,40 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
   const [volumeMap, setVolumeMap] = useState({});
   const [connectedMap, setConnectedMap] = useState({});
   const [receiversMap, setReceiversMap] = useState({});
+
+  const onLeaveSession = async () => {
+    setBackdropOpen(true);
+    const errorCode = await syncStageWorkerWrapper.leave();
+    errorCodeToSnackbar(errorCode);
+    setBackdropOpen(false);
+
+    if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
+      return goToSetupPageOnUnauthorized();
+    }
+    navigate(PathEnum.SESSIONS_JOIN);
+  };
+
+  const onStartRecording = async () => {
+    setBackdropOpen(true);
+    const errorCode = await syncStageWorkerWrapper.startRecording();
+    errorCodeToSnackbar(errorCode);
+    setBackdropOpen(false);
+
+    if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
+      return goToSetupPageOnUnauthorized();
+    }
+  };
+
+  const onStopRecording = async () => {
+    setBackdropOpen(true);
+    const errorCode = await syncStageWorkerWrapper.stopRecording();
+    errorCodeToSnackbar(errorCode);
+    setBackdropOpen(false);
+
+    if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
+      return goToSetupPageOnUnauthorized();
+    }
+  };
 
   const updateMeasurements = async () => {
     if (syncStageWorkerWrapper === null) {
@@ -243,7 +278,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
         });
       }
 
-      setIsRecording(sessionData.isRecording);
+      setIsRecording(sessionData.recordingStatus === 'started');
     }
   };
 
@@ -447,11 +482,21 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
           <Grid container direction="column" justifyContent="center" alignItems="center" style={{ margin: 0, padding: 0 }}>
             {isRecording ? (
               <Grid
+                id="recording-row"
                 container
                 direction="row"
                 justifyContent="center"
                 alignItems="center"
-                style={{ margin: 0, paddingTop: '8px', paddingBottom: '4px', height: '32px', backgroundColor: theme.recordingBackground }}
+                style={{
+                  margin: 0,
+                  paddingTop: '8px',
+                  paddingBottom: '4px',
+                  height: '32px',
+                  bottom: '58px',
+                  position: 'fixed',
+                  width: '100%',
+                  backgroundColor: theme.recordingBackground,
+                }}
                 spacing={2}
               >
                 <span id="redcircle"></span>
@@ -468,11 +513,12 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
             )}
 
             <Grid
+              id="footer-buttons"
               container
               direction="row"
               justifyContent="center"
               alignItems="center"
-              style={{ margin: 0, paddingTop: '4px' }}
+              style={{ margin: 0, bottom: '36px', position: 'fixed', height: '32px', width: '100%' }}
               spacing={2}
             >
               <Grid item style={{ paddingRight: '32px' }}>

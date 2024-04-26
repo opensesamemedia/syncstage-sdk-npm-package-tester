@@ -16,7 +16,6 @@ class SyncStageWorkerWrapper {
 
     this.worker.onmessage = async (event) => {
       // console.log(`SyncStageWorkerWrapper received message from worker: ${JSON.stringify(event.data)}`);
-
       const { id, result, error } = event.data;
 
       if (this.promises[id]) {

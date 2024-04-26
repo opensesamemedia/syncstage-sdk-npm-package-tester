@@ -402,40 +402,6 @@ const StateManager = () => {
     }
   };
 
-  const onLeaveSession = async () => {
-    setBackdropOpen(true);
-    const errorCode = await syncStageWorkerWrapper.leave();
-    errorCodeToSnackbar(errorCode);
-    setBackdropOpen(false);
-
-    if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
-      return goToSetupPageOnUnauthorized();
-    }
-    navigate(PathEnum.SESSIONS_JOIN);
-  };
-
-  const onStartRecording = async () => {
-    setBackdropOpen(true);
-    const errorCode = await syncStageWorkerWrapper.startRecording();
-    errorCodeToSnackbar(errorCode);
-    setBackdropOpen(false);
-
-    if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
-      return goToSetupPageOnUnauthorized();
-    }
-  };
-
-  const onStopRecording = async () => {
-    setBackdropOpen(true);
-    const errorCode = await syncStageWorkerWrapper.stopRecording();
-    errorCodeToSnackbar(errorCode);
-    setBackdropOpen(false);
-
-    if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
-      return goToSetupPageOnUnauthorized();
-    }
-  };
-
   const sharedState = {
     syncStageWorkerWrapper,
     syncStageSDKVersion,
@@ -465,6 +431,7 @@ const StateManager = () => {
     serverInstancesList,
     manuallySelectedInstance,
     setManuallySelectedInstance,
+    goToSetupPageOnUnauthorized,
   };
 
   return (
@@ -526,11 +493,8 @@ const StateManager = () => {
             <RoutesComponent
               onProvisionSubmit={onProvisionSubmit}
               onJoinSession={onJoinSession}
-              onLeaveSession={onLeaveSession}
               onCreateSession={onCreateSession}
               inSession={inSession}
-              onStartRecording={onStartRecording}
-              onStopRecording={onStopRecording}
             />
           </div>
         </div>
