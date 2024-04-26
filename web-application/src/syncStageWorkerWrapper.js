@@ -13,10 +13,9 @@ class SyncStageWorkerWrapper {
     this.onWebsocketReconnected = () => {};
 
     this.worker = new Worker(new URL('worker.js', import.meta.url)); //NEW SYNTAX
-    console.log(this.worker);
 
     this.worker.onmessage = async (event) => {
-      console.log(`SyncStageWorkerWrapper received message from worker: ${JSON.stringify(event.data)}`);
+      // console.log(`SyncStageWorkerWrapper received message from worker: ${JSON.stringify(event.data)}`);
 
       const { id, result, error } = event.data;
 
@@ -29,7 +28,7 @@ class SyncStageWorkerWrapper {
 
         delete this.promises[id];
       } else {
-        console.log(`In switch for callbacks in wrapper, callback is: ${result.callback}, data: ${JSON.stringify(result.data)}`);
+        // console.log(`In switch for callbacks in wrapper, callback is: ${result.callback}, data: ${JSON.stringify(result.data)}`);
         switch (result.callback) {
           case 'onUserJoined':
             this.userDelegate?.userJoined(result.data);
@@ -59,9 +58,6 @@ class SyncStageWorkerWrapper {
             this.connectivityDelegate?.receiverConnectivityChanged(result.data.identifier, result.data.connected);
             break;
           case 'onDiscoveryResults':
-            console.log('in onDiscoveryResults switch wrapper');
-            console.log('this.discoveryDelegate');
-            console.log(this.discoveryDelegate);
             this.discoveryDelegate?.discoveryResults(result.data);
             break;
           case 'onDiscoveryLatencyTestResults':
@@ -104,7 +100,7 @@ class SyncStageWorkerWrapper {
   }
 
   callWorker(method, ...args) {
-    console.log(`SyncStageWorkerWrapper callWorker: method=${method}, args=${JSON.stringify(args)}`);
+    // console.log(`SyncStageWorkerWrapper callWorker: method=${method}, args=${JSON.stringify(args)}`);
     return new Promise((resolve, reject) => {
       const id = this.nextId++;
       this.promises[id] = { resolve, reject };
@@ -191,6 +187,14 @@ class SyncStageWorkerWrapper {
 
   getBestAvailableServer() {
     return this.callWorker('getBestAvailableServer');
+  }
+
+  startRecording() {
+    return this.callWorker('startRecording');
+  }
+
+  stopRecording() {
+    return this.callWorker('stopRecording');
   }
 }
 

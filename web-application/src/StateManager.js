@@ -33,6 +33,7 @@ const StateManager = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const [appLoadTime, setAppLoadTime] = useState(new Date());
   const [previousLocation, setPreviousLocation] = useState(null);
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [userJwt, setUserJwt] = useState(null);
@@ -128,6 +129,11 @@ const StateManager = () => {
       setDesktopAgentConnectedTimeout(false);
     }
   };
+
+  useEffect(() => {
+    // Update appLoadTime when the component mounts
+    setAppLoadTime(new Date());
+  }, []);
 
   useEffect(() => {
     desktopAgentConnectedRef.current = desktopAgentConnected;
@@ -285,12 +291,24 @@ const StateManager = () => {
           signOut();
           return undefined;
         }
-      } else if (syncStageWorkerWrapper !== null && desktopAgentConnectedTimeout && isSignedIn) {
-        console.log('initializeSyncStage useEffect desktopAgentConnectedTimeout');
-        console.log('Desktop connected timeout, going to setup screen');
-        navigate(PathEnum.SETUP);
-        setBackdropOpen(false);
-        return undefined;
+      }
+      // to the next else if add another condition to check if from the application loaded elapsed no more than 10s
+      // if more than 10s, navigate to setup screen
+      else if (syncStageWorkerWrapper !== null && desktopAgentConnectedTimeout && isSignedIn) {
+        // Get the current time
+        let currentTime = new Date();
+
+        // Calculate the time difference in seconds
+        let timeDifference = (currentTime - appLoadTime) / 1000;
+
+        // If less than 10 seconds have elapsed, navigate to setup screen
+        if (timeDifference < 10) {
+          console.log('initializeSyncStage useEffect desktopAgentConnectedTimeout');
+          console.log('Desktop connected timeout, going to setup screen');
+          navigate(PathEnum.SETUP);
+          setBackdropOpen(false);
+          return undefined;
+        }
       }
     };
     initializeSyncStage();
@@ -371,15 +389,17 @@ const StateManager = () => {
       manuallySelectedInstance.zoneId,
       manuallySelectedInstance.studioServerId,
     );
-    errorCodeToSnackbar(errorCode, `Created session ${createData.sessionCode}`);
 
     if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
       return goToSetupPageOnUnauthorized();
     }
 
-    persistSessionCode(createData.sessionCode);
+    if (errorCode === SyncStageSDKErrorCode.OK) {
+      errorCodeToSnackbar(errorCode, `Created session ${createData.sessionCode}`);
+      persistSessionCode(createData.sessionCode);
 
-    navigate(`${PathEnum.SESSIONS_SESSION_PREFIX}${createData.sessionCode}`);
+      navigate(`${PathEnum.SESSIONS_SESSION_PREFIX}${createData.sessionCode}`);
+    }
   };
 
   const onLeaveSession = async () => {
