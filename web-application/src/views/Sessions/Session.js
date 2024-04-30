@@ -33,17 +33,17 @@ const Session = ({ inSession }) => {
 
   const {
     sessionCode,
-    sessionData,
-    setSessionData,
+
     syncStageWorkerWrapper,
     desktopAgentProvisioned,
     setDesktopAgentProvisioned,
     nickname,
     setBackdropOpen,
-    persistSessionCode,
     manuallySelectedInstance,
     goToSetupPageOnUnauthorized,
   } = useContext(AppContext);
+
+  const [sessionData, setSessionData] = useState(null);
 
   const [settingsOpened, setSettingsOpened] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -243,7 +243,7 @@ const Session = ({ inSession }) => {
     );
   }, []);
 
-  const buildViewSessionState = async (sessionData, setConnectedMap, syncStageWorkerWrapper, setDesktopAgentProvisioned, setVolumeMap) => {
+  const buildViewSessionState = async (sessionData, setConnectedMap, syncStageWorkerWrapper, setVolumeMap) => {
     if (syncStageWorkerWrapper !== null && sessionData != null) {
       let errorCode;
       // initialize connection and volume, receivers map based on the sessionData state
@@ -285,6 +285,7 @@ const Session = ({ inSession }) => {
   const onWebsocketReconnected = useCallback(async () => {
     console.log(`onWebsocketReconnected in session at time: ${new Date().toISOString()}`);
     if (syncStageWorkerWrapper === null) {
+      console.log('syncStageWorkerWrapper is null');
       return;
     }
     const [data, errorCode] = await syncStageWorkerWrapper.session();
@@ -318,76 +319,46 @@ const Session = ({ inSession }) => {
   };
 
   useEffect(() => {
+    // React will run it when it is time to clean up:
+    return () => {
+      clearDelegates();
+    };
+  }, []); // Empty array ensures this runs on mount and unmount only
+
+  useEffect(() => {
     const initializeSession = async () => {
       console.log('initializeSession');
       console.log(`Manually selected instance: ${JSON.stringify(manuallySelectedInstance)}`);
       if (syncStageWorkerWrapper !== null && desktopAgentProvisioned) {
         const sessionCodeFromPath = extractSessionCode(location.pathname);
         setBackdropOpen(true);
-        const [data, errorCode] = await syncStageWorkerWrapper.session();
+
+        console.log('Joining the session from the path');
+        const [data, errorCode] = await syncStageWorkerWrapper.join(
+          sessionCodeFromPath,
+          nickname,
+          nickname,
+          manuallySelectedInstance.zoneId,
+          manuallySelectedInstance.studioServerId,
+        );
+
         if (errorCode === SyncStageSDKErrorCode.OK) {
-          console.log('Desktop agent in session');
-
-          persistSessionCode(sessionCodeFromPath);
-          if (data.sessionCode?.replace(/-/g, '').toLowerCase() !== sessionCodeFromPath.replace(/-/g, '').toLowerCase()) {
-            console.log(
-              // eslint-disable-next-line
-              `${data.sessionCode} sessionCode differs from the one in the path ${location.pathname}. Leaving session and joining the one from the path`,
-            );
-            clearDelegates();
-
-            const errorCodeLeave = await syncStageWorkerWrapper.leave();
-            if (errorCodeLeave === SyncStageSDKErrorCode.OK) {
-              const [data, errorCodeJoin] = await syncStageWorkerWrapper.join(
-                sessionCodeFromPath,
-                nickname,
-                nickname,
-                manuallySelectedInstance.zoneId,
-                manuallySelectedInstance.studioServerId,
-              );
-              if (errorCodeJoin === SyncStageSDKErrorCode.OK) {
-                setSessionData(data);
-                setBackdropOpen(false);
-                return undefined;
-              }
-            }
-
-            console.log('Could not join or leave session in initializeSession method');
-            navigate(PathEnum.SESSIONS_JOIN);
-            setBackdropOpen(false);
-            return undefined;
-          } else {
-            setSessionData(data);
-            console.log('Opened session screen with the same session code as the one in the Desktop Agent');
-          }
-        } else if (errorCode !== SyncStageSDKErrorCode.OK) {
-          console.log('Desktop Agent not in session. Joining the session from the path');
-          const [data, errorCode] = await syncStageWorkerWrapper.join(
-            sessionCodeFromPath,
-            nickname,
-            nickname,
-            manuallySelectedInstance.zoneId,
-            manuallySelectedInstance.studioServerId,
-          );
-          if (errorCode === SyncStageSDKErrorCode.OK) {
-            console.log('Remaining on session Screen');
-            setSessionData(data);
-            setBackdropOpen(false);
-            return undefined;
-          }
-
-          console.log('Could not join session from the path.');
-          if (nickname) {
-            navigate(PathEnum.SESSIONS_JOIN);
-            setBackdropOpen(false);
-            return undefined;
-          } else {
-            navigate(PathEnum.SESSION_NICKNAME);
-            setBackdropOpen(false);
-            return undefined;
-          }
+          console.log('Remaining on session Screen');
+          setSessionData(data);
+          setBackdropOpen(false);
+          return undefined;
         }
-        setBackdropOpen(false);
+
+        console.log('Could not join session from the path.');
+        if (nickname) {
+          navigate(PathEnum.SESSIONS_JOIN);
+          setBackdropOpen(false);
+          return undefined;
+        } else {
+          navigate(PathEnum.SESSION_NICKNAME);
+          setBackdropOpen(false);
+          return undefined;
+        }
       } else if (!desktopAgentProvisioned) {
         setBackdropOpen(true);
       }
@@ -413,7 +384,7 @@ const Session = ({ inSession }) => {
           onTransmitterConnectivityChanged,
           onReceiverConnectivityChanged,
         );
-        syncStageWorkerWrapper.updateOnWebsocketReconnected(onWebsocketReconnected);
+        syncStageWorkerWrapper.updateOnWebsocketReconnected(onWebsocketReconnected.bind(this));
 
         const [mutedState, errorCode] = await syncStageWorkerWrapper.isMicrophoneMuted();
         errorCodeToSnackbar(errorCode);

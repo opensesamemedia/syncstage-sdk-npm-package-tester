@@ -1,10 +1,14 @@
 import React, { useContext } from 'react';
 import { Grid } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+
 import AppContext from '../../AppContext';
 import ButtonContained from '../../components/StyledButtonContained';
+import { PathEnum } from '../../router/PathEnum';
 
-const Setup = ({ onProvisionSubmit }) => {
-  const { desktopAgentProtocolHandler, desktopAgentConnected } = useContext(AppContext);
+const Setup = () => {
+  const { desktopAgentProtocolHandler, desktopAgentConnected, initializeSyncStage, syncStageWorkerWrapper } = useContext(AppContext);
+  const navigate = useNavigate();
 
   const getDownloadLink = () => {
     const userAgent = window.navigator.userAgent;
@@ -63,8 +67,11 @@ const Setup = ({ onProvisionSubmit }) => {
       <Grid container justifyContent="flex-end">
         <Grid item>
           <ButtonContained
-            onClick={() => {
-              onProvisionSubmit();
+            onClick={async () => {
+              navigate(PathEnum.SESSION_NICKNAME);
+              if (!(await syncStageWorkerWrapper.checkProvisionedStatus())) {
+                await initializeSyncStage();
+              }
             }}
             disabled={!desktopAgentConnected}
           >

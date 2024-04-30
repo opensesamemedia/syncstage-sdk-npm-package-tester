@@ -7,6 +7,7 @@ import SyncStageDesktopAgentDelegate from './SyncStageDesktopAgentDelegate';
 let syncStage;
 
 self.onmessage = function (e) {
+  // console.log('worker.js received message from main thread', e);
   const { id, method, args } = e.data;
 
   const userDelegate = new SyncStageUserDelegate(
@@ -65,6 +66,9 @@ self.onmessage = function (e) {
     () => {
       self.postMessage({ id: -1, result: { callback: 'onDesktopAgentDisconnected' } });
     }, //onDesktopAgentDisconnected
+    () => {
+      self.postMessage({ id: -1, result: { callback: 'onDesktopAgentRelaunched' } });
+    }, //onDesktopAgentRelaunched
   );
 
   const onTokenExpired = () => {
@@ -73,16 +77,19 @@ self.onmessage = function (e) {
 
   if (method === 'constructor') {
     syncStage = new SyncStage(userDelegate, connectivityDelegate, discoveryDelegate, desktopAgentDelegate, onTokenExpired);
-    syncStage.onWebsocketReconnected = () => {
+    syncStage.updateOnWebsocketReconnected(() => {
+      // console.log('worker.js onWebsocketReconnected');
       self.postMessage({ id: -1, result: { callback: 'onWebsocketReconnected' } });
-    };
+    });
     // eslint-disable-next-line
     self.postMessage({ id, result: 'SyncStage initialized in worker.' });
+    // console.log('worker.js SyncStage initialized in worker.');
   } else if (syncStage && typeof syncStage[method] === 'function') {
-    // console.log(`received function in worker: ${method}`);
+    console.log(`received function in worker: ${method}`);
     Promise.resolve(syncStage[method](...args))
       .then((result) => {
         // eslint-disable-next-line
+        console.log(`worker.js SyncStage method ${method} resolved with result: ${result}`);
         self.postMessage({ id, result });
       })
       .catch((error) => {

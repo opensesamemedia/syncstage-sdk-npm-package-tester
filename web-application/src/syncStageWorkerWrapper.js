@@ -15,11 +15,13 @@ class SyncStageWorkerWrapper {
     this.worker = new Worker(new URL('worker.js', import.meta.url)); //NEW SYNTAX
 
     this.worker.onmessage = async (event) => {
-      // console.log(`SyncStageWorkerWrapper received message from worker: ${JSON.stringify(event.data)}`);
+      console.log(`SyncStageWorkerWrapper received message from worker: ${JSON.stringify(event.data)}`);
+      console.log(`SyncStageWorkerWrapper received message from worker`, event);
       const { id, result, error } = event.data;
 
       if (this.promises[id]) {
         if (error) {
+          // console.log(`In SyncStageWorkerWrapper, error: ${error} for method: ${this.promises[id].method}`);
           this.promises[id].reject(new Error(error));
         } else {
           this.promises[id].resolve(result);
@@ -77,10 +79,14 @@ class SyncStageWorkerWrapper {
           case 'onDesktopAgentDisconnected':
             this.desktopAgentDelegate?.onDesktopAgentDisconnected();
             break;
+          case 'onDesktopAgentRelaunched':
+            this.desktopAgentDelegate?.onDesktopAgentRelaunched();
+            break;
           case 'onTokenExpired':
             this.updateToken(this.onTokenExpired());
             break;
           case 'onWebsocketReconnected':
+            console.log('SyncStageWorkerWrapper received from worker onWebsocketReconnected', this.onWebsocketReconnected);
             this.onWebsocketReconnected();
             break;
           default:
@@ -93,7 +99,7 @@ class SyncStageWorkerWrapper {
     this.promises = {};
     this.nextId = 0;
 
-    console.log(this.worker);
+    // console.log(this.worker);
 
     this.callWorker('constructor');
   }
@@ -102,13 +108,20 @@ class SyncStageWorkerWrapper {
     // console.log(`SyncStageWorkerWrapper callWorker: method=${method}, args=${JSON.stringify(args)}`);
     return new Promise((resolve, reject) => {
       const id = this.nextId++;
-      this.promises[id] = { resolve, reject };
+      this.promises[id] = { resolve, reject, method };
       this.worker.postMessage({ id, method, args });
     });
   }
 
   updateOnWebsocketReconnected(onWebsocketReconnected) {
+    // console.log('SyncStageWorkerWrapper updateOnWebsocketReconnected', onWebsocketReconnected);
     this.onWebsocketReconnected = onWebsocketReconnected;
+  }
+
+  isCompatible() {
+    // console.log('userAgent', window.navigator.userAgent);
+    const os = 'macOS';
+    return this.callWorker('isCompatible', os);
   }
 
   init(jwt) {
@@ -194,6 +207,9 @@ class SyncStageWorkerWrapper {
 
   stopRecording() {
     return this.callWorker('stopRecording');
+  }
+  checkProvisionedStatus() {
+    return this.callWorker('checkProvisionedStatus');
   }
 }
 

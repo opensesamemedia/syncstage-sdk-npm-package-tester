@@ -43,6 +43,7 @@ const willJwtBeExpiredIn = (jwt, secondTimeRemaning) => {
     const jwtExp = JSON.parse(atob(jwt.split('.')[1])).exp * 1000;
 
     const willBeExpired = dateInFuture >= jwtExp;
+    console.log(`willBeExpired: ${willBeExpired} jwtExp: ${jwtExp} dateInFuture: ${dateInFuture}`);
     return willBeExpired;
   } catch (error) {
     console.log(`Error checking jwt: ${error}`);
