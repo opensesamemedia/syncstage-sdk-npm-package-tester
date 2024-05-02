@@ -15,8 +15,8 @@ class SyncStageWorkerWrapper {
     this.worker = new Worker(new URL('worker.js', import.meta.url)); //NEW SYNTAX
 
     this.worker.onmessage = async (event) => {
-      console.log(`SyncStageWorkerWrapper received message from worker: ${JSON.stringify(event.data)}`);
-      console.log(`SyncStageWorkerWrapper received message from worker`, event);
+      // console.log(`SyncStageWorkerWrapper received message from worker: ${JSON.stringify(event.data)}`);
+      // console.log(`SyncStageWorkerWrapper received message from worker`, event);
       const { id, result, error } = event.data;
 
       if (this.promises[id]) {
@@ -82,11 +82,14 @@ class SyncStageWorkerWrapper {
           case 'onDesktopAgentRelaunched':
             this.desktopAgentDelegate?.onDesktopAgentRelaunched();
             break;
+          case 'onDesktopAgentProvisioned':
+            this.desktopAgentDelegate?.onDesktopAgentProvisioned();
+            break;
           case 'onTokenExpired':
             this.updateToken(this.onTokenExpired());
             break;
           case 'onWebsocketReconnected':
-            console.log('SyncStageWorkerWrapper received from worker onWebsocketReconnected', this.onWebsocketReconnected);
+            // console.log('SyncStageWorkerWrapper received from worker onWebsocketReconnected', this.onWebsocketReconnected);
             this.onWebsocketReconnected();
             break;
           default:
@@ -128,9 +131,8 @@ class SyncStageWorkerWrapper {
     return this.callWorker('init', jwt);
   }
 
-  async updateToken(tokenPromise) {
-    const token = await tokenPromise;
-    this.callWorker('updateToken', token);
+  async updateToken(token) {
+    return this.callWorker('updateToken', token);
   }
 
   isDesktopAgentConnected() {

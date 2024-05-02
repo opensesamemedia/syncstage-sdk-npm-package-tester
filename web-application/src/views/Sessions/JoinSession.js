@@ -14,8 +14,14 @@ import { PathEnum } from '../../router/PathEnum';
 const JoinSession = ({ onJoinSession, onCreateSession }) => {
   const navigate = useNavigate();
 
-  const { sessionCode, persistSessionCode, serverInstancesList, manuallySelectedInstance, setManuallySelectedInstance } =
-    useContext(AppContext);
+  const {
+    sessionCode,
+    desktopAgentProvisioned,
+    persistSessionCode,
+    serverInstancesList,
+    manuallySelectedInstance,
+    setManuallySelectedInstance,
+  } = useContext(AppContext);
 
   return (
     <Grid container direction="column" spacing={2}>
@@ -36,7 +42,7 @@ const JoinSession = ({ onJoinSession, onCreateSession }) => {
           />
         </Grid>
         <Grid item>
-          <ButtonContained disabled={sessionCode === ''} onClick={onJoinSession}>
+          <ButtonContained disabled={sessionCode === '' || !desktopAgentProvisioned} onClick={onJoinSession}>
             Join
           </ButtonContained>
         </Grid>
@@ -47,7 +53,9 @@ const JoinSession = ({ onJoinSession, onCreateSession }) => {
           <p>or</p>
         </Grid>
         <Grid item>
-          <ButtonContained onClick={onCreateSession}>New session</ButtonContained>
+          <ButtonContained onClick={onCreateSession} disabled={!desktopAgentProvisioned}>
+            New session
+          </ButtonContained>
         </Grid>
       </Grid>
 

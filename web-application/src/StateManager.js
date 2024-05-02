@@ -71,39 +71,70 @@ const StateManager = () => {
     setSessionCode(sessionCode);
   };
 
-  const initializeSyncStage = async () => {
-    const fetchJWT = async () => {
-      let jwt = syncStageJwt;
+  const fetchSyncStageTokenIfToBeExpired = async () => {
+    let jwt = syncStageJwt;
 
-      const fiveMinutesInSeconds = 5 * 60;
-      if (willJwtBeExpiredIn(jwt, fiveMinutesInSeconds)) {
-        console.log(`SyncStage jwt will expire in the next ${fiveMinutesInSeconds}s, refetching token`);
-        console.log(jwt);
-        jwt = await onJwtExpired();
-        persistSyncStageJwt(jwt);
-      } else {
-        console.log('Found valid SyncStage jwt secret.');
-      }
-      return jwt;
-    };
+    const fiveMinutesInSeconds = 5 * 60;
+    if (willJwtBeExpiredIn(jwt, fiveMinutesInSeconds)) {
+      console.log(`SyncStage jwt will expire in the next ${fiveMinutesInSeconds}s, refetching token`);
+      console.log(jwt);
+      jwt = await onJwtExpired();
+      persistSyncStageJwt(jwt);
+    } else {
+      console.log('Found valid SyncStage jwt secret.');
+    }
+    return jwt;
+  };
+
+  const initializeSyncStage = async () => {
+    console.log(
+      // eslint-disable-next-line max-len
+      `initializeSyncStage desktopAgentConnected: ${desktopAgentConnected} isSignedIn: ${isSignedIn} desktopAgentConnectedTimeout: ${desktopAgentConnectedTimeout} syncStageWorkerWrapper: `,
+      syncStageWorkerWrapper,
+    );
     if (syncStageWorkerWrapper !== null && desktopAgentConnected && isSignedIn === true && desktopAgentConnectedTimeout === null) {
       console.log('initializeSyncStage useEffect syncStage init');
       setDesktopAgentCompatible(await syncStageWorkerWrapper.isCompatible());
-      const jwt = await fetchJWT();
-      const initErrorCode = await syncStageWorkerWrapper.init(jwt);
 
-      if (initErrorCode == SyncStageSDKErrorCode.OK) {
-        setDesktopAgentProvisioned(true);
-        if (!inSession)
-          if (nickname) {
-            navigate(PathEnum.SESSIONS_JOIN);
-          } else {
-            navigate(PathEnum.SESSION_NICKNAME);
+      const syncStageProvisioned = await syncStageWorkerWrapper.checkProvisionedStatus();
+      console.log(`SyncStage provisioned: ${syncStageProvisioned}`);
+
+      const jwt = await fetchSyncStageTokenIfToBeExpired();
+      const provision = async () => {
+        setBackdropOpen(true);
+        const initErrorCode = await syncStageWorkerWrapper.init(jwt);
+        setBackdropOpen(false);
+
+        if (initErrorCode == SyncStageSDKErrorCode.OK) {
+          if (location.pathname === `${PathEnum.LOADING}`) {
+            if (nickname) {
+              navigate(PathEnum.SESSIONS_JOIN);
+            } else {
+              navigate(PathEnum.SESSION_NICKNAME);
+            }
           }
+        } else {
+          console.log('Could not init SyncStage, invalid jwt');
+          signOut();
+          return undefined;
+        }
+      };
+      if (syncStageProvisioned) {
+        const updateErrorCode = await syncStageWorkerWrapper.updateToken(jwt);
+        if (updateErrorCode == SyncStageSDKErrorCode.OK) {
+          if (location.pathname === `${PathEnum.LOADING}`) {
+            if (nickname) {
+              navigate(PathEnum.SESSIONS_JOIN);
+            } else {
+              navigate(PathEnum.SESSION_NICKNAME);
+            }
+          }
+        } else {
+          console.log('Could not update SyncStage token');
+          return await provision();
+        }
       } else {
-        console.log('Could not init SyncStage, invalid jwt');
-        signOut();
-        return undefined;
+        return await provision();
       }
     }
     // to the next else if add another condition to check if from the application loaded elapsed no more than 10s
@@ -136,10 +167,21 @@ const StateManager = () => {
   const onDesktopAgentConnected = async () => {
     setDesktopAgentConnected(true);
     clearTimeout(desktopAgentConnectedTimeoutId);
+    setDesktopAgentConnectedTimeout(null);
   };
 
   const onDesktopAgentDisconnected = () => {
     setDesktopAgentConnected(false);
+    setDesktopAgentProvisioned(false);
+  };
+
+  const onDesktopAgentRelaunched = async () => {
+    setDesktopAgentProvisioned(false);
+    await initializeSyncStage();
+  };
+
+  const onDesktopAgentProvisioned = () => {
+    setDesktopAgentProvisioned(true);
   };
 
   const onServerSelected = (serverSelected) => {
@@ -164,7 +206,7 @@ const StateManager = () => {
     let jwt;
     // use local docke-compose backend
     if (process.env.REACT_APP_BACKEND_BASE_PATH !== undefined) {
-      const tokenResponse = await fetchSyncStageToken(userJwt);
+      const tokenResponse = await fetchSyncStageTokenIfToBeExpired(userJwt);
       jwt = tokenResponse.jwt;
     }
     // use amplify backend
@@ -222,7 +264,7 @@ const StateManager = () => {
         errorCodeToSnackbar(errorCode);
       }
     }
-    if (syncStageWorkerWrapper && desktopAgentProvisioned) {
+    if (syncStageWorkerWrapper && desktopAgentProvisioned && serverInstancesList.length === 1) {
       fetchData();
     }
   }, [syncStageWorkerWrapper, desktopAgentProvisioned]);
@@ -288,7 +330,8 @@ const StateManager = () => {
         onDesktopAgentReleased,
         onDesktopAgentConnected,
         onDesktopAgentDisconnected,
-        initializeSyncStage,
+        onDesktopAgentRelaunched,
+        onDesktopAgentProvisioned,
       );
 
       const ssWorker = new SyncStageWorkerWrapper(null, null, syncStageDiscoveryDelegate, desktopAgentDelegate, onJwtExpired);
@@ -375,6 +418,7 @@ const StateManager = () => {
 
   const sharedState = {
     syncStageWorkerWrapper,
+    fetchSyncStageToken: fetchSyncStageTokenIfToBeExpired,
     initializeSyncStage,
     syncStageSDKVersion,
     nickname,
@@ -385,7 +429,6 @@ const StateManager = () => {
     desktopAgentConnected,
     setDesktopAgentConnected,
     desktopAgentProvisioned,
-    setDesktopAgentProvisioned,
     locationSelected,
     setLocationSelected,
     automatedLocationSelection,

@@ -25,7 +25,11 @@ const errorCodeToSnackbar = (errorCode, msgOnOK) => {
     console.log(snackbarMsg);
 
     // Errors we do not want to show to the user, but we want to log
-    if (errorCode === SyncStageSDKErrorCode.TIMEOUT_ERROR || errorCode === SyncStageSDKErrorCode.TOKEN_EXPIRED) {
+    if (
+      errorCode === SyncStageSDKErrorCode.TIMEOUT_ERROR ||
+      errorCode === SyncStageSDKErrorCode.TOKEN_EXPIRED ||
+      errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED
+    ) {
       return;
     }
     enqueueSnackbar(snackbarMsg);

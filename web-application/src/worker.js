@@ -69,6 +69,9 @@ self.onmessage = function (e) {
     () => {
       self.postMessage({ id: -1, result: { callback: 'onDesktopAgentRelaunched' } });
     }, //onDesktopAgentRelaunched
+    () => {
+      self.postMessage({ id: -1, result: { callback: 'onDesktopAgentProvisioned' } });
+    },
   );
 
   const onTokenExpired = () => {
@@ -85,11 +88,11 @@ self.onmessage = function (e) {
     self.postMessage({ id, result: 'SyncStage initialized in worker.' });
     // console.log('worker.js SyncStage initialized in worker.');
   } else if (syncStage && typeof syncStage[method] === 'function') {
-    console.log(`received function in worker: ${method}`);
+    // console.log(`received function in worker: ${method}`);
     Promise.resolve(syncStage[method](...args))
       .then((result) => {
         // eslint-disable-next-line
-        console.log(`worker.js SyncStage method ${method} resolved with result: ${result}`);
+        // console.log(`worker.js SyncStage method ${method} resolved with result: ${result}`);
         self.postMessage({ id, result });
       })
       .catch((error) => {

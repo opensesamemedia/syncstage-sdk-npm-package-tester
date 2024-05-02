@@ -7,7 +7,7 @@ import ButtonContained from '../../components/StyledButtonContained';
 import { PathEnum } from '../../router/PathEnum';
 
 const Setup = () => {
-  const { desktopAgentProtocolHandler, desktopAgentConnected, initializeSyncStage, syncStageWorkerWrapper } = useContext(AppContext);
+  const { desktopAgentProtocolHandler, desktopAgentConnected, initializeSyncStage } = useContext(AppContext);
   const navigate = useNavigate();
 
   const getDownloadLink = () => {
@@ -68,10 +68,8 @@ const Setup = () => {
         <Grid item>
           <ButtonContained
             onClick={async () => {
+              console.log('initializeSyncStage in next acition on setup', initializeSyncStage);
               navigate(PathEnum.SESSION_NICKNAME);
-              if (!(await syncStageWorkerWrapper.checkProvisionedStatus())) {
-                await initializeSyncStage();
-              }
             }}
             disabled={!desktopAgentConnected}
           >

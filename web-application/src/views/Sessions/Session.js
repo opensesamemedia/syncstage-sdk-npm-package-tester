@@ -33,10 +33,9 @@ const Session = ({ inSession }) => {
 
   const {
     sessionCode,
-
+    persistSessionCode,
     syncStageWorkerWrapper,
     desktopAgentProvisioned,
-    setDesktopAgentProvisioned,
     nickname,
     setBackdropOpen,
     manuallySelectedInstance,
@@ -265,7 +264,7 @@ const Session = ({ inSession }) => {
           errorCodeToSnackbar(errorCode);
 
           setVolumeMap(
-            produce((draft) => {
+            produce(volumeMap, (draft) => {
               draft[receiver.identifier] = volumeValue;
             }),
           );
@@ -291,16 +290,13 @@ const Session = ({ inSession }) => {
     const [data, errorCode] = await syncStageWorkerWrapper.session();
     errorCodeToSnackbar(errorCode);
 
-    if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
-      navigate(PathEnum.SETUP);
-      setDesktopAgentProvisioned(false);
-    } else if (errorCode === SyncStageSDKErrorCode.NOT_IN_SESSION) {
+    if (errorCode === SyncStageSDKErrorCode.NOT_IN_SESSION || errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
       onSessionOut();
     } else if (errorCode === SyncStageSDKErrorCode.OK) {
       setSessionData(data);
     }
 
-    await buildViewSessionState(data, setConnectedMap, syncStageWorkerWrapper, setDesktopAgentProvisioned, setVolumeMap);
+    await buildViewSessionState(data, setConnectedMap, syncStageWorkerWrapper, setVolumeMap);
   }, [syncStageWorkerWrapper]);
 
   const clearDelegates = () => {
@@ -321,16 +317,19 @@ const Session = ({ inSession }) => {
   useEffect(() => {
     // React will run it when it is time to clean up:
     return () => {
+      setSessionData(null);
       clearDelegates();
     };
   }, []); // Empty array ensures this runs on mount and unmount only
 
   useEffect(() => {
+    console.log('Session useEffect ', syncStageWorkerWrapper, desktopAgentProvisioned, location.pathname);
     const initializeSession = async () => {
       console.log('initializeSession');
       console.log(`Manually selected instance: ${JSON.stringify(manuallySelectedInstance)}`);
       if (syncStageWorkerWrapper !== null && desktopAgentProvisioned) {
         const sessionCodeFromPath = extractSessionCode(location.pathname);
+        persistSessionCode(sessionCodeFromPath);
         setBackdropOpen(true);
 
         console.log('Joining the session from the path');
@@ -359,8 +358,6 @@ const Session = ({ inSession }) => {
           setBackdropOpen(false);
           return undefined;
         }
-      } else if (!desktopAgentProvisioned) {
-        setBackdropOpen(true);
       }
     };
 
@@ -391,7 +388,7 @@ const Session = ({ inSession }) => {
         if (errorCode === SyncStageSDKErrorCode.OK) {
           setMuted(mutedState);
         }
-        await buildViewSessionState(sessionData, setConnectedMap, syncStageWorkerWrapper, setDesktopAgentProvisioned, setVolumeMap);
+        await buildViewSessionState(sessionData, setConnectedMap, syncStageWorkerWrapper, setVolumeMap);
       }
     }
     executeAsync();
