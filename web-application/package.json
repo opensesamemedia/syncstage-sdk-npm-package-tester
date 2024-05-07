@@ -10,7 +10,7 @@
     "@mui/material": "^5.11.15",
     "@mui/styled-engine-sc": "^5.11.11",
     "@opensesamemedia/syncstage": "^0.5.0",
-    "@opensesamemedia/syncstage-sdk-npm-package-development": "^0.5.1-rc42",
+    "@opensesamemedia/syncstage-sdk-npm-package-development": "^0.6.0-rc44",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
