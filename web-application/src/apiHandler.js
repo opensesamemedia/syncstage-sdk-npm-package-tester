@@ -16,7 +16,7 @@ export const login = async (username, password) => {
   }
 };
 
-export const fetchSyncStageToken = async (userToken) => {
+export const apiFetchSyncStageToken = async (userToken) => {
   try {
     const response = await axios.get(`${BASE_API_PATH}/fetch-token`, {
       headers: { Authorization: `Bearer ${userToken}` },

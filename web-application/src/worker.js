@@ -80,9 +80,8 @@ self.onmessage = function (e) {
 
   if (method === 'constructor') {
     syncStage = new SyncStage(userDelegate, connectivityDelegate, discoveryDelegate, desktopAgentDelegate, onTokenExpired);
-    syncStage.updateOnWebsocketReconnected(() => {
-      // console.log('worker.js onWebsocketReconnected');
-      self.postMessage({ id: -1, result: { callback: 'onWebsocketReconnected' } });
+    syncStage.updateOnDesktopAgentReconnected(() => {
+      self.postMessage({ id: -1, result: { callback: 'onDesktopAgentReconnected' } });
     });
     // eslint-disable-next-line
     self.postMessage({ id, result: 'SyncStage initialized in worker.' });

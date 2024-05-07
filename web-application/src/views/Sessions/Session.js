@@ -281,8 +281,8 @@ const Session = ({ inSession }) => {
     }
   };
 
-  const onWebsocketReconnected = useCallback(async () => {
-    console.log(`onWebsocketReconnected in session at time: ${new Date().toISOString()}`);
+  const onDesktopAgentReconnected = useCallback(async () => {
+    console.log(`onDesktopAgentReconnected in session at time: ${new Date().toISOString()}`);
     if (syncStageWorkerWrapper === null) {
       console.log('syncStageWorkerWrapper is null');
       return;
@@ -381,7 +381,7 @@ const Session = ({ inSession }) => {
           onTransmitterConnectivityChanged,
           onReceiverConnectivityChanged,
         );
-        syncStageWorkerWrapper.updateOnWebsocketReconnected(onWebsocketReconnected.bind(this));
+        syncStageWorkerWrapper.updateOnDesktopAgentReconnected(onDesktopAgentReconnected.bind(this));
 
         const [mutedState, errorCode] = await syncStageWorkerWrapper.isMicrophoneMuted();
         errorCodeToSnackbar(errorCode);

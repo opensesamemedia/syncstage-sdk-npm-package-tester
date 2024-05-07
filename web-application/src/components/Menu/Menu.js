@@ -12,11 +12,11 @@ import AppContext from '../../AppContext';
 import { PathEnum } from '../../router/PathEnum';
 import theme from '../../ui/theme';
 
-const Menu = ({ nicknameSetAndProvisioned, drawerOpened, onCloseDrawer, isMobile }) => {
+const Menu = ({ drawerOpened, onCloseDrawer, isMobile }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { syncStageSDKVersion, desktopAgentProvisioned, signOut, desktopAgentConnected } = useContext(AppContext);
+  const { syncStageSDKVersion, signOut } = useContext(AppContext);
 
   const selectedStyle = {
     '&.Mui-selected': {

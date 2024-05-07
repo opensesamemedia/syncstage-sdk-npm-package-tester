@@ -15,7 +15,7 @@ import Modal from '@mui/material/Modal';
 
 import Typography from '@mui/material/Typography';
 import { Online } from 'react-detect-offline';
-import { fetchSyncStageToken } from './apiHandler';
+import { apiFetchSyncStageToken } from './apiHandler';
 
 import AppWrapper from './App.styled';
 import { PathEnum } from './router/PathEnum';
@@ -45,6 +45,7 @@ const StateManager = () => {
   const [sessionCode, setSessionCode] = useState(localStorage.getItem('sessionCode') ?? '');
 
   const [desktopAgentCompatible, setDesktopAgentCompatible] = useState(null);
+  const [desktopAgentCompatibleModalClosed, setDesktopAgentCompatibleModalClosed] = useState(false);
 
   const desktopAgentConnectedRef = useRef(false);
   const desktopAgentConnectedTimeoutRef = useRef(null);
@@ -71,7 +72,7 @@ const StateManager = () => {
     setSessionCode(sessionCode);
   };
 
-  const fetchSyncStageTokenIfToBeExpired = async () => {
+  const fetchSyncStageToken = async () => {
     let jwt = syncStageJwt;
 
     const fiveMinutesInSeconds = 5 * 60;
@@ -99,7 +100,7 @@ const StateManager = () => {
       const syncStageProvisioned = await syncStageWorkerWrapper.checkProvisionedStatus();
       console.log(`SyncStage provisioned: ${syncStageProvisioned}`);
 
-      const jwt = await fetchSyncStageTokenIfToBeExpired();
+      const jwt = await fetchSyncStageToken();
       const provision = async () => {
         setBackdropOpen(true);
         const initErrorCode = await syncStageWorkerWrapper.init(jwt);
@@ -206,7 +207,7 @@ const StateManager = () => {
     let jwt;
     // use local docke-compose backend
     if (process.env.REACT_APP_BACKEND_BASE_PATH !== undefined) {
-      const tokenResponse = await fetchSyncStageTokenIfToBeExpired(userJwt);
+      const tokenResponse = await apiFetchSyncStageToken(userJwt);
       jwt = tokenResponse.jwt;
     }
     // use amplify backend
@@ -418,7 +419,7 @@ const StateManager = () => {
 
   const sharedState = {
     syncStageWorkerWrapper,
-    fetchSyncStageToken: fetchSyncStageTokenIfToBeExpired,
+    fetchSyncStageToken,
     initializeSyncStage,
     syncStageSDKVersion,
     nickname,
@@ -493,7 +494,7 @@ const StateManager = () => {
           <Modal keepMounted open={desktopAgentAquired}>
             <Box sx={modalStyle}>
               <Typography variant="h6" component="h2">
-                Desktop Agent in use
+                SyncStage Desktop Agent in use
               </Typography>
               <Typography sx={{ mt: 2 }}>
                 SyncStage opened in another browser tab. Please switch to that tab or close current one.
@@ -501,6 +502,17 @@ const StateManager = () => {
             </Box>
           </Modal>
         </Online>
+        <Modal
+          open={desktopAgentCompatible === false && !desktopAgentCompatibleModalClosed}
+          onClose={() => setDesktopAgentCompatibleModalClosed(true)}
+        >
+          <Box sx={modalStyle}>
+            <Typography variant="h6" component="h2">
+              SyncStage Desktop Agent is incompatible with the current SyncStage SDK version.
+            </Typography>
+            <Typography sx={{ mt: 2 }}>Please upgrade your SyncStage Desktop Agent to the latest version.</Typography>
+          </Box>
+        </Modal>
         <div className="app-container">
           <div className="app-container-limiter">
             <RoutesComponent onJoinSession={onJoinSession} onCreateSession={onCreateSession} inSession={inSession} />
