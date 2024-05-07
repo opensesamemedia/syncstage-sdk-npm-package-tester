@@ -27,29 +27,35 @@ const Setup = () => {
             <p>To have a low latency conversation you need to have the SyncStage Desktop Agent running.</p>
           </Grid>
           <Grid item style={{ height: '80px' }} />
-          {downloadLink ? (
-            <Grid container direction="column" justifyContent="flex-center" alignItems="center">
-              <Grid item>
-                <a target="_blank" href={desktopAgentProtocolHandler}>
-                  {' '}
-                  Pair Desktop Agent{' '}
-                </a>
-              </Grid>
-              <Grid item style={{ marginTop: '14px' }}>
-                <p>or</p>
-              </Grid>
-              <Grid item>
-                <a target="_blank" href={downloadLink} download>
-                  {' '}
-                  Install Desktop Agent{' '}
-                </a>
-              </Grid>
-            </Grid>
-          ) : (
+
+          <Grid container direction="column" justifyContent="flex-center" alignItems="center">
             <Grid item>
-              <p>Your system is not supported yet.</p>
+              <a target="_blank" href={desktopAgentProtocolHandler}>
+                {' '}
+                Pair Desktop Agent{' '}
+              </a>
             </Grid>
-          )}
+
+            {downloadLink ? (
+              <>
+                <Grid item style={{ marginTop: '14px' }}>
+                  <p>or</p>
+                </Grid>
+                <Grid item>
+                  <a target="_blank" href={downloadLink} download>
+                    {' '}
+                    Install Desktop Agent{' '}
+                  </a>
+                </Grid>
+              </>
+            ) : (
+              <Grid item>
+                <br />
+                <br />
+                <p>We could not find matching Desktop Agent version for your OS. Please contact support.</p>
+              </Grid>
+            )}
+          </Grid>
         </>
       )}
       <Grid item style={{ height: '80px' }} />
