@@ -45,6 +45,7 @@ const StateManager = () => {
   const [sessionCode, setSessionCode] = useState(localStorage.getItem('sessionCode') ?? '');
 
   const [desktopAgentCompatible, setDesktopAgentCompatible] = useState(null);
+  const [desktopAgentLatestCompatibleVersion, setDesktopAgentLatestCompatibleVersion] = useState(null);
   const [desktopAgentCompatibleModalClosed, setDesktopAgentCompatibleModalClosed] = useState(false);
 
   const desktopAgentConnectedRef = useRef(false);
@@ -96,6 +97,7 @@ const StateManager = () => {
     if (syncStageWorkerWrapper !== null && desktopAgentConnected && isSignedIn === true && desktopAgentConnectedTimeout === null) {
       console.log('initializeSyncStage useEffect syncStage init');
       setDesktopAgentCompatible(await syncStageWorkerWrapper.isCompatible());
+      setDesktopAgentLatestCompatibleVersion(await syncStageWorkerWrapper.getLatestCompatibleDesktopAgentVersion());
 
       const syncStageProvisioned = await syncStageWorkerWrapper.checkProvisionedStatus();
       console.log(`SyncStage provisioned: ${syncStageProvisioned}`);
@@ -417,6 +419,20 @@ const StateManager = () => {
     }
   };
 
+  const getDownloadLink = () => {
+    if (!desktopAgentLatestCompatibleVersion) {
+      return null;
+    }
+    const userAgent = window.navigator.userAgent;
+    if (userAgent.indexOf('Mac') !== -1) {
+      return `https://public.sync-stage.com/agent/macos/prod/${desktopAgentLatestCompatibleVersion}/SyncStageAgent_${desktopAgentLatestCompatibleVersion}.dmg`;
+    } else if (userAgent.indexOf('Win') !== -1) {
+      return `https://public.sync-stage.com/agent/windows/prod/${desktopAgentLatestCompatibleVersion}/SyncStageAgent_${desktopAgentLatestCompatibleVersion}.exe`;
+    } else {
+      return null;
+    }
+  };
+
   const sharedState = {
     syncStageWorkerWrapper,
     fetchSyncStageToken,
@@ -446,6 +462,7 @@ const StateManager = () => {
     manuallySelectedInstance,
     setManuallySelectedInstance,
     goToSetupPageOnUnauthorized,
+    getDownloadLink,
   };
 
   return (
@@ -510,7 +527,18 @@ const StateManager = () => {
             <Typography variant="h6" component="h2">
               SyncStage Desktop Agent is incompatible with the current SyncStage SDK version.
             </Typography>
-            <Typography sx={{ mt: 2 }}>Please upgrade your SyncStage Desktop Agent to the latest version.</Typography>
+            <Typography sx={{ mt: 2 }}>
+              We noticed your Desktop Agent is currently incompatible with the latest web application version. To ensure a seamless
+              experience, please update your Desktop Agent. <br />
+              <br />
+              {desktopAgentLatestCompatibleVersion ? (
+                <a href={getDownloadLink()} target="_blank">
+                  Click here to download the latest Desktop Agent version
+                </a>
+              ) : (
+                'We could not find matching Desktop Agent version for your OS. Please contact support.'
+              )}
+            </Typography>
           </Box>
         </Modal>
         <div className="app-container">

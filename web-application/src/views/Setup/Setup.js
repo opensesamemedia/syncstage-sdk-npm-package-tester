@@ -7,19 +7,8 @@ import ButtonContained from '../../components/StyledButtonContained';
 import { PathEnum } from '../../router/PathEnum';
 
 const Setup = () => {
-  const { desktopAgentProtocolHandler, desktopAgentConnected, initializeSyncStage } = useContext(AppContext);
+  const { desktopAgentProtocolHandler, desktopAgentConnected, initializeSyncStage, getDownloadLink } = useContext(AppContext);
   const navigate = useNavigate();
-
-  const getDownloadLink = () => {
-    const userAgent = window.navigator.userAgent;
-    if (userAgent.indexOf('Mac') !== -1) {
-      return 'https://public.sync-stage.com/agent/macos/prod/0.4.0/SyncStageAgent_0.4.0.dmg';
-    } else if (userAgent.indexOf('Win') !== -1) {
-      return 'https://public.sync-stage.com/agent/windows/prod/0.1.0/SyncStageAgent_0.1.0.exe';
-    } else {
-      return null;
-    }
-  };
 
   const downloadLink = getDownloadLink();
 

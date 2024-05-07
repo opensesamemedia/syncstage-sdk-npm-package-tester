@@ -122,6 +122,18 @@ class SyncStageWorkerWrapper {
     return this.callWorker('isCompatible', os);
   }
 
+  getLatestCompatibleDesktopAgentVersion() {
+    let os;
+
+    if (window.navigator.userAgent.indexOf('Mac') !== -1) {
+      os = 'macOS';
+    } else if (window.navigator.userAgent.indexOf('Win') !== -1) {
+      os = 'Windows';
+    }
+
+    return this.callWorker('getLatestCompatibleDesktopAgentVersion', os);
+  }
+
   init(jwt) {
     return this.callWorker('init', jwt);
   }
