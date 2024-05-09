@@ -87,6 +87,7 @@ const StateManager = () => {
   };
 
   const fetchSyncStageToken = async () => {
+    console.log('fetchSyncStageToken in StateManager.js');
     let jwt = syncStageJwt;
 
     const fiveMinutesInSeconds = 5 * 60;
@@ -123,7 +124,8 @@ const StateManager = () => {
         setBackdropOpen(false);
 
         if (initErrorCode == SyncStageSDKErrorCode.OK) {
-          if (location.pathname === `${PathEnum.LOADING}`) {
+          if (location.pathname === `${PathEnum.LOADING}` && !inSession) {
+            console.log(`In session: ${inSession}`);
             if (nickname) {
               navigate(PathEnum.SESSIONS_JOIN);
             } else {
@@ -139,7 +141,8 @@ const StateManager = () => {
       if (syncStageProvisioned) {
         const updateErrorCode = await syncStageWorkerWrapper.updateToken(jwt);
         if (updateErrorCode == SyncStageSDKErrorCode.OK) {
-          if (location.pathname === `${PathEnum.LOADING}`) {
+          if (location.pathname === `${PathEnum.LOADING}` && !inSession) {
+            console.log(`In session: ${inSession}`);
             if (nickname) {
               navigate(PathEnum.SESSIONS_JOIN);
             } else {
@@ -220,6 +223,7 @@ const StateManager = () => {
     }
   }
   const onJwtExpired = async () => {
+    console.log('onJwtExpired in StateManager.js');
     let jwt;
     // use local docke-compose backend
     if (process.env.REACT_APP_BACKEND_BASE_PATH !== undefined) {
@@ -537,7 +541,7 @@ const StateManager = () => {
             </Box>
           </Modal>
         </Online>
-        <Modal
+        {/* <Modal
           open={desktopAgentCompatible === false && !desktopAgentCompatibleModalClosed}
           onClose={() => setDesktopAgentCompatibleModalClosed(true)}
         >
@@ -558,7 +562,7 @@ const StateManager = () => {
               )}
             </Typography>
           </Box>
-        </Modal>
+        </Modal> */}
         <div className="app-container">
           <div className="app-container-limiter">
             <RoutesComponent onJoinSession={onJoinSession} onCreateSession={onCreateSession} inSession={inSession} />

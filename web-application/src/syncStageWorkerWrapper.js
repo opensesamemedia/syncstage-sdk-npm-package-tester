@@ -80,7 +80,16 @@ class SyncStageWorkerWrapper {
             this.desktopAgentDelegate?.onDesktopAgentProvisioned();
             break;
           case 'onTokenExpired':
-            this.updateToken(this.onTokenExpired());
+            try {
+              if (typeof this.onTokenExpired === 'function') {
+                const jwt = await this.onTokenExpired();
+                this.updateToken(jwt);
+              } else {
+                console.error('onTokenExpired is not a function');
+              }
+            } catch (error) {
+              console.error('An error occurred in onTokenExpired or updateToken:', error);
+            }
             break;
           case 'onDesktopAgentReconnected':
             this.onDesktopAgentReconnected();
@@ -139,6 +148,7 @@ class SyncStageWorkerWrapper {
   }
 
   async updateToken(token) {
+    console.log('SyncStageWorkerWrapper updateToken');
     return this.callWorker('updateToken', token);
   }
 

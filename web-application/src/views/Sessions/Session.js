@@ -349,7 +349,7 @@ const Session = ({ inSession }) => {
           return undefined;
         }
 
-        console.log('Could not join session from the path.');
+        console.log('Could not join session from the path. errorCode: ', errorCode);
         if (nickname) {
           navigate(PathEnum.SESSIONS_JOIN);
           setBackdropOpen(false);
