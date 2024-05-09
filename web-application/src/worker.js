@@ -67,11 +67,11 @@ self.onmessage = function (e) {
       self.postMessage({ id: -1, result: { callback: 'onDesktopAgentDisconnected' } });
     }, //onDesktopAgentDisconnected
     () => {
-      self.postMessage({ id: -1, result: { callback: 'onDesktopAgentRelaunched' } });
-    }, //onDesktopAgentRelaunched
+      self.postMessage({ id: -1, result: { callback: 'onDesktopAgentDeprovisioned' } });
+    }, //onDesktopAgentDeprovisioned
     () => {
       self.postMessage({ id: -1, result: { callback: 'onDesktopAgentProvisioned' } });
-    },
+    }, //onDesktopAgentProvisioned
   );
 
   const onTokenExpired = () => {

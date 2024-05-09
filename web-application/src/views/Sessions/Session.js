@@ -36,6 +36,7 @@ const Session = ({ inSession }) => {
     persistSessionCode,
     syncStageWorkerWrapper,
     desktopAgentProvisioned,
+    userId,
     nickname,
     setBackdropOpen,
     manuallySelectedInstance,
@@ -335,7 +336,7 @@ const Session = ({ inSession }) => {
         console.log('Joining the session from the path');
         const [data, errorCode] = await syncStageWorkerWrapper.join(
           sessionCodeFromPath,
-          nickname,
+          userId,
           nickname,
           manuallySelectedInstance.zoneId,
           manuallySelectedInstance.studioServerId,

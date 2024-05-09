@@ -73,8 +73,8 @@ class SyncStageWorkerWrapper {
           case 'onDesktopAgentDisconnected':
             this.desktopAgentDelegate?.onDesktopAgentDisconnected();
             break;
-          case 'onDesktopAgentRelaunched':
-            this.desktopAgentDelegate?.onDesktopAgentRelaunched();
+          case 'onDesktopAgentDeprovisioned':
+            this.desktopAgentDelegate?.onDesktopAgentDeprovisioned();
             break;
           case 'onDesktopAgentProvisioned':
             this.desktopAgentDelegate?.onDesktopAgentProvisioned();

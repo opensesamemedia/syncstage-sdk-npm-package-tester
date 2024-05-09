@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
+import { v4 as uuidv4 } from 'uuid';
 import { Amplify } from 'aws-amplify';
 import { signOut as amplifySignOut, getCurrentUser } from 'aws-amplify/auth';
 
@@ -40,6 +41,7 @@ const StateManager = () => {
   const [syncStageJwt, setSyncStageJwt] = useState(localStorage.getItem('syncStageJwt') ?? '');
   const [syncStageWorkerWrapper, setSyncStageWorkerWrapper] = useState(null);
   const [syncStageSDKVersion, setSyncStageSDKVersion] = useState();
+  const [userId, setUserId] = useState(localStorage.getItem('userId') ?? '');
   const [nickname, setNickname] = useState(localStorage.getItem('nickname') ?? '');
   const [selectedServerName, setSelectedServerName] = useState(undefined);
   const [sessionCode, setSessionCode] = useState(localStorage.getItem('sessionCode') ?? '');
@@ -73,6 +75,17 @@ const StateManager = () => {
     setSessionCode(sessionCode);
   };
 
+  const generateAndPersistUserId = () => {
+    const storedUserId = localStorage.getItem('userId');
+    if (storedUserId) {
+      return storedUserId;
+    }
+    const userId = uuidv4();
+    localStorage.setItem('userId', userId);
+    setUserId(userId);
+    return userId;
+  };
+
   const fetchSyncStageToken = async () => {
     let jwt = syncStageJwt;
 
@@ -89,11 +102,12 @@ const StateManager = () => {
   };
 
   const initializeSyncStage = async () => {
-    console.log(
-      // eslint-disable-next-line max-len
-      `initializeSyncStage desktopAgentConnected: ${desktopAgentConnected} isSignedIn: ${isSignedIn} desktopAgentConnectedTimeout: ${desktopAgentConnectedTimeout} syncStageWorkerWrapper: `,
-      syncStageWorkerWrapper,
-    );
+    if (userId)
+      console.log(
+        // eslint-disable-next-line max-len
+        `initializeSyncStage desktopAgentConnected: ${desktopAgentConnected} isSignedIn: ${isSignedIn} desktopAgentConnectedTimeout: ${desktopAgentConnectedTimeout} syncStageWorkerWrapper: `,
+        syncStageWorkerWrapper,
+      );
     if (syncStageWorkerWrapper !== null && desktopAgentConnected && isSignedIn === true && desktopAgentConnectedTimeout === null) {
       console.log('initializeSyncStage useEffect syncStage init');
       setDesktopAgentCompatible(await syncStageWorkerWrapper.isCompatible());
@@ -178,7 +192,7 @@ const StateManager = () => {
     setDesktopAgentProvisioned(false);
   };
 
-  const onDesktopAgentRelaunched = async () => {
+  const onDesktopAgentDeprovisioned = async () => {
     setDesktopAgentProvisioned(false);
     await initializeSyncStage();
   };
@@ -234,6 +248,7 @@ const StateManager = () => {
   useEffect(() => {
     // Update appLoadTime when the component mounts
     setAppLoadTime(new Date());
+    generateAndPersistUserId();
   }, []);
 
   useEffect(() => {
@@ -333,7 +348,7 @@ const StateManager = () => {
         onDesktopAgentReleased,
         onDesktopAgentConnected,
         onDesktopAgentDisconnected,
-        onDesktopAgentRelaunched,
+        onDesktopAgentDeprovisioned,
         onDesktopAgentProvisioned,
       );
 
@@ -402,7 +417,7 @@ const StateManager = () => {
   const onCreateSession = async () => {
     setBackdropOpen(true);
     const [createData, errorCode] = await syncStageWorkerWrapper.createSession(
-      nickname,
+      userId,
       manuallySelectedInstance.zoneId,
       manuallySelectedInstance.studioServerId,
     );
@@ -425,8 +440,10 @@ const StateManager = () => {
     }
     const userAgent = window.navigator.userAgent;
     if (userAgent.indexOf('Mac') !== -1) {
+      // eslint-disable-next-line max-len
       return `https://public.sync-stage.com/agent/macos/prod/${desktopAgentLatestCompatibleVersion}/SyncStageAgent_${desktopAgentLatestCompatibleVersion}.dmg`;
     } else if (userAgent.indexOf('Win') !== -1) {
+      // eslint-disable-next-line max-len
       return `https://public.sync-stage.com/agent/windows/prod/${desktopAgentLatestCompatibleVersion}/SyncStageAgent_${desktopAgentLatestCompatibleVersion}.exe`;
     } else {
       return null;
@@ -438,6 +455,7 @@ const StateManager = () => {
     fetchSyncStageToken,
     initializeSyncStage,
     syncStageSDKVersion,
+    userId,
     nickname,
     persistNickname,
     sessionCode,
