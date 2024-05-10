@@ -67,8 +67,9 @@ const StateManager = () => {
 
   const nicknameSetAndProvisioned = nickname && syncStageJwt;
   const inSession = SESSION_PATH_REGEX.test(location.pathname);
-  const [serverInstancesList, setServerInstancesList] = useState([{ zoneId: null, zoneName: 'auto', studioServerId: null }]);
-  const [manuallySelectedInstance, setManuallySelectedInstance] = useState(serverInstancesList[0]);
+  const autoServerInstance = { zoneId: null, zoneName: 'auto', studioServerId: null };
+  const [serverInstancesList, setServerInstancesList] = useState([autoServerInstance]);
+  const [manuallySelectedInstance, setManuallySelectedInstance] = useState(autoServerInstance);
 
   const persistSessionCode = (sessionCode) => {
     localStorage.setItem('sessionCode', sessionCode);
@@ -277,21 +278,6 @@ const StateManager = () => {
   }, []);
 
   useEffect(() => {
-    async function fetchData() {
-      const [data, errorCode] = await syncStageWorkerWrapper.getServerInstances();
-      console.log(`Available server instances: ${JSON.stringify(data)}`);
-      if (errorCode === SyncStageSDKErrorCode.OK) {
-        setServerInstancesList((serverInstances) => [...serverInstances, ...data]);
-      } else {
-        errorCodeToSnackbar(errorCode);
-      }
-    }
-    if (syncStageWorkerWrapper && desktopAgentProvisioned && serverInstancesList.length === 1) {
-      fetchData();
-    }
-  }, [syncStageWorkerWrapper, desktopAgentProvisioned]);
-
-  useEffect(() => {
     const confirmAmplifyUserSignedIn = async () => {
       if (process.env.REACT_APP_BACKEND_BASE_PATH === undefined) {
         try {
@@ -480,7 +466,9 @@ const StateManager = () => {
     isSignedIn,
     setIsSignedIn,
     selectedServerName,
+    autoServerInstance,
     serverInstancesList,
+    setServerInstancesList,
     manuallySelectedInstance,
     setManuallySelectedInstance,
     goToSetupPageOnUnauthorized,
