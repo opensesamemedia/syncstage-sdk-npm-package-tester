@@ -43,6 +43,8 @@ const Session = ({ inSession }) => {
     goToSetupPageOnUnauthorized,
   } = useContext(AppContext);
 
+  const [sessionLoadTime, setSessionLoadTime] = useState(new Date());
+
   const [sessionData, setSessionData] = useState(null);
 
   const [settingsOpened, setSettingsOpened] = useState(false);
@@ -291,7 +293,11 @@ const Session = ({ inSession }) => {
     const [data, errorCode] = await syncStageWorkerWrapper.session();
     errorCodeToSnackbar(errorCode);
 
-    if (errorCode === SyncStageSDKErrorCode.NOT_IN_SESSION || errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
+    if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
+      onSessionOut();
+    } else if (errorCode === SyncStageSDKErrorCode.NOT_IN_SESSION && new Date() - sessionLoadTime > 5000) {
+      // timeout to allow rejoining session on refresh
+      console.log('Not in session, navigating to join session, sessionLoadTime: ', sessionLoadTime);
       onSessionOut();
     } else if (errorCode === SyncStageSDKErrorCode.OK) {
       setSessionData(data);
@@ -318,6 +324,7 @@ const Session = ({ inSession }) => {
   useEffect(() => {
     // React will run it when it is time to clean up:
     return () => {
+      setSessionLoadTime(new Date());
       setSessionData(null);
       clearDelegates();
     };

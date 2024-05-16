@@ -28,7 +28,8 @@ const errorCodeToSnackbar = (errorCode, msgOnOK) => {
     if (
       errorCode === SyncStageSDKErrorCode.TIMEOUT_ERROR ||
       errorCode === SyncStageSDKErrorCode.TOKEN_EXPIRED ||
-      errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED
+      errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED ||
+      errorCode === SyncStageSDKErrorCode.NOT_IN_SESSION
     ) {
       return;
     }

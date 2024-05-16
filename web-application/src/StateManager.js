@@ -349,7 +349,7 @@ const StateManager = () => {
       );
 
       const ssWorker = new SyncStageWorkerWrapper(null, null, syncStageDiscoveryDelegate, desktopAgentDelegate, onJwtExpired);
-
+      ssWorker.updateToken(syncStageJwt);
       setDesktopAgentProtocolHandler(await ssWorker.getDesktopAgentProtocolHandler());
       setSyncStageSDKVersion(await ssWorker.getSDKVersion());
       setSyncStageWorkerWrapper(ssWorker);
