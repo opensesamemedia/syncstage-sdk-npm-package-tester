@@ -111,6 +111,8 @@ const StateManager = () => {
         syncStageWorkerWrapper,
       );
     if (syncStageWorkerWrapper !== null && desktopAgentConnected && isSignedIn === true && desktopAgentConnectedTimeout === null) {
+      setBackdropOpen(true);
+
       console.log('initializeSyncStage useEffect syncStage init');
       setDesktopAgentCompatible(await syncStageWorkerWrapper.isCompatible());
       setDesktopAgentLatestCompatibleVersion(await syncStageWorkerWrapper.getLatestCompatibleDesktopAgentVersion());
@@ -120,9 +122,7 @@ const StateManager = () => {
 
       const jwt = await fetchSyncStageToken();
       const provision = async () => {
-        setBackdropOpen(true);
         const initErrorCode = await syncStageWorkerWrapper.init(jwt);
-        setBackdropOpen(false);
 
         if (initErrorCode == SyncStageSDKErrorCode.OK) {
           if (location.pathname === `${PathEnum.LOADING}` && !inSession) {
@@ -136,6 +136,7 @@ const StateManager = () => {
         } else {
           console.log('Could not init SyncStage, invalid jwt');
           signOut();
+          setBackdropOpen(false);
           return undefined;
         }
       };
@@ -152,10 +153,14 @@ const StateManager = () => {
           }
         } else {
           console.log('Could not update SyncStage token');
-          return await provision();
+          await provision();
+          setBackdropOpen(false);
+          return undefined;
         }
       } else {
-        return await provision();
+        await provision();
+        setBackdropOpen(false);
+        return undefined;
       }
     }
     // to the next else if add another condition to check if from the application loaded elapsed no more than 10s
@@ -176,6 +181,7 @@ const StateManager = () => {
         return undefined;
       }
     }
+    setBackdropOpen(false);
   };
 
   const onDesktopAgentAquired = () => {
