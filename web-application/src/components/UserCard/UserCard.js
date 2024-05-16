@@ -34,8 +34,8 @@ const StyledLinearProgress = styled(LinearProgress)`
 `;
 
 const StyledBadge = styled(Badge)(({ connected }) => {
-  const color = connected ? '#44b700' : '#93000A';
-  const animation = connected ? 'ripple 1.2s infinite ease-in-out' : 'none';
+  const color = connected === 'true' ? '#44b700' : '#93000A';
+  const animation = connected === 'true' ? 'ripple 1.2s infinite ease-in-out' : 'none';
   return {
     '& .MuiBadge-badge': {
       backgroundColor: color,

@@ -193,6 +193,12 @@ const Session = ({ inSession }) => {
         delete draft[identifier];
       }),
     );
+
+    setVolumeMap(
+      produce((draft) => {
+        delete draft[identifier];
+      }),
+    );
   }, []);
 
   const onUserMuted = useCallback((identifier) => {
@@ -267,7 +273,7 @@ const Session = ({ inSession }) => {
           errorCodeToSnackbar(errorCode);
 
           setVolumeMap(
-            produce(volumeMap, (draft) => {
+            produce((draft) => {
               draft[receiver.identifier] = volumeValue;
             }),
           );
@@ -425,7 +431,7 @@ const Session = ({ inSession }) => {
             <UserCard
               transmitter
               {...sessionData.transmitter}
-              connected={connected ?? false}
+              connected={connected ? connected.toString() : undefined}
               {...measurements}
               key={sessionData.transmitter.identifier}
             />
@@ -434,7 +440,7 @@ const Session = ({ inSession }) => {
             <UserCard
               {...connection}
               {...measurementsMap[identifier]}
-              connected={connectedMap[identifier] ?? false}
+              connected={connectedMap[identifier] ? connectedMap[identifier].toString() : undefined}
               volume={volumeMap[identifier]}
               onVolumeChanged={async (volume) => {
                 setVolumeMap({
