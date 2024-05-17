@@ -94,7 +94,9 @@ const Menu = ({ drawerOpened, onCloseDrawer, isMobile }) => {
             </ListItemButton>
           </List>
 
-          <span style={{ paddingLeft: 16, paddingTop: 20, fontSize: 10 }}>SDK: {syncStageSDKVersion}</span>
+          <span style={{ paddingLeft: 16, paddingTop: 20, fontSize: 10 }}>
+            SDK: {syncStageSDKVersion} | Commit: {process.env.REACT_APP_GIT_HASH}{' '}
+          </span>
         </MenuWrapper>
       </Drawer>
     </>
