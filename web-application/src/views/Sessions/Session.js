@@ -27,22 +27,25 @@ import ButtonContained from '../../components/StyledButtonContained';
 
 const MEASUREMENTS_INTERVAL_MS = 5000;
 
-const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording }) => {
+const Session = ({ inSession }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
   const {
     sessionCode,
-    sessionData,
-    setSessionData,
-    syncStage,
+    persistSessionCode,
+    syncStageWorkerWrapper,
     desktopAgentProvisioned,
-    setDesktopAgentProvisioned,
+    userId,
     nickname,
     setBackdropOpen,
-    persistSessionCode,
     manuallySelectedInstance,
+    goToSetupPageOnUnauthorized,
   } = useContext(AppContext);
+
+  const [sessionLoadTime, setSessionLoadTime] = useState(new Date());
+
+  const [sessionData, setSessionData] = useState(null);
 
   const [settingsOpened, setSettingsOpened] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -58,8 +61,42 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
   const [connectedMap, setConnectedMap] = useState({});
   const [receiversMap, setReceiversMap] = useState({});
 
+  const onLeaveSession = async () => {
+    setBackdropOpen(true);
+    const errorCode = await syncStageWorkerWrapper.leave();
+    errorCodeToSnackbar(errorCode);
+    setBackdropOpen(false);
+
+    if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
+      return goToSetupPageOnUnauthorized();
+    }
+    navigate(PathEnum.SESSIONS_JOIN);
+  };
+
+  const onStartRecording = async () => {
+    setBackdropOpen(true);
+    const errorCode = await syncStageWorkerWrapper.startRecording();
+    errorCodeToSnackbar(errorCode);
+    setBackdropOpen(false);
+
+    if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
+      return goToSetupPageOnUnauthorized();
+    }
+  };
+
+  const onStopRecording = async () => {
+    setBackdropOpen(true);
+    const errorCode = await syncStageWorkerWrapper.stopRecording();
+    errorCodeToSnackbar(errorCode);
+    setBackdropOpen(false);
+
+    if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
+      return goToSetupPageOnUnauthorized();
+    }
+  };
+
   const updateMeasurements = async () => {
-    if (syncStage === null) {
+    if (syncStageWorkerWrapper === null) {
       return;
     }
     let errorCode;
@@ -68,7 +105,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     console.log(`updateMeasurements execution time: ${new Date().toISOString()}`);
 
     //Tx measurements
-    [measurements, errorCode] = await syncStage.getTransmitterMeasurements();
+    [measurements, errorCode] = await syncStageWorkerWrapper.getTransmitterMeasurements();
     errorCodeToSnackbar(errorCode);
 
     if (measurements) {
@@ -84,7 +121,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     Object.entries(receiversMap).forEach(async ([_, receiver]) => {
       let errorCode;
       let measurements;
-      [measurements, errorCode] = await syncStage.getReceiverMeasurements(receiver.identifier);
+      [measurements, errorCode] = await syncStageWorkerWrapper.getReceiverMeasurements(receiver.identifier);
       errorCodeToSnackbar(errorCode);
       if (measurements) {
         setMeasurementsMap(
@@ -111,16 +148,16 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
   const onMutedToggle = useCallback(async () => {
     const mutedState = !muted;
     setMuted(mutedState);
-    const errorCode = await syncStage.toggleMicrophone(mutedState);
+    const errorCode = await syncStageWorkerWrapper.toggleMicrophone(mutedState);
     errorCodeToSnackbar(errorCode);
     if (errorCode !== SyncStageSDKErrorCode.OK) {
       setMuted(!mutedState);
     }
-  }, [syncStage, muted]);
+  }, [syncStageWorkerWrapper, muted]);
 
   const onUserJoined = useCallback(async (connection) => {
     console.log('onUserJoined');
-    if (syncStage === null) {
+    if (syncStageWorkerWrapper === null) {
       return;
     }
     // Not adding self connection and avoid duplicates
@@ -138,7 +175,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     );
     // Volume
 
-    const [volumeValue, errorCode] = await syncStage.getReceiverVolume(connection.identifier);
+    const [volumeValue, errorCode] = await syncStageWorkerWrapper.getReceiverVolume(connection.identifier);
     errorCodeToSnackbar(errorCode);
 
     setVolumeMap(
@@ -152,6 +189,12 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     console.log('onUserLeft');
 
     setReceiversMap(
+      produce((draft) => {
+        delete draft[identifier];
+      }),
+    );
+
+    setVolumeMap(
       produce((draft) => {
         delete draft[identifier];
       }),
@@ -208,8 +251,8 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
     );
   }, []);
 
-  const buildViewSessionState = async (sessionData, setConnectedMap, syncStage, setDesktopAgentProvisioned, setVolumeMap) => {
-    if (syncStage !== null && sessionData != null) {
+  const buildViewSessionState = async (sessionData, setConnectedMap, syncStageWorkerWrapper, setVolumeMap) => {
+    if (syncStageWorkerWrapper !== null && sessionData != null) {
       let errorCode;
       // initialize connection and volume, receivers map based on the sessionData state
 
@@ -226,7 +269,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
 
           // Volume
           let volumeValue;
-          [volumeValue, errorCode] = await syncStage.getReceiverVolume(receiver.identifier);
+          [volumeValue, errorCode] = await syncStageWorkerWrapper.getReceiverVolume(receiver.identifier);
           errorCodeToSnackbar(errorCode);
 
           setVolumeMap(
@@ -243,35 +286,37 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
         });
       }
 
-      setIsRecording(sessionData.isRecording);
+      setIsRecording(sessionData.recordingStatus === 'started');
     }
   };
 
-  const onWebsocketReconnected = useCallback(async () => {
-    console.log(`onWebsocketReconnected in session at time: ${new Date().toISOString()}`);
-    if (syncStage === null) {
+  const onDesktopAgentReconnected = useCallback(async () => {
+    console.log(`onDesktopAgentReconnected in session at time: ${new Date().toISOString()}`);
+    if (syncStageWorkerWrapper === null) {
+      console.log('syncStageWorkerWrapper is null');
       return;
     }
-    const [data, errorCode] = await syncStage.session();
+    const [data, errorCode] = await syncStageWorkerWrapper.session();
     errorCodeToSnackbar(errorCode);
 
     if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
-      navigate(PathEnum.SETUP);
-      setDesktopAgentProvisioned(false);
-    } else if (errorCode === SyncStageSDKErrorCode.NOT_IN_SESSION) {
+      onSessionOut();
+    } else if (errorCode === SyncStageSDKErrorCode.NOT_IN_SESSION && new Date() - sessionLoadTime > 5000) {
+      // timeout to allow rejoining session on refresh
+      console.log('Not in session, navigating to join session, sessionLoadTime: ', sessionLoadTime);
       onSessionOut();
     } else if (errorCode === SyncStageSDKErrorCode.OK) {
       setSessionData(data);
     }
 
-    await buildViewSessionState(data, setConnectedMap, syncStage, setDesktopAgentProvisioned, setVolumeMap);
-  }, [syncStage]);
+    await buildViewSessionState(data, setConnectedMap, syncStageWorkerWrapper, setVolumeMap);
+  }, [syncStageWorkerWrapper]);
 
   const clearDelegates = () => {
-    if (syncStage === null) {
+    if (syncStageWorkerWrapper === null) {
       return;
     }
-    syncStage.userDelegate = new SyncStageUserDelegate(
+    syncStageWorkerWrapper.userDelegate = new SyncStageUserDelegate(
       () => {},
       () => {},
       () => {},
@@ -283,89 +328,61 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
   };
 
   useEffect(() => {
+    // React will run it when it is time to clean up:
+    return () => {
+      setSessionLoadTime(new Date());
+      setSessionData(null);
+      clearDelegates();
+    };
+  }, []); // Empty array ensures this runs on mount and unmount only
+
+  useEffect(() => {
+    console.log('Session useEffect ', syncStageWorkerWrapper, desktopAgentProvisioned, location.pathname);
     const initializeSession = async () => {
       console.log('initializeSession');
       console.log(`Manually selected instance: ${JSON.stringify(manuallySelectedInstance)}`);
-      if (syncStage !== null && desktopAgentProvisioned) {
+      if (syncStageWorkerWrapper !== null && desktopAgentProvisioned) {
         const sessionCodeFromPath = extractSessionCode(location.pathname);
+        persistSessionCode(sessionCodeFromPath);
         setBackdropOpen(true);
-        const [data, errorCode] = await syncStage.session();
+
+        console.log('Joining the session from the path');
+        const [data, errorCode] = await syncStageWorkerWrapper.join(
+          sessionCodeFromPath,
+          userId,
+          nickname,
+          manuallySelectedInstance.zoneId,
+          manuallySelectedInstance.studioServerId,
+        );
+
         if (errorCode === SyncStageSDKErrorCode.OK) {
-          console.log('Desktop agent in session');
-
-          persistSessionCode(sessionCodeFromPath);
-          if (data.sessionCode?.replace(/-/g, '').toLowerCase() !== sessionCodeFromPath.replace(/-/g, '').toLowerCase()) {
-            console.log(
-              // eslint-disable-next-line
-              `${data.sessionCode} sessionCode differs from the one in the path ${location.pathname}. Leaving session and joining the one from the path`,
-            );
-            clearDelegates();
-
-            const errorCodeLeave = await syncStage.leave();
-            if (errorCodeLeave === SyncStageSDKErrorCode.OK) {
-              const [data, errorCodeJoin] = await syncStage.join(
-                sessionCodeFromPath,
-                nickname,
-                nickname,
-                manuallySelectedInstance.zoneId,
-                manuallySelectedInstance.studioServerId,
-              );
-              if (errorCodeJoin === SyncStageSDKErrorCode.OK) {
-                setSessionData(data);
-                setBackdropOpen(false);
-                return undefined;
-              }
-            }
-
-            console.log('Could not join or leave session in initializeSession method');
-            navigate(PathEnum.SESSIONS_JOIN);
-            setBackdropOpen(false);
-            return undefined;
-          } else {
-            setSessionData(data);
-            console.log('Opened session screen with the same session code as the one in the Desktop Agent');
-          }
-        } else if (errorCode !== SyncStageSDKErrorCode.OK) {
-          console.log('Desktop Agent not in session. Joining the session from the path');
-          const [data, errorCode] = await syncStage.join(
-            sessionCodeFromPath,
-            nickname,
-            nickname,
-            manuallySelectedInstance.zoneId,
-            manuallySelectedInstance.studioServerId,
-          );
-          if (errorCode === SyncStageSDKErrorCode.OK) {
-            console.log('Remaining on session Screen');
-            setSessionData(data);
-            setBackdropOpen(false);
-            return undefined;
-          }
-
-          console.log('Could not join session from the path.');
-          if (nickname) {
-            navigate(PathEnum.SESSIONS_JOIN);
-            setBackdropOpen(false);
-            return undefined;
-          } else {
-            navigate(PathEnum.SESSION_NICKNAME);
-            setBackdropOpen(false);
-            return undefined;
-          }
+          console.log('Remaining on session Screen');
+          setSessionData(data);
+          setBackdropOpen(false);
+          return undefined;
         }
-        setBackdropOpen(false);
-      } else if (!desktopAgentProvisioned) {
-        setBackdropOpen(true);
+
+        console.log('Could not join session from the path. errorCode: ', errorCode);
+        if (nickname) {
+          navigate(PathEnum.SESSIONS_JOIN);
+          setBackdropOpen(false);
+          return undefined;
+        } else {
+          navigate(PathEnum.SESSION_NICKNAME);
+          setBackdropOpen(false);
+          return undefined;
+        }
       }
     };
 
     initializeSession();
-  }, [syncStage, desktopAgentProvisioned, location.pathname]);
+  }, [syncStageWorkerWrapper, desktopAgentProvisioned, location.pathname]);
 
   useEffect(() => {
     async function executeAsync() {
-      if (syncStage !== null) {
+      if (syncStageWorkerWrapper !== null) {
         console.log('Updating delegates');
-        syncStage.userDelegate = new SyncStageUserDelegate(
+        syncStageWorkerWrapper.userDelegate = new SyncStageUserDelegate(
           onUserJoined,
           onUserLeft,
           onUserMuted,
@@ -374,30 +391,33 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
           onRecordingStopped,
           onSessionOut,
         );
-        syncStage.connectivityDelegate = new SyncStageConnectivityDelegate(onTransmitterConnectivityChanged, onReceiverConnectivityChanged);
-        syncStage.updateOnWebsocketReconnected(onWebsocketReconnected);
+        syncStageWorkerWrapper.connectivityDelegate = new SyncStageConnectivityDelegate(
+          onTransmitterConnectivityChanged,
+          onReceiverConnectivityChanged,
+        );
+        syncStageWorkerWrapper.updateOnDesktopAgentReconnected(onDesktopAgentReconnected.bind(this));
 
-        const [mutedState, errorCode] = await syncStage.isMicrophoneMuted();
+        const [mutedState, errorCode] = await syncStageWorkerWrapper.isMicrophoneMuted();
         errorCodeToSnackbar(errorCode);
         if (errorCode === SyncStageSDKErrorCode.OK) {
           setMuted(mutedState);
         }
-        await buildViewSessionState(sessionData, setConnectedMap, syncStage, setDesktopAgentProvisioned, setVolumeMap);
+        await buildViewSessionState(sessionData, setConnectedMap, syncStageWorkerWrapper, setVolumeMap);
       }
     }
     executeAsync();
     return () => {
-      if (syncStage !== null) {
-        syncStage.userDelegate = null;
-        syncStage.connectivityDelegate = null;
+      if (syncStageWorkerWrapper !== null) {
+        syncStageWorkerWrapper.userDelegate = null;
+        syncStageWorkerWrapper.connectivityDelegate = null;
       }
     };
-  }, [syncStage, sessionData]);
+  }, [syncStageWorkerWrapper, sessionData]);
 
   useEffect(() => {
     //on component unmount.
     return () => {
-      if (syncStage !== null) {
+      if (syncStageWorkerWrapper !== null) {
         pause(); // stop measurements
       }
     };
@@ -411,7 +431,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
             <UserCard
               transmitter
               {...sessionData.transmitter}
-              connected={connected ?? false}
+              connected={connected ? connected.toString() : undefined}
               {...measurements}
               key={sessionData.transmitter.identifier}
             />
@@ -420,7 +440,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
             <UserCard
               {...connection}
               {...measurementsMap[identifier]}
-              connected={connectedMap[identifier] ?? false}
+              connected={connectedMap[identifier] ? connectedMap[identifier].toString() : undefined}
               volume={volumeMap[identifier]}
               onVolumeChanged={async (volume) => {
                 setVolumeMap({
@@ -429,7 +449,7 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
                 });
               }}
               onVolumeChangeCommited={async (volume) => {
-                syncStage.changeReceiverVolume(identifier, volume);
+                syncStageWorkerWrapper.changeReceiverVolume(identifier, volume);
                 setVolumeMap({
                   ...volumeMap,
                   [identifier]: volume,
@@ -444,11 +464,21 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
           <Grid container direction="column" justifyContent="center" alignItems="center" style={{ margin: 0, padding: 0 }}>
             {isRecording ? (
               <Grid
+                id="recording-row"
                 container
                 direction="row"
                 justifyContent="center"
                 alignItems="center"
-                style={{ margin: 0, paddingTop: '8px', paddingBottom: '4px', height: '32px', backgroundColor: theme.recordingBackground }}
+                style={{
+                  margin: 0,
+                  paddingTop: '8px',
+                  paddingBottom: '4px',
+                  height: '32px',
+                  bottom: '58px',
+                  position: 'fixed',
+                  width: '100%',
+                  backgroundColor: theme.recordingBackground,
+                }}
                 spacing={2}
               >
                 <span id="redcircle"></span>
@@ -465,11 +495,12 @@ const Session = ({ onLeaveSession, inSession, onStartRecording, onStopRecording 
             )}
 
             <Grid
+              id="footer-buttons"
               container
               direction="row"
               justifyContent="center"
               alignItems="center"
-              style={{ margin: 0, paddingTop: '4px' }}
+              style={{ margin: 0, bottom: '36px', position: 'fixed', height: '32px', width: '100%' }}
               spacing={2}
             >
               <Grid item style={{ paddingRight: '32px' }}>

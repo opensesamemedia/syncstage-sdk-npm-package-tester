@@ -25,7 +25,12 @@ const errorCodeToSnackbar = (errorCode, msgOnOK) => {
     console.log(snackbarMsg);
 
     // Errors we do not want to show to the user, but we want to log
-    if (errorCode === SyncStageSDKErrorCode.TIMEOUT_ERROR || errorCode === SyncStageSDKErrorCode.TOKEN_EXPIRED) {
+    if (
+      errorCode === SyncStageSDKErrorCode.TIMEOUT_ERROR ||
+      errorCode === SyncStageSDKErrorCode.TOKEN_EXPIRED ||
+      errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED ||
+      errorCode === SyncStageSDKErrorCode.NOT_IN_SESSION
+    ) {
       return;
     }
     enqueueSnackbar(snackbarMsg);
@@ -43,6 +48,7 @@ const willJwtBeExpiredIn = (jwt, secondTimeRemaning) => {
     const jwtExp = JSON.parse(atob(jwt.split('.')[1])).exp * 1000;
 
     const willBeExpired = dateInFuture >= jwtExp;
+    console.log(`willBeExpired: ${willBeExpired} jwtExp: ${jwtExp} dateInFuture: ${dateInFuture}`);
     return willBeExpired;
   } catch (error) {
     console.log(`Error checking jwt: ${error}`);

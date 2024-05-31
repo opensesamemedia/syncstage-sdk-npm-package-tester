@@ -1,6 +1,9 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-
+import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
+import { errorCodeToSnackbar } from '../../utils';
+import IconButton from '@mui/material/IconButton';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import { Grid } from '@mui/material';
 import ButtonContained from '../../components/StyledButtonContained';
 import Button from '../../components/StyledButton';
@@ -14,8 +17,36 @@ import { PathEnum } from '../../router/PathEnum';
 const JoinSession = ({ onJoinSession, onCreateSession }) => {
   const navigate = useNavigate();
 
-  const { sessionCode, persistSessionCode, serverInstancesList, manuallySelectedInstance, setManuallySelectedInstance } =
-    useContext(AppContext);
+  const {
+    sessionCode,
+    desktopAgentProvisioned,
+    persistSessionCode,
+    serverInstancesList,
+    manuallySelectedInstance,
+    setManuallySelectedInstance,
+    syncStageWorkerWrapper,
+    autoServerInstance,
+    setServerInstancesList,
+  } = useContext(AppContext);
+
+  const fetchServerInstancesList = async () => {
+    console.log('Fetching server instances list');
+    const [data, errorCode] = await syncStageWorkerWrapper.getServerInstances();
+    console.log(`Available server instances: ${JSON.stringify(data)}`);
+    if (errorCode === SyncStageSDKErrorCode.OK) {
+      console.log([autoServerInstance, ...data]);
+      setManuallySelectedInstance(autoServerInstance);
+      setServerInstancesList([autoServerInstance, ...data]);
+    } else {
+      errorCodeToSnackbar(errorCode);
+    }
+  };
+
+  useEffect(() => {
+    if (syncStageWorkerWrapper && serverInstancesList.length === 1) {
+      fetchServerInstancesList();
+    }
+  }, [syncStageWorkerWrapper, desktopAgentProvisioned]);
 
   return (
     <Grid container direction="column" spacing={2}>
@@ -36,7 +67,7 @@ const JoinSession = ({ onJoinSession, onCreateSession }) => {
           />
         </Grid>
         <Grid item>
-          <ButtonContained disabled={sessionCode === ''} onClick={onJoinSession}>
+          <ButtonContained disabled={sessionCode === '' || !desktopAgentProvisioned} onClick={onJoinSession}>
             Join
           </ButtonContained>
         </Grid>
@@ -47,7 +78,9 @@ const JoinSession = ({ onJoinSession, onCreateSession }) => {
           <p>or</p>
         </Grid>
         <Grid item>
-          <ButtonContained onClick={onCreateSession}>New session</ButtonContained>
+          <ButtonContained onClick={onCreateSession} disabled={!desktopAgentProvisioned}>
+            New session
+          </ButtonContained>
         </Grid>
       </Grid>
 
@@ -64,21 +97,31 @@ const JoinSession = ({ onJoinSession, onCreateSession }) => {
         </Grid>
       </Grid>
       <Grid item style={{ height: '20px' }} />
+
       <Grid item>
-        <FormControl>
-          <span style={{ fontSize: 12 }}>Studio Server location</span>
-          <Select
-            labelId="region-select-label"
-            value={manuallySelectedInstance}
-            onChange={(e) => setManuallySelectedInstance(e.target.value)}
-          >
-            {serverInstancesList.map((server) => (
-              <MenuItem value={server} key={server.studioServerId}>
-                {server.zoneName}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        <Grid container direction="row" alignItems="center" spacing={2}>
+          <Grid item>
+            <FormControl>
+              <span style={{ fontSize: 12 }}>Studio Server location</span>
+              <Select
+                labelId="region-select-label"
+                value={manuallySelectedInstance}
+                onChange={(e) => setManuallySelectedInstance(e.target.value)}
+              >
+                {serverInstancesList.map((server) => (
+                  <MenuItem value={server} key={server.studioServerId}>
+                    {server.zoneName}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item>
+            <IconButton onClick={fetchServerInstancesList} style={{ color: 'white', paddingTop: '22px' }}>
+              <RefreshIcon />
+            </IconButton>
+          </Grid>
+        </Grid>
       </Grid>
     </Grid>
   );

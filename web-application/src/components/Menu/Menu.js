@@ -12,11 +12,11 @@ import AppContext from '../../AppContext';
 import { PathEnum } from '../../router/PathEnum';
 import theme from '../../ui/theme';
 
-const Menu = ({ nicknameSetAndProvisioned, drawerOpened, onCloseDrawer, isMobile }) => {
+const Menu = ({ drawerOpened, onCloseDrawer, isMobile }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { syncStageSDKVersion, desktopAgentProvisioned, signOut, desktopAgentConnected } = useContext(AppContext);
+  const { syncStageSDKVersion, signOut } = useContext(AppContext);
 
   const selectedStyle = {
     '&.Mui-selected': {
@@ -68,7 +68,6 @@ const Menu = ({ nicknameSetAndProvisioned, drawerOpened, onCloseDrawer, isMobile
               onClick={() => {
                 navigate(PathEnum.SESSION_NICKNAME);
               }}
-              disabled={!desktopAgentProvisioned || !desktopAgentConnected}
             >
               <ListItemIcon sx={{ color: 'inherit' }}>
                 <AccountCircleOutlinedIcon />
@@ -80,7 +79,6 @@ const Menu = ({ nicknameSetAndProvisioned, drawerOpened, onCloseDrawer, isMobile
               selected={location.pathname === `${PathEnum.SESSIONS_SESSION_PREFIX}`}
               sx={selectedStyle}
               onClick={() => navigate(PathEnum.SESSIONS_JOIN)}
-              disabled={!nicknameSetAndProvisioned || !desktopAgentProvisioned || !desktopAgentConnected}
             >
               <ListItemIcon sx={{ color: 'inherit' }}>
                 <GroupsIcon />
@@ -96,7 +94,9 @@ const Menu = ({ nicknameSetAndProvisioned, drawerOpened, onCloseDrawer, isMobile
             </ListItemButton>
           </List>
 
-          <span style={{ paddingLeft: 16, paddingTop: 20, fontSize: 10 }}>SDK: {syncStageSDKVersion}</span>
+          <span style={{ paddingLeft: 16, paddingTop: 20, fontSize: 10 }}>
+            SDK: {syncStageSDKVersion} | Commit: {process.env.REACT_APP_GIT_HASH}{' '}
+          </span>
         </MenuWrapper>
       </Drawer>
     </>
