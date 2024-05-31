@@ -25,7 +25,7 @@ import './ui/animationStyles.css';
 import SyncStageDesktopAgentDelegate from './SyncStageDesktopAgentDelegate';
 import SyncStageDiscoveryDelegate from './SyncStageDiscoveryDelegate';
 
-import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-package-development';
+import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
 import modalStyle from './ui/ModalStyle';
 import Navigation from './components/Navigation/Navigation';
 import SyncStageWorkerWrapper from './syncStageWorkerWrapper';
@@ -535,7 +535,7 @@ const StateManager = () => {
             </Box>
           </Modal>
         </Online>
-        {/* <Modal
+        <Modal
           open={desktopAgentCompatible === false && !desktopAgentCompatibleModalClosed}
           onClose={() => setDesktopAgentCompatibleModalClosed(true)}
         >
@@ -556,7 +556,7 @@ const StateManager = () => {
               )}
             </Typography>
           </Box>
-        </Modal> */}
+        </Modal>
         <div className="app-container">
           <div className="app-container-limiter">
             <RoutesComponent onJoinSession={onJoinSession} onCreateSession={onCreateSession} inSession={inSession} />
