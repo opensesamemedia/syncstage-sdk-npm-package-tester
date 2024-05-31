@@ -43,7 +43,8 @@ const StateManager = () => {
   const [nickname, setNickname] = useState(localStorage.getItem('nickname') ?? '');
   const [selectedServerName, setSelectedServerName] = useState(undefined);
   const [sessionCode, setSessionCode] = useState(localStorage.getItem('sessionCode') ?? '');
-  const [sessionData, setSessionData] = useState(null);
+
+  const [desktopAgentCompatible, setDesktopAgentCompatible] = useState(null);
 
   const desktopAgentConnectedRef = useRef(false);
   const desktopAgentConnectedTimeoutRef = useRef(null);
@@ -70,6 +71,61 @@ const StateManager = () => {
     setSessionCode(sessionCode);
   };
 
+  const initializeSyncStage = async () => {
+    const fetchJWT = async () => {
+      let jwt = syncStageJwt;
+
+      const fiveMinutesInSeconds = 5 * 60;
+      if (willJwtBeExpiredIn(jwt, fiveMinutesInSeconds)) {
+        console.log(`SyncStage jwt will expire in the next ${fiveMinutesInSeconds}s, refetching token`);
+        console.log(jwt);
+        jwt = await onJwtExpired();
+        persistSyncStageJwt(jwt);
+      } else {
+        console.log('Found valid SyncStage jwt secret.');
+      }
+      return jwt;
+    };
+    if (syncStageWorkerWrapper !== null && desktopAgentConnected && isSignedIn === true && desktopAgentConnectedTimeout === null) {
+      console.log('initializeSyncStage useEffect syncStage init');
+      setDesktopAgentCompatible(await syncStageWorkerWrapper.isCompatible());
+      const jwt = await fetchJWT();
+      const initErrorCode = await syncStageWorkerWrapper.init(jwt);
+
+      if (initErrorCode == SyncStageSDKErrorCode.OK) {
+        setDesktopAgentProvisioned(true);
+        if (!inSession)
+          if (nickname) {
+            navigate(PathEnum.SESSIONS_JOIN);
+          } else {
+            navigate(PathEnum.SESSION_NICKNAME);
+          }
+      } else {
+        console.log('Could not init SyncStage, invalid jwt');
+        signOut();
+        return undefined;
+      }
+    }
+    // to the next else if add another condition to check if from the application loaded elapsed no more than 10s
+    // if more than 10s, navigate to setup screen
+    else if (syncStageWorkerWrapper !== null && desktopAgentConnectedTimeout && isSignedIn) {
+      // Get the current time
+      let currentTime = new Date();
+
+      // Calculate the time difference in seconds
+      let timeDifference = (currentTime - appLoadTime) / 1000;
+
+      // If less than 10 seconds have elapsed, navigate to setup screen
+      if (timeDifference < 10) {
+        console.log('initializeSyncStage useEffect desktopAgentConnectedTimeout');
+        console.log('Desktop connected timeout, going to setup screen');
+        navigate(PathEnum.SETUP);
+        setBackdropOpen(false);
+        return undefined;
+      }
+    }
+  };
+
   const onDesktopAgentAquired = () => {
     setDesktopAgentAquired(true);
   };
@@ -77,7 +133,7 @@ const StateManager = () => {
     setDesktopAgentAquired(false);
   };
 
-  const onDesktopAgentConnected = () => {
+  const onDesktopAgentConnected = async () => {
     setDesktopAgentConnected(true);
     clearTimeout(desktopAgentConnectedTimeoutId);
   };
@@ -232,6 +288,7 @@ const StateManager = () => {
         onDesktopAgentReleased,
         onDesktopAgentConnected,
         onDesktopAgentDisconnected,
+        initializeSyncStage,
       );
 
       const ssWorker = new SyncStageWorkerWrapper(null, null, syncStageDiscoveryDelegate, desktopAgentDelegate, onJwtExpired);
@@ -257,60 +314,6 @@ const StateManager = () => {
   }, [location.pathname]);
 
   useEffect(() => {
-    const fetchJWT = async () => {
-      let jwt = syncStageJwt;
-
-      const fiveMinutesInSeconds = 5 * 60;
-      if (willJwtBeExpiredIn(jwt, fiveMinutesInSeconds)) {
-        console.log(`SyncStage jwt will expire in the next ${fiveMinutesInSeconds}s, refetching token`);
-        jwt = await onJwtExpired();
-        persistSyncStageJwt(jwt);
-      } else {
-        console.log('Found valid SyncStage jwt secret.');
-      }
-      return jwt;
-    };
-
-    const initializeSyncStage = async () => {
-      if (syncStageWorkerWrapper !== null && desktopAgentConnected && isSignedIn === true && desktopAgentConnectedTimeout === null) {
-        console.log('initializeSyncStage useEffect syncStage init');
-        const jwt = await fetchJWT();
-
-        const initErrorCode = await syncStageWorkerWrapper.init(jwt);
-
-        if (initErrorCode == SyncStageSDKErrorCode.OK) {
-          setDesktopAgentProvisioned(true);
-          if (!inSession)
-            if (nickname) {
-              navigate(PathEnum.SESSIONS_JOIN);
-            } else {
-              navigate(PathEnum.SESSION_NICKNAME);
-            }
-        } else {
-          console.log('Could not init SyncStage, invalid jwt');
-          signOut();
-          return undefined;
-        }
-      }
-      // to the next else if add another condition to check if from the application loaded elapsed no more than 10s
-      // if more than 10s, navigate to setup screen
-      else if (syncStageWorkerWrapper !== null && desktopAgentConnectedTimeout && isSignedIn) {
-        // Get the current time
-        let currentTime = new Date();
-
-        // Calculate the time difference in seconds
-        let timeDifference = (currentTime - appLoadTime) / 1000;
-
-        // If less than 10 seconds have elapsed, navigate to setup screen
-        if (timeDifference < 10) {
-          console.log('initializeSyncStage useEffect desktopAgentConnectedTimeout');
-          console.log('Desktop connected timeout, going to setup screen');
-          navigate(PathEnum.SETUP);
-          setBackdropOpen(false);
-          return undefined;
-        }
-      }
-    };
     initializeSyncStage();
   }, [syncStageWorkerWrapper, desktopAgentConnected, desktopAgentConnectedTimeout, isSignedIn]);
 
@@ -321,7 +324,6 @@ const StateManager = () => {
       console.log('error signing out from aplify backend: ', error);
     }
 
-    setSessionData(null);
     setUserJwt(null);
     setIsSignedIn(false);
     persistSyncStageJwt('');
@@ -345,37 +347,6 @@ const StateManager = () => {
   const persistSyncStageJwt = (jwt) => {
     setSyncStageJwt(jwt);
     localStorage.setItem('syncStageJwt', jwt);
-  };
-
-  async function fetchNewSyncStageToken() {
-    let jwt;
-    // use local docke-compose backend
-    if (process.env.REACT_APP_BACKEND_BASE_PATH !== undefined) {
-      const tokenResponse = await fetchSyncStageToken(userJwt);
-      jwt = tokenResponse.jwt;
-    }
-
-    // use amplify backend
-    else {
-      jwt = await amplifyFetchSyncStageToken();
-    }
-    persistSyncStageJwt(jwt);
-    const errorCode = await syncStageWorkerWrapper.init(jwt);
-    return errorCode;
-  }
-
-  const onProvisionSubmit = async () => {
-    setBackdropOpen(true);
-    const errorCode = await fetchNewSyncStageToken();
-    errorCodeToSnackbar(errorCode, 'Authorized to SyncStage services');
-
-    if (errorCode === SyncStageSDKErrorCode.OK) {
-      setBackdropOpen(false);
-      navigate(PathEnum.SESSION_NICKNAME);
-      setDesktopAgentProvisioned(true);
-    } else {
-      setDesktopAgentProvisioned(false);
-    }
   };
 
   const onJoinSession = async () => {
@@ -402,49 +373,14 @@ const StateManager = () => {
     }
   };
 
-  const onLeaveSession = async () => {
-    setBackdropOpen(true);
-    const errorCode = await syncStageWorkerWrapper.leave();
-    errorCodeToSnackbar(errorCode);
-    setBackdropOpen(false);
-
-    if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
-      return goToSetupPageOnUnauthorized();
-    }
-    navigate(PathEnum.SESSIONS_JOIN);
-  };
-
-  const onStartRecording = async () => {
-    setBackdropOpen(true);
-    const errorCode = await syncStageWorkerWrapper.startRecording();
-    errorCodeToSnackbar(errorCode);
-    setBackdropOpen(false);
-
-    if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
-      return goToSetupPageOnUnauthorized();
-    }
-  };
-
-  const onStopRecording = async () => {
-    setBackdropOpen(true);
-    const errorCode = await syncStageWorkerWrapper.stopRecording();
-    errorCodeToSnackbar(errorCode);
-    setBackdropOpen(false);
-
-    if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
-      return goToSetupPageOnUnauthorized();
-    }
-  };
-
   const sharedState = {
     syncStageWorkerWrapper,
+    initializeSyncStage,
     syncStageSDKVersion,
     nickname,
     persistNickname,
     sessionCode,
     persistSessionCode,
-    sessionData,
-    setSessionData,
     setBackdropOpen,
     desktopAgentConnected,
     setDesktopAgentConnected,
@@ -465,6 +401,7 @@ const StateManager = () => {
     serverInstancesList,
     manuallySelectedInstance,
     setManuallySelectedInstance,
+    goToSetupPageOnUnauthorized,
   };
 
   return (
@@ -523,15 +460,7 @@ const StateManager = () => {
         </Online>
         <div className="app-container">
           <div className="app-container-limiter">
-            <RoutesComponent
-              onProvisionSubmit={onProvisionSubmit}
-              onJoinSession={onJoinSession}
-              onLeaveSession={onLeaveSession}
-              onCreateSession={onCreateSession}
-              inSession={inSession}
-              onStartRecording={onStartRecording}
-              onStopRecording={onStopRecording}
-            />
+            <RoutesComponent onJoinSession={onJoinSession} onCreateSession={onCreateSession} inSession={inSession} />
           </div>
         </div>
       </AppWrapper>

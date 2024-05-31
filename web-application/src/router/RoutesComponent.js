@@ -11,10 +11,9 @@ import BackdropView from '../views/Backdrop/BackdropView';
 const RoutesComponent = ({
   onJoinSession,
   onCreateSession,
-  onLeaveSession,
+
   inSession,
-  onStartRecording,
-  onStopRecording,
+
   onProvisionSubmit,
 }) => {
   return (
@@ -34,17 +33,7 @@ const RoutesComponent = ({
 
       <Route path={PathEnum.SESSIONS_JOIN} element={<JoinSession onJoinSession={onJoinSession} />} />
 
-      <Route
-        path={PathEnum.SESSIONS_SESSION_CODE}
-        element={
-          <Session
-            onLeaveSession={onLeaveSession}
-            inSession={inSession}
-            onStartRecording={onStartRecording}
-            onStopRecording={onStopRecording}
-          />
-        }
-      />
+      <Route path={PathEnum.SESSIONS_SESSION_CODE} element={<Session inSession={inSession} />} />
     </Routes>
   );
 };
