@@ -24,19 +24,21 @@ import './ui/animationStyles.css';
 import SyncStageDesktopAgentDelegate from './SyncStageDesktopAgentDelegate';
 import SyncStageDiscoveryDelegate from './SyncStageDiscoveryDelegate';
 
-import SyncStage, { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
+import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-package-development';
 import modalStyle from './ui/ModalStyle';
 import Navigation from './components/Navigation/Navigation';
+import SyncStageWorkerWrapper from './syncStageWorkerWrapper';
 
 const StateManager = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const [appLoadTime, setAppLoadTime] = useState(new Date());
   const [previousLocation, setPreviousLocation] = useState(null);
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [userJwt, setUserJwt] = useState(null);
   const [syncStageJwt, setSyncStageJwt] = useState(localStorage.getItem('syncStageJwt') ?? '');
-  const [syncStage, setSyncStage] = useState(null);
+  const [syncStageWorkerWrapper, setSyncStageWorkerWrapper] = useState(null);
   const [syncStageSDKVersion, setSyncStageSDKVersion] = useState();
   const [nickname, setNickname] = useState(localStorage.getItem('nickname') ?? '');
   const [selectedServerName, setSelectedServerName] = useState(undefined);
@@ -129,6 +131,11 @@ const StateManager = () => {
   };
 
   useEffect(() => {
+    // Update appLoadTime when the component mounts
+    setAppLoadTime(new Date());
+  }, []);
+
+  useEffect(() => {
     desktopAgentConnectedRef.current = desktopAgentConnected;
   }, [desktopAgentConnected]);
 
@@ -151,7 +158,7 @@ const StateManager = () => {
 
   useEffect(() => {
     async function fetchData() {
-      const [data, errorCode] = await syncStage.getServerInstances();
+      const [data, errorCode] = await syncStageWorkerWrapper.getServerInstances();
       console.log(`Available server instances: ${JSON.stringify(data)}`);
       if (errorCode === SyncStageSDKErrorCode.OK) {
         setServerInstancesList((serverInstances) => [...serverInstances, ...data]);
@@ -159,10 +166,10 @@ const StateManager = () => {
         errorCodeToSnackbar(errorCode);
       }
     }
-    if (syncStage && desktopAgentProvisioned) {
+    if (syncStageWorkerWrapper && desktopAgentProvisioned) {
       fetchData();
     }
-  }, [syncStage, desktopAgentProvisioned]);
+  }, [syncStageWorkerWrapper, desktopAgentProvisioned]);
 
   useEffect(() => {
     const confirmAmplifyUserSignedIn = async () => {
@@ -209,9 +216,7 @@ const StateManager = () => {
   }, []);
 
   useEffect(() => {
-    if (syncStage === null) {
-      console.log('initializeSyncStage create SyncStage object');
-
+    const initWorker = async () => {
       const syncStageDiscoveryDelegate = new SyncStageDiscoveryDelegate(
         (zones) => {
           console.log(JSON.stringify(zones));
@@ -229,11 +234,15 @@ const StateManager = () => {
         onDesktopAgentDisconnected,
       );
 
-      const ss = new SyncStage(null, null, syncStageDiscoveryDelegate, desktopAgentDelegate, onJwtExpired);
+      const ssWorker = new SyncStageWorkerWrapper(null, null, syncStageDiscoveryDelegate, desktopAgentDelegate, onJwtExpired);
 
-      setSyncStageSDKVersion(ss.getSDKVersion());
-      setSyncStage(ss);
-      setDesktopAgentProtocolHandler(ss.getDesktopAgentProtocolHandler());
+      setDesktopAgentProtocolHandler(await ssWorker.getDesktopAgentProtocolHandler());
+      setSyncStageSDKVersion(await ssWorker.getSDKVersion());
+      setSyncStageWorkerWrapper(ssWorker);
+    };
+
+    if (!syncStageWorkerWrapper) {
+      initWorker();
     }
   }, []);
 
@@ -263,11 +272,12 @@ const StateManager = () => {
     };
 
     const initializeSyncStage = async () => {
-      if (syncStage !== null && desktopAgentConnected && isSignedIn === true && desktopAgentConnectedTimeout === null) {
+      if (syncStageWorkerWrapper !== null && desktopAgentConnected && isSignedIn === true && desktopAgentConnectedTimeout === null) {
         console.log('initializeSyncStage useEffect syncStage init');
         const jwt = await fetchJWT();
 
-        const initErrorCode = await syncStage.init(jwt);
+        const initErrorCode = await syncStageWorkerWrapper.init(jwt);
+
         if (initErrorCode == SyncStageSDKErrorCode.OK) {
           setDesktopAgentProvisioned(true);
           if (!inSession)
@@ -281,16 +291,28 @@ const StateManager = () => {
           signOut();
           return undefined;
         }
-      } else if (syncStage !== null && desktopAgentConnectedTimeout && isSignedIn) {
-        console.log('initializeSyncStage useEffect desktopAgentConnectedTimeout');
-        console.log('Desktop connected timeout, going to setup screen');
-        navigate(PathEnum.SETUP);
-        setBackdropOpen(false);
-        return undefined;
+      }
+      // to the next else if add another condition to check if from the application loaded elapsed no more than 10s
+      // if more than 10s, navigate to setup screen
+      else if (syncStageWorkerWrapper !== null && desktopAgentConnectedTimeout && isSignedIn) {
+        // Get the current time
+        let currentTime = new Date();
+
+        // Calculate the time difference in seconds
+        let timeDifference = (currentTime - appLoadTime) / 1000;
+
+        // If less than 10 seconds have elapsed, navigate to setup screen
+        if (timeDifference < 10) {
+          console.log('initializeSyncStage useEffect desktopAgentConnectedTimeout');
+          console.log('Desktop connected timeout, going to setup screen');
+          navigate(PathEnum.SETUP);
+          setBackdropOpen(false);
+          return undefined;
+        }
       }
     };
     initializeSyncStage();
-  }, [syncStage, desktopAgentConnected, desktopAgentConnectedTimeout, isSignedIn]);
+  }, [syncStageWorkerWrapper, desktopAgentConnected, desktopAgentConnectedTimeout, isSignedIn]);
 
   const signOut = async () => {
     try {
@@ -306,7 +328,7 @@ const StateManager = () => {
     navigate(PathEnum.LOGIN);
     setDesktopAgentProvisioned(false);
     setBackdropOpen(false);
-    await syncStage.leave();
+    await syncStageWorkerWrapper.leave();
   };
 
   const persistNickname = (nickname) => {
@@ -338,7 +360,7 @@ const StateManager = () => {
       jwt = await amplifyFetchSyncStageToken();
     }
     persistSyncStageJwt(jwt);
-    const errorCode = await syncStage.init(jwt);
+    const errorCode = await syncStageWorkerWrapper.init(jwt);
     return errorCode;
   }
 
@@ -362,25 +384,27 @@ const StateManager = () => {
 
   const onCreateSession = async () => {
     setBackdropOpen(true);
-    const [createData, errorCode] = await syncStage.createSession(
+    const [createData, errorCode] = await syncStageWorkerWrapper.createSession(
       nickname,
       manuallySelectedInstance.zoneId,
       manuallySelectedInstance.studioServerId,
     );
-    errorCodeToSnackbar(errorCode, `Created session ${createData.sessionCode}`);
 
     if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
       return goToSetupPageOnUnauthorized();
     }
 
-    persistSessionCode(createData.sessionCode);
+    if (errorCode === SyncStageSDKErrorCode.OK) {
+      errorCodeToSnackbar(errorCode, `Created session ${createData.sessionCode}`);
+      persistSessionCode(createData.sessionCode);
 
-    navigate(`${PathEnum.SESSIONS_SESSION_PREFIX}${createData.sessionCode}`);
+      navigate(`${PathEnum.SESSIONS_SESSION_PREFIX}${createData.sessionCode}`);
+    }
   };
 
   const onLeaveSession = async () => {
     setBackdropOpen(true);
-    const errorCode = await syncStage.leave();
+    const errorCode = await syncStageWorkerWrapper.leave();
     errorCodeToSnackbar(errorCode);
     setBackdropOpen(false);
 
@@ -392,7 +416,7 @@ const StateManager = () => {
 
   const onStartRecording = async () => {
     setBackdropOpen(true);
-    const errorCode = await syncStage.startRecording();
+    const errorCode = await syncStageWorkerWrapper.startRecording();
     errorCodeToSnackbar(errorCode);
     setBackdropOpen(false);
 
@@ -403,7 +427,7 @@ const StateManager = () => {
 
   const onStopRecording = async () => {
     setBackdropOpen(true);
-    const errorCode = await syncStage.stopRecording();
+    const errorCode = await syncStageWorkerWrapper.stopRecording();
     errorCodeToSnackbar(errorCode);
     setBackdropOpen(false);
 
@@ -413,7 +437,7 @@ const StateManager = () => {
   };
 
   const sharedState = {
-    syncStage,
+    syncStageWorkerWrapper,
     syncStageSDKVersion,
     nickname,
     persistNickname,

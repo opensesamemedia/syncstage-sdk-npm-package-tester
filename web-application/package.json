@@ -10,7 +10,7 @@
     "@mui/material": "^5.11.15",
     "@mui/styled-engine-sc": "^5.11.11",
     "@opensesamemedia/syncstage": "^0.5.0",
-    "@opensesamemedia/syncstage-sdk-npm-package-development": "^0.4.4-rc21",
+    "@opensesamemedia/syncstage-sdk-npm-package-development": "^0.5.1-rc11",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
@@ -31,10 +31,11 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "cross-env PORT=3001 react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
+    "start": "cross-env PORT=3001 react-app-rewired start",
+    "watch-local": "nodemon --watch ../../syncstage-sdk-npm-package/lib -e js,json --exec 'cross-env PORT=3001 react-app-rewired start'",
+    "build": "react-app-rewired build",
+    "test": "react-app-rewired test",
+    "eject": "react-app-rewired eject",
     "lint": "eslint --ext .js,.ts,.jsx,.tsx src",
     "format": "npm run lint --fix & yarn prettier --write \"src/**/*.{js,jsx,ts,tsx}\""
   },
@@ -60,9 +61,13 @@
     "@typescript-eslint/eslint-plugin": "^5.59.1",
     "@typescript-eslint/parser": "^5.59.1",
     "cross-env": "^7.0.3",
+    "customize-cra": "^1.0.0",
     "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-prettier": "^4.2.1",
+    "nodemon": "^3.1.0",
     "prettier": "^2.8.8",
-    "typescript": "^5.0.4"
+    "react-app-rewired": "^2.2.1",
+    "typescript": "^5.0.4",
+    "worker-loader": "^3.0.8"
   }
 }
