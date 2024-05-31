@@ -1,4 +1,4 @@
-import SyncStage from '@opensesamemedia/syncstage-sdk-npm-package-development';
+import SyncStage from '@opensesamemedia/syncstage';
 import SyncStageUserDelegate from './SyncStageUserDelegate';
 import SyncStageConnectivityDelegate from './SyncStageConnectivityDelegate';
 import SyncStageDiscoveryDelegate from './SyncStageDiscoveryDelegate';
@@ -67,8 +67,11 @@ self.onmessage = function (e) {
       self.postMessage({ id: -1, result: { callback: 'onDesktopAgentDisconnected' } });
     }, //onDesktopAgentDisconnected
     () => {
-      self.postMessage({ id: -1, result: { callback: 'onDesktopAgentRelaunched' } });
-    }, //onDesktopAgentRelaunched
+      self.postMessage({ id: -1, result: { callback: 'onDesktopAgentDeprovisioned' } });
+    }, //onDesktopAgentDeprovisioned
+    () => {
+      self.postMessage({ id: -1, result: { callback: 'onDesktopAgentProvisioned' } });
+    }, //onDesktopAgentProvisioned
   );
 
   const onTokenExpired = () => {
@@ -77,19 +80,18 @@ self.onmessage = function (e) {
 
   if (method === 'constructor') {
     syncStage = new SyncStage(userDelegate, connectivityDelegate, discoveryDelegate, desktopAgentDelegate, onTokenExpired);
-    syncStage.updateOnWebsocketReconnected(() => {
-      // console.log('worker.js onWebsocketReconnected');
-      self.postMessage({ id: -1, result: { callback: 'onWebsocketReconnected' } });
+    syncStage.updateOnDesktopAgentReconnected(() => {
+      self.postMessage({ id: -1, result: { callback: 'onDesktopAgentReconnected' } });
     });
     // eslint-disable-next-line
     self.postMessage({ id, result: 'SyncStage initialized in worker.' });
     // console.log('worker.js SyncStage initialized in worker.');
   } else if (syncStage && typeof syncStage[method] === 'function') {
-    console.log(`received function in worker: ${method}`);
+    // console.log(`received function in worker: ${method}`);
     Promise.resolve(syncStage[method](...args))
       .then((result) => {
         // eslint-disable-next-line
-        console.log(`worker.js SyncStage method ${method} resolved with result: ${result}`);
+        // console.log(`worker.js SyncStage method ${method} resolved with result: ${result}`);
         self.postMessage({ id, result });
       })
       .catch((error) => {

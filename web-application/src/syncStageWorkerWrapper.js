@@ -1,5 +1,3 @@
-// SyncStageWorkerWrapper.js
-
 class SyncStageWorkerWrapper {
   constructor(userDelegate, connectivityDelegate, discoveryDelegate, desktopAgentDelegate, onTokenExpired) {
     console.log('SyncStageWorkerWrapper constructor');
@@ -10,18 +8,15 @@ class SyncStageWorkerWrapper {
     this.desktopAgentDelegate = desktopAgentDelegate;
     this.onTokenExpired = onTokenExpired;
     // eslint-disable-next-line @typescript-eslint/no-empty-function
-    this.onWebsocketReconnected = () => {};
+    this.onDesktopAgentReconnected = () => {};
 
     this.worker = new Worker(new URL('worker.js', import.meta.url)); //NEW SYNTAX
 
     this.worker.onmessage = async (event) => {
-      console.log(`SyncStageWorkerWrapper received message from worker: ${JSON.stringify(event.data)}`);
-      console.log(`SyncStageWorkerWrapper received message from worker`, event);
       const { id, result, error } = event.data;
 
       if (this.promises[id]) {
         if (error) {
-          // console.log(`In SyncStageWorkerWrapper, error: ${error} for method: ${this.promises[id].method}`);
           this.promises[id].reject(new Error(error));
         } else {
           this.promises[id].resolve(result);
@@ -29,7 +24,6 @@ class SyncStageWorkerWrapper {
 
         delete this.promises[id];
       } else {
-        // console.log(`In switch for callbacks in wrapper, callback is: ${result.callback}, data: ${JSON.stringify(result.data)}`);
         switch (result.callback) {
           case 'onUserJoined':
             this.userDelegate?.userJoined(result.data);
@@ -79,18 +73,29 @@ class SyncStageWorkerWrapper {
           case 'onDesktopAgentDisconnected':
             this.desktopAgentDelegate?.onDesktopAgentDisconnected();
             break;
-          case 'onDesktopAgentRelaunched':
-            this.desktopAgentDelegate?.onDesktopAgentRelaunched();
+          case 'onDesktopAgentDeprovisioned':
+            this.desktopAgentDelegate?.onDesktopAgentDeprovisioned();
+            break;
+          case 'onDesktopAgentProvisioned':
+            this.desktopAgentDelegate?.onDesktopAgentProvisioned();
             break;
           case 'onTokenExpired':
-            this.updateToken(this.onTokenExpired());
+            try {
+              if (typeof this.onTokenExpired === 'function') {
+                const jwt = await this.onTokenExpired();
+                this.updateToken(jwt);
+              } else {
+                console.error('onTokenExpired is not a function');
+              }
+            } catch (error) {
+              console.error('An error occurred in onTokenExpired or updateToken:', error);
+            }
             break;
-          case 'onWebsocketReconnected':
-            console.log('SyncStageWorkerWrapper received from worker onWebsocketReconnected', this.onWebsocketReconnected);
-            this.onWebsocketReconnected();
+          case 'onDesktopAgentReconnected':
+            this.onDesktopAgentReconnected();
             break;
           default:
-            console.log(`In SyncStageWorkerWrapper, 'No implementation for callback ${result.callback}`);
+            console.log(`No implementation for callback ${result.callback}`);
             break;
         }
       }
@@ -99,13 +104,10 @@ class SyncStageWorkerWrapper {
     this.promises = {};
     this.nextId = 0;
 
-    // console.log(this.worker);
-
     this.callWorker('constructor');
   }
 
   callWorker(method, ...args) {
-    // console.log(`SyncStageWorkerWrapper callWorker: method=${method}, args=${JSON.stringify(args)}`);
     return new Promise((resolve, reject) => {
       const id = this.nextId++;
       this.promises[id] = { resolve, reject, method };
@@ -113,24 +115,41 @@ class SyncStageWorkerWrapper {
     });
   }
 
-  updateOnWebsocketReconnected(onWebsocketReconnected) {
-    // console.log('SyncStageWorkerWrapper updateOnWebsocketReconnected', onWebsocketReconnected);
-    this.onWebsocketReconnected = onWebsocketReconnected;
+  updateOnDesktopAgentReconnected(onDesktopAgentReconnected) {
+    this.onDesktopAgentReconnected = onDesktopAgentReconnected;
   }
 
   isCompatible() {
-    // console.log('userAgent', window.navigator.userAgent);
-    const os = 'macOS';
+    let os;
+
+    if (window.navigator.userAgent.indexOf('Mac') !== -1) {
+      os = 'macOS';
+    } else if (window.navigator.userAgent.indexOf('Win') !== -1) {
+      os = 'Windows';
+    }
+
     return this.callWorker('isCompatible', os);
+  }
+
+  getLatestCompatibleDesktopAgentVersion() {
+    let os;
+
+    if (window.navigator.userAgent.indexOf('Mac') !== -1) {
+      os = 'macOS';
+    } else if (window.navigator.userAgent.indexOf('Win') !== -1) {
+      os = 'Windows';
+    }
+
+    return this.callWorker('getLatestCompatibleDesktopAgentVersion', os);
   }
 
   init(jwt) {
     return this.callWorker('init', jwt);
   }
 
-  async updateToken(tokenPromise) {
-    const token = await tokenPromise;
-    this.callWorker('updateToken', token);
+  async updateToken(token) {
+    console.log('SyncStageWorkerWrapper updateToken');
+    return this.callWorker('updateToken', token);
   }
 
   isDesktopAgentConnected() {

@@ -7,19 +7,8 @@ import ButtonContained from '../../components/StyledButtonContained';
 import { PathEnum } from '../../router/PathEnum';
 
 const Setup = () => {
-  const { desktopAgentProtocolHandler, desktopAgentConnected, initializeSyncStage, syncStageWorkerWrapper } = useContext(AppContext);
+  const { desktopAgentProtocolHandler, desktopAgentConnected, initializeSyncStage, getDownloadLink } = useContext(AppContext);
   const navigate = useNavigate();
-
-  const getDownloadLink = () => {
-    const userAgent = window.navigator.userAgent;
-    if (userAgent.indexOf('Mac') !== -1) {
-      return 'https://public.sync-stage.com/agent/macos/prod/0.4.0/SyncStageAgent_0.4.0.dmg';
-    } else if (userAgent.indexOf('Win') !== -1) {
-      return 'https://public.sync-stage.com/agent/windows/prod/0.1.0/SyncStageAgent_0.1.0.exe';
-    } else {
-      return null;
-    }
-  };
 
   const downloadLink = getDownloadLink();
 
@@ -38,29 +27,35 @@ const Setup = () => {
             <p>To have a low latency conversation you need to have the SyncStage Desktop Agent running.</p>
           </Grid>
           <Grid item style={{ height: '80px' }} />
-          {downloadLink ? (
-            <Grid container direction="column" justifyContent="flex-center" alignItems="center">
-              <Grid item>
-                <a target="_blank" href={desktopAgentProtocolHandler}>
-                  {' '}
-                  Pair Desktop Agent{' '}
-                </a>
-              </Grid>
-              <Grid item style={{ marginTop: '14px' }}>
-                <p>or</p>
-              </Grid>
-              <Grid item>
-                <a target="_blank" href={downloadLink} download>
-                  {' '}
-                  Install Desktop Agent{' '}
-                </a>
-              </Grid>
-            </Grid>
-          ) : (
+
+          <Grid container direction="column" justifyContent="flex-center" alignItems="center">
             <Grid item>
-              <p>Your system is not supported yet.</p>
+              <a target="_blank" href={desktopAgentProtocolHandler}>
+                {' '}
+                Pair Desktop Agent{' '}
+              </a>
             </Grid>
-          )}
+
+            {downloadLink ? (
+              <>
+                <Grid item style={{ marginTop: '14px' }}>
+                  <p>or</p>
+                </Grid>
+                <Grid item>
+                  <a target="_blank" href={downloadLink} download>
+                    {' '}
+                    Install Desktop Agent{' '}
+                  </a>
+                </Grid>
+              </>
+            ) : (
+              <Grid item>
+                <br />
+                <br />
+                <p>We could not find matching Desktop Agent version for your OS. Please contact support.</p>
+              </Grid>
+            )}
+          </Grid>
         </>
       )}
       <Grid item style={{ height: '80px' }} />
@@ -68,10 +63,8 @@ const Setup = () => {
         <Grid item>
           <ButtonContained
             onClick={async () => {
+              console.log('initializeSyncStage in next acition on setup', initializeSyncStage);
               navigate(PathEnum.SESSION_NICKNAME);
-              if (!(await syncStageWorkerWrapper.checkProvisionedStatus())) {
-                await initializeSyncStage();
-              }
             }}
             disabled={!desktopAgentConnected}
           >

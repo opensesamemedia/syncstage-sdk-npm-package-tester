@@ -9,8 +9,7 @@
     "@mui/icons-material": "^5.11.11",
     "@mui/material": "^5.11.15",
     "@mui/styled-engine-sc": "^5.11.11",
-    "@opensesamemedia/syncstage": "^0.5.0",
-    "@opensesamemedia/syncstage-sdk-npm-package-development": "^0.5.1-rc29",
+    "@opensesamemedia/syncstage": "^0.6.1",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
@@ -28,11 +27,13 @@
     "react-scripts": "5.0.1",
     "react-timing-hooks": "^4.0.2",
     "styled-components": "^5.3.9",
+    "uuid": "^9.0.1",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
     "start": "cross-env PORT=3001 react-app-rewired start",
     "watch-local": "nodemon --watch ../../syncstage-sdk-npm-package/lib -e js,json --exec 'cross-env PORT=3001 react-app-rewired start'",
+    "prebuild": "echo REACT_APP_GIT_HASH=$(git rev-parse --short HEAD) > .env",
     "build": "react-app-rewired build",
     "test": "react-app-rewired test",
     "eject": "react-app-rewired eject",

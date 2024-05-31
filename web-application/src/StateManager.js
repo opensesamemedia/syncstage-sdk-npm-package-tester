@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
+import { v4 as uuidv4 } from 'uuid';
 import { Amplify } from 'aws-amplify';
 import { signOut as amplifySignOut, getCurrentUser } from 'aws-amplify/auth';
 
@@ -15,7 +16,7 @@ import Modal from '@mui/material/Modal';
 
 import Typography from '@mui/material/Typography';
 import { Online } from 'react-detect-offline';
-import { fetchSyncStageToken } from './apiHandler';
+import { apiFetchSyncStageToken } from './apiHandler';
 
 import AppWrapper from './App.styled';
 import { PathEnum } from './router/PathEnum';
@@ -24,7 +25,7 @@ import './ui/animationStyles.css';
 import SyncStageDesktopAgentDelegate from './SyncStageDesktopAgentDelegate';
 import SyncStageDiscoveryDelegate from './SyncStageDiscoveryDelegate';
 
-import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-package-development';
+import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
 import modalStyle from './ui/ModalStyle';
 import Navigation from './components/Navigation/Navigation';
 import SyncStageWorkerWrapper from './syncStageWorkerWrapper';
@@ -40,11 +41,14 @@ const StateManager = () => {
   const [syncStageJwt, setSyncStageJwt] = useState(localStorage.getItem('syncStageJwt') ?? '');
   const [syncStageWorkerWrapper, setSyncStageWorkerWrapper] = useState(null);
   const [syncStageSDKVersion, setSyncStageSDKVersion] = useState();
+  const [userId, setUserId] = useState(localStorage.getItem('userId') ?? '');
   const [nickname, setNickname] = useState(localStorage.getItem('nickname') ?? '');
   const [selectedServerName, setSelectedServerName] = useState(undefined);
   const [sessionCode, setSessionCode] = useState(localStorage.getItem('sessionCode') ?? '');
 
   const [desktopAgentCompatible, setDesktopAgentCompatible] = useState(null);
+  const [desktopAgentLatestCompatibleVersion, setDesktopAgentLatestCompatibleVersion] = useState(null);
+  const [desktopAgentCompatibleModalClosed, setDesktopAgentCompatibleModalClosed] = useState(false);
 
   const desktopAgentConnectedRef = useRef(false);
   const desktopAgentConnectedTimeoutRef = useRef(null);
@@ -63,46 +67,99 @@ const StateManager = () => {
 
   const nicknameSetAndProvisioned = nickname && syncStageJwt;
   const inSession = SESSION_PATH_REGEX.test(location.pathname);
-  const [serverInstancesList, setServerInstancesList] = useState([{ zoneId: null, zoneName: 'auto', studioServerId: null }]);
-  const [manuallySelectedInstance, setManuallySelectedInstance] = useState(serverInstancesList[0]);
+  const autoServerInstance = { zoneId: null, zoneName: 'auto', studioServerId: null };
+  const [serverInstancesList, setServerInstancesList] = useState([autoServerInstance]);
+  const [manuallySelectedInstance, setManuallySelectedInstance] = useState(autoServerInstance);
 
   const persistSessionCode = (sessionCode) => {
     localStorage.setItem('sessionCode', sessionCode);
     setSessionCode(sessionCode);
   };
 
-  const initializeSyncStage = async () => {
-    const fetchJWT = async () => {
-      let jwt = syncStageJwt;
+  const generateAndPersistUserId = () => {
+    const storedUserId = localStorage.getItem('userId');
+    if (storedUserId) {
+      return storedUserId;
+    }
+    const userId = uuidv4();
+    localStorage.setItem('userId', userId);
+    setUserId(userId);
+    return userId;
+  };
 
-      const fiveMinutesInSeconds = 5 * 60;
-      if (willJwtBeExpiredIn(jwt, fiveMinutesInSeconds)) {
-        console.log(`SyncStage jwt will expire in the next ${fiveMinutesInSeconds}s, refetching token`);
-        console.log(jwt);
-        jwt = await onJwtExpired();
-        persistSyncStageJwt(jwt);
-      } else {
-        console.log('Found valid SyncStage jwt secret.');
-      }
-      return jwt;
-    };
+  const fetchSyncStageToken = async () => {
+    console.log('fetchSyncStageToken in StateManager.js');
+    let jwt = syncStageJwt;
+
+    const fiveMinutesInSeconds = 5 * 60;
+    if (willJwtBeExpiredIn(jwt, fiveMinutesInSeconds)) {
+      console.log(`SyncStage jwt will expire in the next ${fiveMinutesInSeconds}s, refetching token`);
+      console.log(jwt);
+      jwt = await onJwtExpired();
+      persistSyncStageJwt(jwt);
+    } else {
+      console.log('Found valid SyncStage jwt secret.');
+    }
+    return jwt;
+  };
+
+  const initializeSyncStage = async () => {
+    if (userId)
+      console.log(
+        // eslint-disable-next-line max-len
+        `initializeSyncStage desktopAgentConnected: ${desktopAgentConnected} isSignedIn: ${isSignedIn} desktopAgentConnectedTimeout: ${desktopAgentConnectedTimeout} syncStageWorkerWrapper: `,
+        syncStageWorkerWrapper,
+      );
     if (syncStageWorkerWrapper !== null && desktopAgentConnected && isSignedIn === true && desktopAgentConnectedTimeout === null) {
+      setBackdropOpen(true);
+
       console.log('initializeSyncStage useEffect syncStage init');
       setDesktopAgentCompatible(await syncStageWorkerWrapper.isCompatible());
-      const jwt = await fetchJWT();
-      const initErrorCode = await syncStageWorkerWrapper.init(jwt);
+      setDesktopAgentLatestCompatibleVersion(await syncStageWorkerWrapper.getLatestCompatibleDesktopAgentVersion());
 
-      if (initErrorCode == SyncStageSDKErrorCode.OK) {
-        setDesktopAgentProvisioned(true);
-        if (!inSession)
-          if (nickname) {
-            navigate(PathEnum.SESSIONS_JOIN);
-          } else {
-            navigate(PathEnum.SESSION_NICKNAME);
+      const syncStageProvisioned = await syncStageWorkerWrapper.checkProvisionedStatus();
+      console.log(`SyncStage provisioned: ${syncStageProvisioned}`);
+
+      const jwt = await fetchSyncStageToken();
+      const provision = async () => {
+        const initErrorCode = await syncStageWorkerWrapper.init(jwt);
+
+        if (initErrorCode == SyncStageSDKErrorCode.OK) {
+          if (location.pathname === `${PathEnum.LOADING}` && !inSession) {
+            console.log(`In session: ${inSession}`);
+            if (nickname) {
+              navigate(PathEnum.SESSIONS_JOIN);
+            } else {
+              navigate(PathEnum.SESSION_NICKNAME);
+            }
           }
+        } else {
+          console.log('Could not init SyncStage, invalid jwt');
+          signOut();
+          setBackdropOpen(false);
+          return undefined;
+        }
+      };
+      if (syncStageProvisioned) {
+        const updateErrorCode = await syncStageWorkerWrapper.updateToken(jwt);
+        if (updateErrorCode == SyncStageSDKErrorCode.OK) {
+          if (location.pathname === `${PathEnum.LOADING}` && !inSession) {
+            console.log(`In session: ${inSession}`);
+            if (nickname) {
+              navigate(PathEnum.SESSIONS_JOIN);
+            } else {
+              navigate(PathEnum.SESSION_NICKNAME);
+            }
+          }
+        } else {
+          console.log('Could not update SyncStage token');
+          await provision();
+          setBackdropOpen(false);
+          return undefined;
+        }
       } else {
-        console.log('Could not init SyncStage, invalid jwt');
-        signOut();
+        await provision();
+        setBackdropOpen(false);
         return undefined;
       }
     }
@@ -124,6 +181,7 @@ const StateManager = () => {
         return undefined;
       }
     }
+    setBackdropOpen(false);
   };
 
   const onDesktopAgentAquired = () => {
@@ -136,10 +194,21 @@ const StateManager = () => {
   const onDesktopAgentConnected = async () => {
     setDesktopAgentConnected(true);
     clearTimeout(desktopAgentConnectedTimeoutId);
+    setDesktopAgentConnectedTimeout(null);
   };
 
   const onDesktopAgentDisconnected = () => {
     setDesktopAgentConnected(false);
+    setDesktopAgentProvisioned(false);
+  };
+
+  const onDesktopAgentDeprovisioned = async () => {
+    setDesktopAgentProvisioned(false);
+    await initializeSyncStage();
+  };
+
+  const onDesktopAgentProvisioned = () => {
+    setDesktopAgentProvisioned(true);
   };
 
   const onServerSelected = (serverSelected) => {
@@ -161,10 +230,11 @@ const StateManager = () => {
     }
   }
   const onJwtExpired = async () => {
+    console.log('onJwtExpired in StateManager.js');
     let jwt;
     // use local docke-compose backend
     if (process.env.REACT_APP_BACKEND_BASE_PATH !== undefined) {
-      const tokenResponse = await fetchSyncStageToken(userJwt);
+      const tokenResponse = await apiFetchSyncStageToken(userJwt);
       jwt = tokenResponse.jwt;
     }
     // use amplify backend
@@ -189,6 +259,7 @@ const StateManager = () => {
   useEffect(() => {
     // Update appLoadTime when the component mounts
     setAppLoadTime(new Date());
+    generateAndPersistUserId();
   }, []);
 
   useEffect(() => {
@@ -211,21 +282,6 @@ const StateManager = () => {
     }
     return () => clearTimeout(desktopAgentConnectedTimeoutId);
   }, []);
-
-  useEffect(() => {
-    async function fetchData() {
-      const [data, errorCode] = await syncStageWorkerWrapper.getServerInstances();
-      console.log(`Available server instances: ${JSON.stringify(data)}`);
-      if (errorCode === SyncStageSDKErrorCode.OK) {
-        setServerInstancesList((serverInstances) => [...serverInstances, ...data]);
-      } else {
-        errorCodeToSnackbar(errorCode);
-      }
-    }
-    if (syncStageWorkerWrapper && desktopAgentProvisioned) {
-      fetchData();
-    }
-  }, [syncStageWorkerWrapper, desktopAgentProvisioned]);
 
   useEffect(() => {
     const confirmAmplifyUserSignedIn = async () => {
@@ -288,11 +344,12 @@ const StateManager = () => {
         onDesktopAgentReleased,
         onDesktopAgentConnected,
         onDesktopAgentDisconnected,
-        initializeSyncStage,
+        onDesktopAgentDeprovisioned,
+        onDesktopAgentProvisioned,
       );
 
       const ssWorker = new SyncStageWorkerWrapper(null, null, syncStageDiscoveryDelegate, desktopAgentDelegate, onJwtExpired);
-
+      ssWorker.updateToken(syncStageJwt);
       setDesktopAgentProtocolHandler(await ssWorker.getDesktopAgentProtocolHandler());
       setSyncStageSDKVersion(await ssWorker.getSDKVersion());
       setSyncStageWorkerWrapper(ssWorker);
@@ -356,7 +413,7 @@ const StateManager = () => {
   const onCreateSession = async () => {
     setBackdropOpen(true);
     const [createData, errorCode] = await syncStageWorkerWrapper.createSession(
-      nickname,
+      userId,
       manuallySelectedInstance.zoneId,
       manuallySelectedInstance.studioServerId,
     );
@@ -373,10 +430,28 @@ const StateManager = () => {
     }
   };
 
+  const getDownloadLink = () => {
+    if (!desktopAgentLatestCompatibleVersion) {
+      return null;
+    }
+    const userAgent = window.navigator.userAgent;
+    if (userAgent.indexOf('Mac') !== -1) {
+      // eslint-disable-next-line max-len
+      return `https://public.sync-stage.com/agent/macos/prod/${desktopAgentLatestCompatibleVersion}/SyncStageAgent_${desktopAgentLatestCompatibleVersion}.dmg`;
+    } else if (userAgent.indexOf('Win') !== -1) {
+      // eslint-disable-next-line max-len
+      return `https://public.sync-stage.com/agent/windows/prod/${desktopAgentLatestCompatibleVersion}/SyncStageAgent_${desktopAgentLatestCompatibleVersion}.exe`;
+    } else {
+      return null;
+    }
+  };
+
   const sharedState = {
     syncStageWorkerWrapper,
+    fetchSyncStageToken,
     initializeSyncStage,
     syncStageSDKVersion,
+    userId,
     nickname,
     persistNickname,
     sessionCode,
@@ -385,7 +460,6 @@ const StateManager = () => {
     desktopAgentConnected,
     setDesktopAgentConnected,
     desktopAgentProvisioned,
-    setDesktopAgentProvisioned,
     locationSelected,
     setLocationSelected,
     automatedLocationSelection,
@@ -398,10 +472,13 @@ const StateManager = () => {
     isSignedIn,
     setIsSignedIn,
     selectedServerName,
+    autoServerInstance,
     serverInstancesList,
+    setServerInstancesList,
     manuallySelectedInstance,
     setManuallySelectedInstance,
     goToSetupPageOnUnauthorized,
+    getDownloadLink,
   };
 
   return (
@@ -450,7 +527,7 @@ const StateManager = () => {
           <Modal keepMounted open={desktopAgentAquired}>
             <Box sx={modalStyle}>
               <Typography variant="h6" component="h2">
-                Desktop Agent in use
+                SyncStage Desktop Agent in use
               </Typography>
               <Typography sx={{ mt: 2 }}>
                 SyncStage opened in another browser tab. Please switch to that tab or close current one.
@@ -458,6 +535,28 @@ const StateManager = () => {
             </Box>
           </Modal>
         </Online>
+        <Modal
+          open={desktopAgentCompatible === false && !desktopAgentCompatibleModalClosed}
+          onClose={() => setDesktopAgentCompatibleModalClosed(true)}
+        >
+          <Box sx={modalStyle}>
+            <Typography variant="h6" component="h2">
+              SyncStage Desktop Agent is incompatible with the current SyncStage SDK version.
+            </Typography>
+            <Typography sx={{ mt: 2 }}>
+              We noticed your Desktop Agent is currently incompatible with the latest web application version. To ensure a seamless
+              experience, please update your Desktop Agent. <br />
+              <br />
+              {desktopAgentLatestCompatibleVersion ? (
+                <a href={getDownloadLink()} target="_blank">
+                  Click here to download the latest Desktop Agent version
+                </a>
+              ) : (
+                'We could not find matching Desktop Agent version for your OS. Please contact support.'
+              )}
+            </Typography>
+          </Box>
+        </Modal>
         <div className="app-container">
           <div className="app-container-limiter">
             <RoutesComponent onJoinSession={onJoinSession} onCreateSession={onCreateSession} inSession={inSession} />

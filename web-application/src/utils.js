@@ -1,4 +1,4 @@
-import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-package-development';
+import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
 import { enqueueSnackbar } from 'notistack';
 
 const syncStageErrorToMessageMap = new Map();
@@ -25,7 +25,12 @@ const errorCodeToSnackbar = (errorCode, msgOnOK) => {
     console.log(snackbarMsg);
 
     // Errors we do not want to show to the user, but we want to log
-    if (errorCode === SyncStageSDKErrorCode.TIMEOUT_ERROR || errorCode === SyncStageSDKErrorCode.TOKEN_EXPIRED) {
+    if (
+      errorCode === SyncStageSDKErrorCode.TIMEOUT_ERROR ||
+      errorCode === SyncStageSDKErrorCode.TOKEN_EXPIRED ||
+      errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED ||
+      errorCode === SyncStageSDKErrorCode.NOT_IN_SESSION
+    ) {
       return;
     }
     enqueueSnackbar(snackbarMsg);

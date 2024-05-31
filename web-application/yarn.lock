@@ -2564,20 +2564,10 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@opensesamemedia/syncstage-sdk-npm-package-development@^0.5.1-rc29":
-  version "0.5.1-rc29"
-  resolved "https://registry.yarnpkg.com/@opensesamemedia/syncstage-sdk-npm-package-development/-/syncstage-sdk-npm-package-development-0.5.1-rc29.tgz#8ee1b187d778507d187603715543b1611d9549a7"
-  integrity sha512-CmRRFUl3QxQLgzvVqUVKzZgQX2QXTjorKSeDw5mA92T7+flZdbE4U4M+TsBK5noHyNjgWW33KezGs8c6yf4JZw==
-  dependencies:
-    "@anephenix/sarus" "^0.4.6"
-    async-mutex "^0.4.0"
-    is-online "^10.0.0"
-    uuid "^9.0.0"
-
-"@opensesamemedia/syncstage@^0.5.0":
-  version "0.5.0"
-  resolved "https://registry.yarnpkg.com/@opensesamemedia/syncstage/-/syncstage-0.5.0.tgz#6cee51c9c76c045d423e2884af9f576ca43b819a"
-  integrity sha512-AZxZbBeGvn3XHTyaKfm+ENhqsHK1IMO2TsYX5YlrbgZNNRsuH13Nwmtn9wU4vitCB2vXUWkp0GGqeIyUd/1Jig==
+"@opensesamemedia/syncstage@^0.6.1":
+  version "0.6.1"
+  resolved "https://registry.yarnpkg.com/@opensesamemedia/syncstage/-/syncstage-0.6.1.tgz#ac34f040292f3d38c14e90e39490ae19d018670f"
+  integrity sha512-QnA8JIl/i2cJvaMRUByzeum1v1bGIAZMW94nRi+uvzfm5bAvy7QZuoOvvQL1dZeloOHxfkzp28iQJGfZUE6J3w==
   dependencies:
     "@anephenix/sarus" "^0.4.6"
     async-mutex "^0.4.0"
@@ -11492,7 +11482,7 @@ uuid@^8.3.2:
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-8.3.2.tgz#80d5b5ced271bb9af6c445f21a1a04c606cefbe2"
   integrity sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==
 
-uuid@^9.0.0:
+uuid@^9.0.0, uuid@^9.0.1:
   version "9.0.1"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-9.0.1.tgz#e188d4c8853cc722220392c424cd637f32293f30"
   integrity sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==

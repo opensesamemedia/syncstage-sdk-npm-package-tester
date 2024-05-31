@@ -17,7 +17,7 @@ import Button from '@mui/material/Button';
 import theme from '../../ui/theme';
 import InviteOthers from '../../components/UserCard/InviteOthers';
 import { errorCodeToSnackbar, extractSessionCode } from '../../utils';
-import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-package-development';
+import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
 import SyncStageUserDelegate from '../../SyncStageUserDelegate';
 import SyncStageConnectivityDelegate from '../../SyncStageConnectivityDelegate';
 import { PathEnum } from '../../router/PathEnum';
@@ -33,15 +33,17 @@ const Session = ({ inSession }) => {
 
   const {
     sessionCode,
-
+    persistSessionCode,
     syncStageWorkerWrapper,
     desktopAgentProvisioned,
-    setDesktopAgentProvisioned,
+    userId,
     nickname,
     setBackdropOpen,
     manuallySelectedInstance,
     goToSetupPageOnUnauthorized,
   } = useContext(AppContext);
+
+  const [sessionLoadTime, setSessionLoadTime] = useState(new Date());
 
   const [sessionData, setSessionData] = useState(null);
 
@@ -191,6 +193,12 @@ const Session = ({ inSession }) => {
         delete draft[identifier];
       }),
     );
+
+    setVolumeMap(
+      produce((draft) => {
+        delete draft[identifier];
+      }),
+    );
   }, []);
 
   const onUserMuted = useCallback((identifier) => {
@@ -282,8 +290,8 @@ const Session = ({ inSession }) => {
     }
   };
 
-  const onWebsocketReconnected = useCallback(async () => {
-    console.log(`onWebsocketReconnected in session at time: ${new Date().toISOString()}`);
+  const onDesktopAgentReconnected = useCallback(async () => {
+    console.log(`onDesktopAgentReconnected in session at time: ${new Date().toISOString()}`);
     if (syncStageWorkerWrapper === null) {
       console.log('syncStageWorkerWrapper is null');
       return;
@@ -292,15 +300,16 @@ const Session = ({ inSession }) => {
     errorCodeToSnackbar(errorCode);
 
     if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
-      navigate(PathEnum.SETUP);
-      setDesktopAgentProvisioned(false);
-    } else if (errorCode === SyncStageSDKErrorCode.NOT_IN_SESSION) {
+      onSessionOut();
+    } else if (errorCode === SyncStageSDKErrorCode.NOT_IN_SESSION && new Date() - sessionLoadTime > 5000) {
+      // timeout to allow rejoining session on refresh
+      console.log('Not in session, navigating to join session, sessionLoadTime: ', sessionLoadTime);
       onSessionOut();
     } else if (errorCode === SyncStageSDKErrorCode.OK) {
       setSessionData(data);
     }
 
-    await buildViewSessionState(data, setConnectedMap, syncStageWorkerWrapper, setDesktopAgentProvisioned, setVolumeMap);
+    await buildViewSessionState(data, setConnectedMap, syncStageWorkerWrapper, setVolumeMap);
   }, [syncStageWorkerWrapper]);
 
   const clearDelegates = () => {
@@ -321,22 +330,26 @@ const Session = ({ inSession }) => {
   useEffect(() => {
     // React will run it when it is time to clean up:
     return () => {
+      setSessionLoadTime(new Date());
+      setSessionData(null);
       clearDelegates();
     };
   }, []); // Empty array ensures this runs on mount and unmount only
 
   useEffect(() => {
+    console.log('Session useEffect ', syncStageWorkerWrapper, desktopAgentProvisioned, location.pathname);
     const initializeSession = async () => {
       console.log('initializeSession');
       console.log(`Manually selected instance: ${JSON.stringify(manuallySelectedInstance)}`);
       if (syncStageWorkerWrapper !== null && desktopAgentProvisioned) {
         const sessionCodeFromPath = extractSessionCode(location.pathname);
+        persistSessionCode(sessionCodeFromPath);
         setBackdropOpen(true);
 
         console.log('Joining the session from the path');
         const [data, errorCode] = await syncStageWorkerWrapper.join(
           sessionCodeFromPath,
-          nickname,
+          userId,
           nickname,
           manuallySelectedInstance.zoneId,
           manuallySelectedInstance.studioServerId,
@@ -349,7 +362,7 @@ const Session = ({ inSession }) => {
           return undefined;
         }
 
-        console.log('Could not join session from the path.');
+        console.log('Could not join session from the path. errorCode: ', errorCode);
         if (nickname) {
           navigate(PathEnum.SESSIONS_JOIN);
           setBackdropOpen(false);
@@ -359,8 +372,6 @@ const Session = ({ inSession }) => {
           setBackdropOpen(false);
           return undefined;
         }
-      } else if (!desktopAgentProvisioned) {
-        setBackdropOpen(true);
       }
     };
 
@@ -384,14 +395,14 @@ const Session = ({ inSession }) => {
           onTransmitterConnectivityChanged,
           onReceiverConnectivityChanged,
         );
-        syncStageWorkerWrapper.updateOnWebsocketReconnected(onWebsocketReconnected.bind(this));
+        syncStageWorkerWrapper.updateOnDesktopAgentReconnected(onDesktopAgentReconnected.bind(this));
 
         const [mutedState, errorCode] = await syncStageWorkerWrapper.isMicrophoneMuted();
         errorCodeToSnackbar(errorCode);
         if (errorCode === SyncStageSDKErrorCode.OK) {
           setMuted(mutedState);
         }
-        await buildViewSessionState(sessionData, setConnectedMap, syncStageWorkerWrapper, setDesktopAgentProvisioned, setVolumeMap);
+        await buildViewSessionState(sessionData, setConnectedMap, syncStageWorkerWrapper, setVolumeMap);
       }
     }
     executeAsync();
@@ -420,7 +431,7 @@ const Session = ({ inSession }) => {
             <UserCard
               transmitter
               {...sessionData.transmitter}
-              connected={connected ?? false}
+              connected={connected ? connected.toString() : undefined}
               {...measurements}
               key={sessionData.transmitter.identifier}
             />
@@ -429,7 +440,7 @@ const Session = ({ inSession }) => {
             <UserCard
               {...connection}
               {...measurementsMap[identifier]}
-              connected={connectedMap[identifier] ?? false}
+              connected={connectedMap[identifier] ? connectedMap[identifier].toString() : undefined}
               volume={volumeMap[identifier]}
               onVolumeChanged={async (volume) => {
                 setVolumeMap({

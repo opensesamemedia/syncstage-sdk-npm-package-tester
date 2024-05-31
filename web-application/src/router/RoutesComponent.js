@@ -8,14 +8,7 @@ import { PathEnum } from './PathEnum';
 import LoginView from '../views/Login/LoginView';
 import BackdropView from '../views/Backdrop/BackdropView';
 
-const RoutesComponent = ({
-  onJoinSession,
-  onCreateSession,
-
-  inSession,
-
-  onProvisionSubmit,
-}) => {
+const RoutesComponent = ({ onJoinSession, onCreateSession, inSession }) => {
   return (
     <Routes>
       <Route path="/" element={<Navigate to={`${PathEnum.LOADING}`} />} />
@@ -26,7 +19,7 @@ const RoutesComponent = ({
 
       <Route path={PathEnum.SESSION_NICKNAME} element={<SessionNickname />} />
 
-      <Route path={PathEnum.SETUP} element={<Setup onProvisionSubmit={onProvisionSubmit} />} />
+      <Route path={PathEnum.SETUP} element={<Setup />} />
 
       <Route path={PathEnum.SESSIONS_JOIN} element={<JoinSession onJoinSession={onJoinSession} onCreateSession={onCreateSession} />} />
       <Route path={PathEnum.SESSIONS_JOIN} element={<JoinSession onJoinSession={onJoinSession} />} />
