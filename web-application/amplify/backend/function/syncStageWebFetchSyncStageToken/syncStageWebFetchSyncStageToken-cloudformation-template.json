@@ -98,7 +98,7 @@
                 ]
               ]
             },
-            "BASE_API_PATH": {
+            "baseApiPath": {
               "Ref": "baseApiPath"
             }
           }

@@ -4,7 +4,7 @@
   "environmentVariableList": [
     {
       "cloudFormationParameterName": "baseApiPath",
-      "environmentVariableName": "BASE_API_PATH"
+      "environmentVariableName": "baseApiPath"
     }
   ],
   "secretNames": [
