@@ -17,7 +17,7 @@ import Button from '@mui/material/Button';
 import theme from '../../ui/theme';
 import InviteOthers from '../../components/UserCard/InviteOthers';
 import { errorCodeToSnackbar, extractSessionCode } from '../../utils';
-import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
+import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-package-development';
 import SyncStageUserDelegate from '../../SyncStageUserDelegate';
 import SyncStageConnectivityDelegate from '../../SyncStageConnectivityDelegate';
 import { PathEnum } from '../../router/PathEnum';
@@ -342,7 +342,11 @@ const Session = ({ inSession }) => {
       console.log('initializeSession');
       console.log(`Manually selected instance: ${JSON.stringify(manuallySelectedInstance)}`);
       if (syncStageWorkerWrapper !== null && desktopAgentProvisioned) {
-        const sessionCodeFromPath = extractSessionCode(location.pathname);
+        const sessionCodeFromPath = extractSessionCode(location.pathname.toLowerCase().replace(/-/g, ''));
+        if (sessionCodeFromPath === sessionCode) {
+          console.log(`Already in the session with the session code: ${sessionCodeFromPath}, no need to join again`);
+          return;
+        }
         persistSessionCode(sessionCodeFromPath);
         setBackdropOpen(true);
 

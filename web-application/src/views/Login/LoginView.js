@@ -26,10 +26,10 @@ const LoginView = () => {
         const data = await login(username, password);
         const { token } = data;
         enqueueSnackbar('Login successful');
-        navigate(PathEnum.SETUP);
         setUserJwt(token);
         setIsSignedIn(true);
         await fetchSyncStageToken();
+        navigate(PathEnum.SETUP);
       } catch (error) {
         console.error('Login failed:', error);
         enqueueSnackbar('Unauthorized');
@@ -40,9 +40,9 @@ const LoginView = () => {
       try {
         const { isSignedIn, nextStep } = await signIn({ username, password });
         console.log(`isSignedIn: ${isSignedIn}, nexstStep: ${JSON.stringify(nextStep)}`);
-        setIsSignedIn(true);
         await fetchSyncStageToken();
         navigate(PathEnum.SETUP);
+        setIsSignedIn(true);
       } catch (error) {
         console.error('Login failed:', error);
         enqueueSnackbar('Unauthorized');
