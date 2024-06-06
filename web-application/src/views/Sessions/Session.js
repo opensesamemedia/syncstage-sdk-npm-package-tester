@@ -45,6 +45,7 @@ const Session = ({ inSession }) => {
 
   const [sessionLoadTime, setSessionLoadTime] = useState(new Date());
 
+  const [localSessionCode, setLocalSessionCode] = useState();
   const [sessionData, setSessionData] = useState(null);
 
   const [settingsOpened, setSettingsOpened] = useState(false);
@@ -349,10 +350,15 @@ const Session = ({ inSession }) => {
       console.log(`Manually selected instance: ${JSON.stringify(manuallySelectedInstance)}`);
       if (syncStageWorkerWrapper !== null && desktopAgentProvisioned) {
         const sessionCodeFromPath = extractSessionCode(location.pathname.toLowerCase().replace(/-/g, ''));
-        if (sessionCodeFromPath === sessionCode) {
+        if (sessionCodeFromPath === localSessionCode) {
           console.log(`Already in the session with the session code: ${sessionCodeFromPath}, no need to join again`);
           return;
+        } else if (localSessionCode && localSessionCode.toString().length > 0) {
+          console.log(`Leaving the session with the session code: ${localSessionCode}`);
+          syncStageWorkerWrapper.leave();
         }
+
+        setLocalSessionCode(sessionCodeFromPath);
         persistSessionCode(sessionCodeFromPath);
         setBackdropOpen(true);
 
