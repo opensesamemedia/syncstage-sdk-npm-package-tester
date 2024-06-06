@@ -155,7 +155,7 @@ const Session = ({ inSession }) => {
     }
   }, [syncStageWorkerWrapper, muted]);
 
-  const onUserJoined = useCallback(async (connection) => {
+  const onUserJoined = async (connection) => {
     console.log('onUserJoined');
     if (syncStageWorkerWrapper === null) {
       return;
@@ -165,25 +165,31 @@ const Session = ({ inSession }) => {
       (sessionData && sessionData.transmitter && sessionData.transmitter.identifier === connection.identifier) ||
       receiversMap[connection.identifier]
     ) {
+      console.log("Self connection, won't add to the receivers map");
       return;
     }
+
+    console.log('Adding connection to receivers map: ', connection, receiversMap);
 
     setReceiversMap(
       produce((draft) => {
         draft[connection.identifier] = connection;
       }),
     );
-    // Volume
+    console.log('Added connection to receivers map');
 
+    // Volume
+    console.log('Setting volume map for: ', connection.identifier);
     const [volumeValue, errorCode] = await syncStageWorkerWrapper.getReceiverVolume(connection.identifier);
     errorCodeToSnackbar(errorCode);
+    console.log('Set volume map for: ', connection.identifier);
 
     setVolumeMap(
       produce((draft) => {
         draft[connection.identifier] = volumeValue;
       }),
     );
-  }, []);
+  };
 
   const onUserLeft = useCallback((identifier) => {
     console.log('onUserLeft');
