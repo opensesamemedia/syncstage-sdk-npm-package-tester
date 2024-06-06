@@ -110,7 +110,12 @@ const StateManager = () => {
         `initializeSyncStage desktopAgentConnected: ${desktopAgentConnected} isSignedIn: ${isSignedIn} desktopAgentConnectedTimeout: ${desktopAgentConnectedTimeout} syncStageWorkerWrapper: `,
         syncStageWorkerWrapper,
       );
-    if (syncStageWorkerWrapper !== null && desktopAgentConnected && isSignedIn === true && desktopAgentConnectedTimeout === null) {
+    if (
+      syncStageWorkerWrapper !== null &&
+      desktopAgentConnected &&
+      isSignedIn === true &&
+      (desktopAgentConnectedTimeout === null || desktopAgentConnectedTimeout === false)
+    ) {
       setBackdropOpen(true);
 
       console.log('initializeSyncStage useEffect syncStage init');
