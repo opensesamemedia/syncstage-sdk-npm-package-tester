@@ -30,6 +30,28 @@ import modalStyle from './ui/ModalStyle';
 import Navigation from './components/Navigation/Navigation';
 import SyncStageWorkerWrapper from './syncStageWorkerWrapper';
 
+const getDownloadLink = (version) => {
+  const userAgent = window.navigator.userAgent;
+  let link = null;
+  if (userAgent.indexOf('Mac') !== -1) {
+    // eslint-disable-next-line max-len
+    if (version) {
+      link = `https://public.sync-stage.com/agent/macos/prod/${version}/SyncStageAgent_${version}.dmg`;
+    } else {
+      link = `https://public.sync-stage.com/agent/macos/prod/0.4.1/SyncStageAgent_0.4.1.dmg`;
+    }
+  } else if (userAgent.indexOf('Win') !== -1) {
+    if (version) {
+      // eslint-disable-next-line max-len
+      link = `https://public.sync-stage.com/agent/windows/prod/${version}/SyncStageAgent_${version}.exe`;
+    } else {
+      link = `https://public.sync-stage.com/agent/windows/prod/0.1.0/SyncStageAgent_0.1.0.exe`;
+    }
+  }
+  console.log('link: ', link);
+  return link;
+};
+
 const StateManager = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -48,6 +70,7 @@ const StateManager = () => {
 
   const [desktopAgentCompatible, setDesktopAgentCompatible] = useState(null);
   const [desktopAgentLatestCompatibleVersion, setDesktopAgentLatestCompatibleVersion] = useState(null);
+  const [downloadLink, setDownloadLink] = useState(getDownloadLink(null));
   const [desktopAgentCompatibleModalClosed, setDesktopAgentCompatibleModalClosed] = useState(false);
 
   const desktopAgentConnectedRef = useRef(false);
@@ -120,7 +143,9 @@ const StateManager = () => {
 
       console.log('initializeSyncStage useEffect syncStage init');
       setDesktopAgentCompatible(await syncStageWorkerWrapper.isCompatible());
-      setDesktopAgentLatestCompatibleVersion(await syncStageWorkerWrapper.getLatestCompatibleDesktopAgentVersion());
+      const tempVer = await syncStageWorkerWrapper.getLatestCompatibleDesktopAgentVersion();
+      setDesktopAgentLatestCompatibleVersion(tempVer);
+      setDownloadLink(getDownloadLink(tempVer));
 
       const syncStageProvisioned = await syncStageWorkerWrapper.checkProvisionedStatus();
       console.log(`SyncStage provisioned: ${syncStageProvisioned}`);
@@ -435,22 +460,6 @@ const StateManager = () => {
     }
   };
 
-  const getDownloadLink = () => {
-    if (!desktopAgentLatestCompatibleVersion) {
-      return null;
-    }
-    const userAgent = window.navigator.userAgent;
-    if (userAgent.indexOf('Mac') !== -1) {
-      // eslint-disable-next-line max-len
-      return `https://public.sync-stage.com/agent/macos/prod/${desktopAgentLatestCompatibleVersion}/SyncStageAgent_${desktopAgentLatestCompatibleVersion}.dmg`;
-    } else if (userAgent.indexOf('Win') !== -1) {
-      // eslint-disable-next-line max-len
-      return `https://public.sync-stage.com/agent/windows/prod/${desktopAgentLatestCompatibleVersion}/SyncStageAgent_${desktopAgentLatestCompatibleVersion}.exe`;
-    } else {
-      return null;
-    }
-  };
-
   const sharedState = {
     syncStageWorkerWrapper,
     fetchSyncStageToken,
@@ -483,7 +492,7 @@ const StateManager = () => {
     manuallySelectedInstance,
     setManuallySelectedInstance,
     goToSetupPageOnUnauthorized,
-    getDownloadLink,
+    downloadLink,
   };
 
   return (
@@ -553,7 +562,7 @@ const StateManager = () => {
               experience, please update your Desktop Agent. <br />
               <br />
               {desktopAgentLatestCompatibleVersion ? (
-                <a href={getDownloadLink()} target="_blank">
+                <a href={downloadLink} target="_blank">
                   Click here to download the latest Desktop Agent version
                 </a>
               ) : (
