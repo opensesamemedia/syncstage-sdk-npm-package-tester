@@ -230,10 +230,6 @@ class SyncStageWorkerWrapper {
   checkProvisionedStatus() {
     return this.callWorker('checkProvisionedStatus');
   }
-
-  getDesktopAgentLatestCompatibleVersion() {
-    return this.callWorker('getDesktopAgentLatestCompatibleVersion');
-  }
 }
 
 export default SyncStageWorkerWrapper;

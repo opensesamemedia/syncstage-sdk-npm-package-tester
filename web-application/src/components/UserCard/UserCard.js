@@ -37,7 +37,7 @@ const StyledBadge = styled(Badge)(({ connected }) => {
   const color = connected === 'true' ? '#44b700' : '#93000A';
   const animation = connected === 'true' ? 'ripple 1.2s infinite ease-in-out' : 'none';
   return {
-    '& .MuiBadge-badge': {
+    '& .CustomDotBadge-badge': {
       backgroundColor: color,
       color: color,
       boxShadow: `0 0 0 2px f00`,
@@ -88,9 +88,22 @@ const UserCard = ({
     <UserCardBase>
       <Grid container direction="row" justifyContent="flex-start" alignItems="center" style={{ height: '100%', width: '100%' }}>
         <Grid item xs={3} style={{ paddingLeft: '6px' }}>
-          <StyledBadge overlap="circular" anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} variant="dot" connected={connected}>
-            <Avatar sx={{ bgcolor: theme.surfaceVariant, width: 62, height: 62 }}>{/* {`${nickname.charAt(0)}`} */}</Avatar>
-          </StyledBadge>
+          <Badge
+            badgeContent={transmitter ? <></> : isMuted ? <MicOffIcon style={{ color: '#9d9fa1' }} /> : <MicIcon />}
+            color="transparent"
+            overlap="circular"
+            anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+          >
+            <StyledBadge
+              classes={{ badge: 'CustomDotBadge-badge' }}
+              overlap="circular"
+              variant="dot"
+              connected={connected}
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            >
+              <Avatar sx={{ bgcolor: theme.surfaceVariant, width: 62, height: 62 }}>{/* {`${nickname.charAt(0)}`} */}</Avatar>
+            </StyledBadge>
+          </Badge>
         </Grid>
         <Grid item xs={9}>
           <Grid container direction="column" justifyContent="flex-start" alignItems="flex-start" style={{ height: '100%', width: '100%' }}>
@@ -107,18 +120,21 @@ const UserCard = ({
                     {nickname}
                   </p>
                 </Grid>
-                {transmitter ? <></> : <Grid item>{isMuted ? <MicOffIcon /> : <MicIcon />}</Grid>}
               </Grid>
               {transmitter ? (
                 <Grid item style={{ height: '12px' }} />
               ) : (
-                <Grid item>
-                  <StyledSlider
-                    value={volume || 0}
-                    style={{ width: '70%' }}
-                    onChange={(_, newValue) => onVolumeChanged(newValue)}
-                    onChangeCommitted={async (_, newValue) => await onVolumeChangeCommited(newValue)}
-                  />
+                <Grid container direction="row" justifyContent="flex-start" alignItems="center" style={{ width: '100%' }}>
+                  <Grid item style={{ width: '25%' }}>
+                    <p style={{ margin: 0, marginBottom: 4 }}>Volume:</p>
+                  </Grid>
+                  <Grid item style={{ width: '55%' }}>
+                    <StyledSlider
+                      value={volume || 0}
+                      onChange={(_, newValue) => onVolumeChanged(newValue)}
+                      onChangeCommitted={async (_, newValue) => await onVolumeChangeCommited(newValue)}
+                    />
+                  </Grid>
                 </Grid>
               )}
 
