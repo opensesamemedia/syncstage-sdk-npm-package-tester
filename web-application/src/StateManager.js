@@ -38,7 +38,7 @@ const getDownloadLink = (version) => {
     if (version) {
       link = `https://public.sync-stage.com/agent/macos/prod/${version}/SyncStageAgent_${version}.dmg`;
     } else {
-      link = `https://public.sync-stage.com/agent/macos/prod/0.4.1/SyncStageAgent_0.4.1.dmg`;
+      link = `https://public.sync-stage.com/agent/macos/prod/0.5.0/SyncStageAgent_0.5.0.dmg`;
     }
   } else if (userAgent.indexOf('Win') !== -1) {
     if (version) {
