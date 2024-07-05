@@ -45,7 +45,7 @@ const getDownloadLink = (version) => {
       // eslint-disable-next-line max-len
       link = `https://public.sync-stage.com/agent/windows/prod/${version}/SyncStageAgent_${version}.exe`;
     } else {
-      link = `https://public.sync-stage.com/agent/windows/prod/0.1.0/SyncStageAgent_0.1.0.exe`;
+      link = `https://public.sync-stage.com/agent/windows/prod/0.2.0/SyncStageAgent_0.2.0.exe`;
     }
   }
   console.log('link: ', link);
