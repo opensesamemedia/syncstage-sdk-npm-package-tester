@@ -1,4 +1,4 @@
-import SyncStage from '@opensesamemedia/syncstage-sdk-npm-package-development';
+import SyncStage from '@opensesamemedia/syncstage';
 import SyncStageUserDelegate from './SyncStageUserDelegate';
 import SyncStageConnectivityDelegate from './SyncStageConnectivityDelegate';
 import SyncStageDiscoveryDelegate from './SyncStageDiscoveryDelegate';
