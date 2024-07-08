@@ -54,7 +54,7 @@ const JoinSession = ({ onJoinSession, onCreateSession }) => {
         <h2>Sessions</h2>
       </Grid>
       <Grid item>
-        <p>Enter a session code to join an existing session or to create a new one.</p>
+        <p>Create a new session or enter a session code to join an existing session.</p>
       </Grid>
       <Grid container direction="row" justifyContent="space-between" alignItems="center" style={{ paddingLeft: '18px' }} gap={3}>
         <Grid item xs>
