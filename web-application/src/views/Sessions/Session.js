@@ -140,6 +140,8 @@ const Session = ({ inSession }) => {
   };
 
   const handleNoiseCancellationChange = async (enabled) => {
+    const requestId = startBackdropRequest();
+
     const stateBefore = noiseCancellationEnabled;
     setNoiseCancellationEnabled(enabled);
     const errorCode = await syncStageWorkerWrapper.setNoiseCancellation(enabled);
@@ -147,9 +149,12 @@ const Session = ({ inSession }) => {
       setNoiseCancellationEnabled(stateBefore);
       enqueueSnackbar('Failed to set noise cancellation', { variant: 'error' });
     }
+    endBackdropRequest(requestId);
   };
 
   const handleDisableGainChange = async (disabled) => {
+    const requestId = startBackdropRequest();
+
     const stateBefore = gainDisabled;
     setGainDisabled(disabled);
     const errorCode = await syncStageWorkerWrapper.setDisableGain(disabled);
@@ -157,9 +162,12 @@ const Session = ({ inSession }) => {
       setGainDisabled(stateBefore);
       enqueueSnackbar('Failed to set gain', { variant: 'error' });
     }
+    endBackdropRequest(requestId);
   };
 
   const handleDirectMonitorChange = async (enabled) => {
+    const requestId = startBackdropRequest();
+
     const stateBefore = directMonitorEnabled;
     setDirectMonitorEnabled(enabled);
     const errorCode = await syncStageWorkerWrapper.setDirectMonitor(enabled);
@@ -167,9 +175,12 @@ const Session = ({ inSession }) => {
       setDirectMonitorEnabled(stateBefore);
       enqueueSnackbar('Failed to set direct monitor', { variant: 'error' });
     }
+    endBackdropRequest(requestId);
   };
 
   const handleLatencyLevelChange = async (newLevel) => {
+    const requestId = startBackdropRequest();
+
     const stateBefore = latencyOptimizationLevel;
     setLatencyOptimizationLevel(newLevel);
     const errorCode = await syncStageWorkerWrapper.setLatencyOptimizationLevel(newLevel);
@@ -177,24 +188,32 @@ const Session = ({ inSession }) => {
       setLatencyOptimizationLevel(stateBefore);
       enqueueSnackbar('Failed to update latency optimization level', { variant: 'error' });
     }
+    endBackdropRequest(requestId);
   };
 
   const handleInputDeviceChange = async (event) => {
+    const requestId = startBackdropRequest();
+
     const identifier = event.target.value;
     const errorCode = await syncStageWorkerWrapper.setInputDevice(identifier);
-    setSelectedInputDevice(identifier);
+
     if (errorCode !== SyncStageSDKErrorCode.OK) {
+      setSelectedInputDevice(identifier);
       enqueueSnackbar('Failed to set output device', { variant: 'error' });
     }
+    endBackdropRequest(requestId);
   };
 
   const handleOutputDeviceChange = async (event) => {
+    const requestId = startBackdropRequest();
+
     const identifier = event.target.value;
     const errorCode = await syncStageWorkerWrapper.setOutputDevice(identifier);
-    setSelectedOutputDevice(identifier);
     if (errorCode !== SyncStageSDKErrorCode.OK) {
       enqueueSnackbar('Failed to set output device', { variant: 'error' });
+      setSelectedOutputDevice(identifier);
     }
+    endBackdropRequest(requestId);
   };
   const updateMeasurements = async () => {
     if (syncStageWorkerWrapper === null) {
