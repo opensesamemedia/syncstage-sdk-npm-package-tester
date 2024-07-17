@@ -86,6 +86,7 @@ const StateManager = () => {
   const [desktopAgentAquired, setDesktopAgentAquired] = useState(false);
 
   const [desktopAgentProtocolHandler, setDesktopAgentProtocolHandler] = useState('');
+  const [activeRequestIds, setActiveRequestIds] = useState(new Set());
   const [backdropOpen, setBackdropOpen] = useState(false);
 
   const nicknameSetAndProvisioned = nickname && syncStageJwt;
@@ -93,6 +94,31 @@ const StateManager = () => {
   const autoServerInstance = { zoneId: null, zoneName: 'auto', studioServerId: null };
   const [serverInstancesList, setServerInstancesList] = useState([autoServerInstance]);
   const [manuallySelectedInstance, setManuallySelectedInstance] = useState(autoServerInstance);
+
+  // Function to start a request
+  const startBackdropRequest = () => {
+    const requestId = uuidv4();
+    const updatedIds = new Set(activeRequestIds).add(requestId);
+    console.log('startBackdropRequest', requestId);
+    console.log('updatedIds', updatedIds);
+    setActiveRequestIds(updatedIds);
+    setBackdropOpen(true);
+    return requestId;
+  };
+
+  // Function to end a request
+  const endBackdropRequest = (requestId) => {
+    setActiveRequestIds((prevIds) => {
+      const updatedIds = new Set(prevIds);
+      updatedIds.delete(requestId);
+      console.log('endBackdropRequest', requestId);
+      console.log('updatedIds', updatedIds);
+      if (updatedIds.size === 0) {
+        setBackdropOpen(false);
+      }
+      return updatedIds;
+    });
+  };
 
   const persistSessionCode = (sessionCode) => {
     localStorage.setItem('sessionCode', sessionCode);
@@ -127,6 +153,8 @@ const StateManager = () => {
   };
 
   const initializeSyncStage = async () => {
+    const requestId = startBackdropRequest();
+
     if (userId)
       console.log(
         // eslint-disable-next-line max-len
@@ -139,8 +167,6 @@ const StateManager = () => {
       isSignedIn === true &&
       (desktopAgentConnectedTimeout === null || desktopAgentConnectedTimeout === false)
     ) {
-      setBackdropOpen(true);
-
       console.log('initializeSyncStage useEffect syncStage init');
       setDesktopAgentCompatible(await syncStageWorkerWrapper.isCompatible());
       const tempVer = await syncStageWorkerWrapper.getLatestCompatibleDesktopAgentVersion();
@@ -166,7 +192,7 @@ const StateManager = () => {
         } else {
           console.log('Could not init SyncStage, invalid jwt');
           signOut();
-          setBackdropOpen(false);
+          endBackdropRequest(requestId);
           return undefined;
         }
       };
@@ -184,12 +210,12 @@ const StateManager = () => {
         } else {
           console.log('Could not update SyncStage token');
           await provision();
-          setBackdropOpen(false);
+          endBackdropRequest(requestId);
           return undefined;
         }
       } else {
         await provision();
-        setBackdropOpen(false);
+        endBackdropRequest(requestId);
         return undefined;
       }
     }
@@ -207,11 +233,11 @@ const StateManager = () => {
         console.log('initializeSyncStage useEffect desktopAgentConnectedTimeout');
         console.log('Desktop connected timeout, going to setup screen');
         navigate(PathEnum.SETUP);
-        setBackdropOpen(false);
+        endBackdropRequest(requestId);
         return undefined;
       }
     }
-    setBackdropOpen(false);
+    endBackdropRequest(requestId);
   };
 
   const onDesktopAgentAquired = () => {
@@ -416,7 +442,6 @@ const StateManager = () => {
     persistSyncStageJwt('');
     navigate(PathEnum.LOGIN);
     setDesktopAgentProvisioned(false);
-    setBackdropOpen(false);
     await syncStageWorkerWrapper.leave();
   };
 
@@ -428,7 +453,6 @@ const StateManager = () => {
   const goToSetupPageOnUnauthorized = () => {
     navigate(PathEnum.SETUP);
     setDesktopAgentProvisioned(false);
-    setBackdropOpen(false);
   };
 
   const persistSyncStageJwt = (jwt) => {
@@ -441,7 +465,7 @@ const StateManager = () => {
   };
 
   const onCreateSession = async () => {
-    setBackdropOpen(true);
+    const requestId = startBackdropRequest();
     const [createData, errorCode] = await syncStageWorkerWrapper.createSession(
       userId,
       manuallySelectedInstance.zoneId,
@@ -449,6 +473,7 @@ const StateManager = () => {
     );
 
     if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
+      endBackdropRequest(requestId);
       return goToSetupPageOnUnauthorized();
     }
 
@@ -458,6 +483,7 @@ const StateManager = () => {
 
       navigate(`${PathEnum.SESSIONS_SESSION_PREFIX}${createData.sessionCode}`);
     }
+    endBackdropRequest(requestId);
   };
 
   const sharedState = {
@@ -470,7 +496,8 @@ const StateManager = () => {
     persistNickname,
     sessionCode,
     persistSessionCode,
-    setBackdropOpen,
+    startBackdropRequest,
+    endBackdropRequest,
     desktopAgentConnected,
     setDesktopAgentConnected,
     desktopAgentProvisioned,

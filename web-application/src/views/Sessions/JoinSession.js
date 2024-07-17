@@ -27,10 +27,13 @@ const JoinSession = ({ onJoinSession, onCreateSession }) => {
     syncStageWorkerWrapper,
     autoServerInstance,
     setServerInstancesList,
+    startBackdropRequest,
+    endBackdropRequest,
   } = useContext(AppContext);
 
   const fetchServerInstancesList = async () => {
     console.log('Fetching server instances list');
+    const requestId = startBackdropRequest();
     const [data, errorCode] = await syncStageWorkerWrapper.getServerInstances();
     console.log(`Available server instances: ${JSON.stringify(data)}`);
     if (errorCode === SyncStageSDKErrorCode.OK) {
@@ -40,6 +43,7 @@ const JoinSession = ({ onJoinSession, onCreateSession }) => {
     } else {
       errorCodeToSnackbar(errorCode);
     }
+    endBackdropRequest(requestId);
   };
 
   useEffect(() => {
