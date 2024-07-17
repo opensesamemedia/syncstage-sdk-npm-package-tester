@@ -25,7 +25,7 @@ import './ui/animationStyles.css';
 import SyncStageDesktopAgentDelegate from './SyncStageDesktopAgentDelegate';
 import SyncStageDiscoveryDelegate from './SyncStageDiscoveryDelegate';
 
-import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
+import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-package-development';
 import modalStyle from './ui/ModalStyle';
 import Navigation from './components/Navigation/Navigation';
 import SyncStageWorkerWrapper from './syncStageWorkerWrapper';
@@ -531,7 +531,7 @@ const StateManager = () => {
         <Backdrop
           sx={{
             color: '#fff',
-            zIndex: (theme) => theme.zIndex.drawer + 1,
+            zIndex: (theme) => theme.zIndex.drawer + 1000,
           }}
           open={backdropOpen}
         >

@@ -204,10 +204,6 @@ class SyncStageWorkerWrapper {
     return this.callWorker('getTransmitterMeasurements');
   }
 
-  getLatencyOptimizationLevel() {
-    return this.callWorker('getLatencyOptimizationLevel');
-  }
-
   getDesktopAgentProtocolHandler() {
     return this.callWorker('getDesktopAgentProtocolHandler');
   }
@@ -229,6 +225,34 @@ class SyncStageWorkerWrapper {
   }
   checkProvisionedStatus() {
     return this.callWorker('checkProvisionedStatus');
+  }
+
+  getSessionSettings() {
+    return this.callWorker('getSessionSettings');
+  }
+
+  setInputDevice(identifier) {
+    return this.callWorker('setInputDevice', identifier);
+  }
+
+  setOutputDevice(identifier) {
+    return this.callWorker('setOutputDevice', identifier);
+  }
+
+  setNoiseCancellation(enabled) {
+    return this.callWorker('setNoiseCancellation', enabled);
+  }
+
+  setDisableGain(disabled) {
+    return this.callWorker('setDisableGain', disabled);
+  }
+
+  setDirectMonitor(enabled) {
+    return this.callWorker('setDirectMonitor', enabled);
+  }
+
+  setLatencyOptimizationLevel(level) {
+    return this.callWorker('setLatencyOptimizationLevel', level);
   }
 }
 

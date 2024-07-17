@@ -13,6 +13,9 @@ const StyledSelect = styled(Select)`
   & > div {
     border: 1px solid ${({ theme }) => theme.text};
   }
+  .MuiSelect-icon {
+    color: ${({ theme }) => theme.text} !important;
+  }
 `;
 
 export default StyledSelect;

@@ -3,7 +3,9 @@ import React, { useContext, useState, useEffect, useCallback } from 'react';
 import { useInterval } from 'react-timing-hooks';
 
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Grid, Box, Modal, Typography } from '@mui/material';
+import { Grid, Box, Modal, Typography, InputLabel, Switch, FormControlLabel, Slider, MenuItem } from '@mui/material';
+import Select from '../../components/StyledSelect';
+
 import AppContext from '../../AppContext';
 import { mountedStyle, unmountedStyle } from '../../ui/AnimationStyles';
 import UserCard from '../../components/UserCard/UserCard';
@@ -11,19 +13,18 @@ import SessionWrapper from './Session.styled';
 import CallEndIcon from '@mui/icons-material/CallEnd';
 import MicOffIcon from '@mui/icons-material/MicOff';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import CloseIcon from '@mui/icons-material/Close';
 import { Mic } from '@mui/icons-material';
 import Button from '@mui/material/Button';
 import theme from '../../ui/theme';
 import InviteOthers from '../../components/UserCard/InviteOthers';
 import { errorCodeToSnackbar, extractSessionCode } from '../../utils';
-import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
+import { SyncStageSDKErrorCode, LatencyOptimizationLevel } from '@opensesamemedia/syncstage-sdk-npm-package-development';
 import SyncStageUserDelegate from '../../SyncStageUserDelegate';
 import SyncStageConnectivityDelegate from '../../SyncStageConnectivityDelegate';
 import { PathEnum } from '../../router/PathEnum';
 import produce from 'immer';
 import modalStyle from '../../ui/ModalStyle';
-import ButtonContained from '../../components/StyledButtonContained';
+import { enqueueSnackbar } from 'notistack';
 
 const MEASUREMENTS_INTERVAL_MS = 5000;
 
@@ -50,6 +51,14 @@ const Session = ({ inSession }) => {
 
   const [settingsOpened, setSettingsOpened] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [noiseCancellationEnabled, setNoiseCancellationEnabled] = useState(false);
+  const [gainDisabled, setGainDisabled] = useState(false);
+  const [directMonitorEnabled, setDirectMonitorEnabled] = useState(false);
+  const [latencyOptimizationLevel, setLatencyOptimizationLevel] = useState(LatencyOptimizationLevel.highQuality);
+  const [selectedInputDevice, setSelectedInputDevice] = useState('');
+  const [selectedOutputDevice, setSelectedOutputDevice] = useState('');
+  const [inputDevices, setInputDevices] = useState([]);
+  const [outputDevices, setOutputDevices] = useState([]);
 
   // Transmitter
   const [muted, setMuted] = useState(false);
@@ -74,9 +83,52 @@ const Session = ({ inSession }) => {
     navigate(PathEnum.SESSIONS_JOIN);
   };
 
-  const onStartRecording = async () => {
+  const fetchSettingsFromAgent = async (showBackdrop) => {
+    if (showBackdrop) {
+      setBackdropOpen(true);
+    }
+    const [settings, errorCode] = await syncStageWorkerWrapper.getSessionSettings();
+    if (errorCode !== SyncStageSDKErrorCode.OK) {
+      enqueueSnackbar('Failed to get session settings', { variant: 'error' });
+    } else {
+      setDirectMonitorEnabled(settings.directMonitorEnabled);
+      setGainDisabled(settings.disableGain);
+      setNoiseCancellationEnabled(settings.noiseCancellationEnabled);
+      setLatencyOptimizationLevel(settings.latencyOptimizationLevel);
+      setInputDevices(settings.inputDevices);
+      setOutputDevices(settings.outputDevices);
+
+      // Find and set the selected input device
+      const selectedInput = settings.inputDevices.find((device) => device.selected);
+      if (selectedInput) {
+        setSelectedInputDevice(selectedInput.identifier);
+      }
+
+      // Find and set the selected output device
+      const selectedOutput = settings.outputDevices.find((device) => device.selected);
+      if (selectedOutput) {
+        setSelectedOutputDevice(selectedOutput.identifier);
+      }
+    }
+
+    if (showBackdrop) {
+      setBackdropOpen(false);
+    }
+  };
+
+  const handleOpenSettings = async (opened) => {
+    setSettingsOpened(opened);
+    await fetchSettingsFromAgent(true);
+  };
+
+  const handleToggleRecording = async (enabled) => {
     setBackdropOpen(true);
-    const errorCode = await syncStageWorkerWrapper.startRecording();
+    let errorCode;
+    if (enabled) {
+      errorCode = await syncStageWorkerWrapper.startRecording();
+    } else {
+      errorCode = await syncStageWorkerWrapper.stopRecording();
+    }
     errorCodeToSnackbar(errorCode);
     setBackdropOpen(false);
 
@@ -85,17 +137,63 @@ const Session = ({ inSession }) => {
     }
   };
 
-  const onStopRecording = async () => {
-    setBackdropOpen(true);
-    const errorCode = await syncStageWorkerWrapper.stopRecording();
-    errorCodeToSnackbar(errorCode);
-    setBackdropOpen(false);
-
-    if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
-      return goToSetupPageOnUnauthorized();
+  const handleNoiseCancellationChange = async (enabled) => {
+    const stateBefore = noiseCancellationEnabled;
+    setNoiseCancellationEnabled(enabled);
+    const errorCode = await syncStageWorkerWrapper.setNoiseCancellation(enabled);
+    if (errorCode !== SyncStageSDKErrorCode.OK) {
+      setNoiseCancellationEnabled(stateBefore);
+      enqueueSnackbar('Failed to set noise cancellation', { variant: 'error' });
     }
   };
 
+  const handleDisableGainChange = async (disabled) => {
+    const stateBefore = gainDisabled;
+    setGainDisabled(disabled);
+    const errorCode = await syncStageWorkerWrapper.setDisableGain(disabled);
+    if (errorCode !== SyncStageSDKErrorCode.OK) {
+      setGainDisabled(stateBefore);
+      enqueueSnackbar('Failed to set gain', { variant: 'error' });
+    }
+  };
+
+  const handleDirectMonitorChange = async (enabled) => {
+    const stateBefore = directMonitorEnabled;
+    setDirectMonitorEnabled(enabled);
+    const errorCode = await syncStageWorkerWrapper.setDirectMonitor(enabled);
+    if (errorCode !== SyncStageSDKErrorCode.OK) {
+      setDirectMonitorEnabled(stateBefore);
+      enqueueSnackbar('Failed to set direct monitor', { variant: 'error' });
+    }
+  };
+
+  const handleLatencyLevelChange = async (newLevel) => {
+    const stateBefore = latencyOptimizationLevel;
+    setLatencyOptimizationLevel(newLevel);
+    const errorCode = await syncStageWorkerWrapper.setLatencyOptimizationLevel(newLevel);
+    if (errorCode !== SyncStageSDKErrorCode.OK) {
+      setLatencyOptimizationLevel(stateBefore);
+      enqueueSnackbar('Failed to update latency optimization level', { variant: 'error' });
+    }
+  };
+
+  const handleInputDeviceChange = async (event) => {
+    const identifier = event.target.value;
+    const errorCode = await syncStageWorkerWrapper.setInputDevice(identifier);
+    setSelectedInputDevice(identifier);
+    if (errorCode !== SyncStageSDKErrorCode.OK) {
+      enqueueSnackbar('Failed to set output device', { variant: 'error' });
+    }
+  };
+
+  const handleOutputDeviceChange = async (event) => {
+    const identifier = event.target.value;
+    const errorCode = await syncStageWorkerWrapper.setOutputDevice(identifier);
+    setSelectedOutputDevice(identifier);
+    if (errorCode !== SyncStageSDKErrorCode.OK) {
+      enqueueSnackbar('Failed to set output device', { variant: 'error' });
+    }
+  };
   const updateMeasurements = async () => {
     if (syncStageWorkerWrapper === null) {
       return;
@@ -536,7 +634,7 @@ const Session = ({ inSession }) => {
                 </Button>
               </Grid>
               <Grid item>
-                <Button style={{ color: theme.onSurfaceVariant }} onClick={() => setSettingsOpened(true)}>
+                <Button style={{ color: theme.onSurfaceVariant }} onClick={() => handleOpenSettings(true)}>
                   <MoreVertIcon />
                 </Button>
               </Grid>
@@ -544,35 +642,88 @@ const Session = ({ inSession }) => {
           </Grid>
         </div>
       </SessionWrapper>
-      <Modal open={settingsOpened} onClose={() => setSettingsOpened(false)}>
+      <Modal id="settings-modal" open={settingsOpened} onClose={() => setSettingsOpened(false)}>
         <Box sx={modalStyle}>
-          <Grid container direction="column" justifyContent="flex-start" alignItems="center">
-            <Grid container direction="row" justifyContent="space-between" alignItems="center" style={{ padding: '16px' }}>
-              <Typography variant="h4" component="h4">
-                Settings
-              </Typography>
-              <Button style={{ color: theme.onSurfaceVariant }} onClick={() => setSettingsOpened(false)}>
-                <CloseIcon />
-              </Button>
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <Typography variant="h6">Settings</Typography>
             </Grid>
-            <Grid item style={{ width: '100%', paddingLeft: 32 }}>
-              <Typography variant="h5" component="h5">
-                Recording
-              </Typography>
+            <Grid item xs={12}>
+              <FormControlLabel
+                control={<Switch checked={isRecording} onChange={() => handleToggleRecording(!isRecording)} />}
+                label="Recording"
+              />
             </Grid>
-
-            <Grid item>
-              <ButtonContained
-                onClick={() => {
-                  if (isRecording) {
-                    onStopRecording();
-                  } else {
-                    onStartRecording();
-                  }
-                }}
+            <Grid item xs={12}>
+              <FormControlLabel
+                control={
+                  <Switch checked={noiseCancellationEnabled} onChange={() => handleNoiseCancellationChange(!noiseCancellationEnabled)} />
+                }
+                label="Noise Cancellation"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <FormControlLabel
+                control={<Switch checked={gainDisabled} onChange={() => handleDisableGainChange(!gainDisabled)} />}
+                label="Disable Gain"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <FormControlLabel
+                control={<Switch checked={directMonitorEnabled} onChange={() => handleDirectMonitorChange(!directMonitorEnabled)} />}
+                label="Direct Monitor"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <InputLabel htmlFor="latency-slider" style={{ paddingBottom: '40px', color: 'rgb(197, 199, 200)' }}>
+                Latency optimization Level
+              </InputLabel>
+              <Slider
+                defaultValue={latencyOptimizationLevel}
+                step={1}
+                marks
+                min={0}
+                max={3}
+                valueLabelDisplay="on"
+                onChangeCommitted={(_, newValue) => handleLatencyLevelChange(newValue)}
+                valueLabelFormat={(value) => ['High quality', 'Optimized', 'Best Performance', 'Ultra Fast'][value]}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <InputLabel id="input-device-label" style={{ color: 'rgb(197, 199, 200)' }}>
+                Input Device
+              </InputLabel>
+              <Select
+                labelId="input-device-label"
+                id="input-device-select"
+                value={selectedInputDevice}
+                onChange={handleInputDeviceChange}
+                fullWidth
               >
-                {isRecording ? 'Stop recording' : 'Start recording'}
-              </ButtonContained>
+                {inputDevices.map((device) => (
+                  <MenuItem key={device.identifier} value={device.identifier}>
+                    {device.name}
+                  </MenuItem>
+                ))}{' '}
+              </Select>
+            </Grid>
+            <Grid item xs={12}>
+              <InputLabel id="output-device-label" style={{ color: 'rgb(197, 199, 200)' }}>
+                Output Device
+              </InputLabel>
+              <Select
+                labelId="output-device-label"
+                id="output-device-select"
+                value={selectedOutputDevice}
+                onChange={handleOutputDeviceChange}
+                fullWidth
+              >
+                {outputDevices.map((device) => (
+                  <MenuItem key={device.identifier} value={device.identifier}>
+                    {device.name}
+                  </MenuItem>
+                ))}
+              </Select>
             </Grid>
           </Grid>
         </Box>
