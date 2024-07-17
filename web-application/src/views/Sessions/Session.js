@@ -39,7 +39,8 @@ const Session = ({ inSession }) => {
     desktopAgentProvisioned,
     userId,
     nickname,
-    setBackdropOpen,
+    startBackdropRequest,
+    endBackdropRequest,
     manuallySelectedInstance,
     goToSetupPageOnUnauthorized,
   } = useContext(AppContext);
@@ -72,10 +73,10 @@ const Session = ({ inSession }) => {
   const [receiversMap, setReceiversMap] = useState({});
 
   const onLeaveSession = async () => {
-    setBackdropOpen(true);
+    const requestId = startBackdropRequest();
     const errorCode = await syncStageWorkerWrapper.leave();
     errorCodeToSnackbar(errorCode);
-    setBackdropOpen(false);
+    endBackdropRequest(requestId);
 
     if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
       return goToSetupPageOnUnauthorized();
@@ -84,8 +85,9 @@ const Session = ({ inSession }) => {
   };
 
   const fetchSettingsFromAgent = async (showBackdrop) => {
+    let requestId;
     if (showBackdrop) {
-      setBackdropOpen(true);
+      requestId = startBackdropRequest();
     }
     const [settings, errorCode] = await syncStageWorkerWrapper.getSessionSettings();
     if (errorCode !== SyncStageSDKErrorCode.OK) {
@@ -112,7 +114,7 @@ const Session = ({ inSession }) => {
     }
 
     if (showBackdrop) {
-      setBackdropOpen(false);
+      endBackdropRequest(requestId);
     }
   };
 
@@ -122,7 +124,7 @@ const Session = ({ inSession }) => {
   };
 
   const handleToggleRecording = async (enabled) => {
-    setBackdropOpen(true);
+    const requestId = startBackdropRequest();
     let errorCode;
     if (enabled) {
       errorCode = await syncStageWorkerWrapper.startRecording();
@@ -130,7 +132,7 @@ const Session = ({ inSession }) => {
       errorCode = await syncStageWorkerWrapper.stopRecording();
     }
     errorCodeToSnackbar(errorCode);
-    setBackdropOpen(false);
+    endBackdropRequest(requestId);
 
     if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
       return goToSetupPageOnUnauthorized();
@@ -458,7 +460,7 @@ const Session = ({ inSession }) => {
 
         setLocalSessionCode(sessionCodeFromPath);
         persistSessionCode(sessionCodeFromPath);
-        setBackdropOpen(true);
+        const requestId = startBackdropRequest();
 
         console.log('Joining the session from the path');
         const [data, errorCode] = await syncStageWorkerWrapper.join(
@@ -472,18 +474,18 @@ const Session = ({ inSession }) => {
         if (errorCode === SyncStageSDKErrorCode.OK) {
           console.log('Remaining on session Screen');
           setSessionData(data);
-          setBackdropOpen(false);
+          endBackdropRequest(requestId);
           return undefined;
         }
 
         console.log('Could not join session from the path. errorCode: ', errorCode);
         if (nickname) {
           navigate(PathEnum.SESSIONS_JOIN);
-          setBackdropOpen(false);
+          endBackdropRequest(requestId);
           return undefined;
         } else {
           navigate(PathEnum.SESSION_NICKNAME);
-          setBackdropOpen(false);
+          endBackdropRequest(requestId);
           return undefined;
         }
       }
@@ -691,7 +693,7 @@ const Session = ({ inSession }) => {
             </Grid>
             <Grid item xs={12}>
               <InputLabel id="input-device-label" style={{ color: 'rgb(197, 199, 200)' }}>
-                Input Device
+                Audio Input
               </InputLabel>
               <Select
                 labelId="input-device-label"
@@ -709,7 +711,7 @@ const Session = ({ inSession }) => {
             </Grid>
             <Grid item xs={12}>
               <InputLabel id="output-device-label" style={{ color: 'rgb(197, 199, 200)' }}>
-                Output Device
+                Audio Output
               </InputLabel>
               <Select
                 labelId="output-device-label"
