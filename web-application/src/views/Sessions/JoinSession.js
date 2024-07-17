@@ -32,10 +32,10 @@ const JoinSession = ({ onJoinSession, onCreateSession }) => {
   } = useContext(AppContext);
 
   const fetchServerInstancesList = async () => {
-    console.log('Fetching server instances list');
+    console.log('Fetching server instances list.');
     const requestId = startBackdropRequest();
     const [data, errorCode] = await syncStageWorkerWrapper.getServerInstances();
-    console.log(`Available server instances: ${JSON.stringify(data)}`);
+    console.log(`Available server instances: ${JSON.stringify(data)}.`);
     if (errorCode === SyncStageSDKErrorCode.OK) {
       console.log([autoServerInstance, ...data]);
       setManuallySelectedInstance(autoServerInstance);
