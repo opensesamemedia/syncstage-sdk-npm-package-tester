@@ -45,6 +45,8 @@ const Session = ({ inSession }) => {
     goToSetupPageOnUnauthorized,
   } = useContext(AppContext);
 
+  const [isWindowsPlatform, setIsWindowsPlatform] = useState(false);
+
   const [sessionLoadTime, setSessionLoadTime] = useState(new Date());
 
   const [localSessionCode, setLocalSessionCode] = useState();
@@ -463,6 +465,23 @@ const Session = ({ inSession }) => {
   }, []); // Empty array ensures this runs on mount and unmount only
 
   useEffect(() => {
+    const checkPlatform = async () => {
+      let platform;
+
+      if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
+        const uaData = await navigator.userAgentData.getHighEntropyValues(['platform']);
+        platform = uaData.platform;
+      } else {
+        platform = navigator.userAgent;
+      }
+
+      setIsWindowsPlatform(/Win/i.test(platform));
+    };
+
+    checkPlatform();
+  }, []);
+
+  useEffect(() => {
     console.log('Session useEffect ', syncStageWorkerWrapper, desktopAgentProvisioned, location.pathname);
     const initializeSession = async () => {
       console.log('initializeSession');
@@ -683,18 +702,22 @@ const Session = ({ inSession }) => {
                 label="Noise Cancellation"
               />
             </Grid>
-            <Grid item xs={12}>
-              <FormControlLabel
-                control={<Switch checked={gainDisabled} onChange={() => handleDisableGainChange(!gainDisabled)} />}
-                label="Disable Gain"
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <FormControlLabel
-                control={<Switch checked={directMonitorEnabled} onChange={() => handleDirectMonitorChange(!directMonitorEnabled)} />}
-                label="Direct Monitor"
-              />
-            </Grid>
+            {!isWindowsPlatform && (
+              <>
+                <Grid item xs={12}>
+                  <FormControlLabel
+                    control={<Switch checked={gainDisabled} onChange={() => handleDisableGainChange(!gainDisabled)} />}
+                    label="Disable Gain"
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <FormControlLabel
+                    control={<Switch checked={directMonitorEnabled} onChange={() => handleDirectMonitorChange(!directMonitorEnabled)} />}
+                    label="Direct Monitor"
+                  />
+                </Grid>
+              </>
+            )}
             <Grid item xs={12}>
               <InputLabel htmlFor="latency-slider" style={{ paddingBottom: '40px', color: 'rgb(197, 199, 200)' }}>
                 Latency optimization Level
