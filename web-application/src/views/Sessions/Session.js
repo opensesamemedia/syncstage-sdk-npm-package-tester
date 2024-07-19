@@ -182,10 +182,10 @@ const Session = ({ inSession }) => {
 
   const handleLatencyLevelChange = async (newLevel) => {
     const requestId = startBackdropRequest();
-
     const stateBefore = latencyOptimizationLevel;
     setLatencyOptimizationLevel(newLevel);
     const errorCode = await syncStageWorkerWrapper.setLatencyOptimizationLevel(newLevel);
+
     if (errorCode !== SyncStageSDKErrorCode.OK) {
       setLatencyOptimizationLevel(stateBefore);
       enqueueSnackbar('Failed to update latency optimization level', { variant: 'error' });
@@ -195,27 +195,34 @@ const Session = ({ inSession }) => {
 
   const handleInputDeviceChange = async (event) => {
     const requestId = startBackdropRequest();
+    const stateBefore = selectedInputDevice;
 
     const identifier = event.target.value;
     const errorCode = await syncStageWorkerWrapper.setInputDevice(identifier);
+    setSelectedInputDevice(identifier);
 
     if (errorCode !== SyncStageSDKErrorCode.OK) {
-      setSelectedInputDevice(identifier);
       enqueueSnackbar('Failed to set output device', { variant: 'error' });
+      setSelectedInputDevice(stateBefore);
+      fetchSettingsFromAgent(true);
     }
     endBackdropRequest(requestId);
   };
 
   const handleOutputDeviceChange = async (event) => {
+    const stateBefore = selectedOutputDevice;
     const requestId = startBackdropRequest();
 
     const identifier = event.target.value;
     const errorCode = await syncStageWorkerWrapper.setOutputDevice(identifier);
+    setSelectedOutputDevice(identifier);
+
     if (errorCode !== SyncStageSDKErrorCode.OK) {
       enqueueSnackbar('Failed to set output device', { variant: 'error' });
-      setSelectedOutputDevice(identifier);
+      setSelectedOutputDevice(stateBefore);
     }
     endBackdropRequest(requestId);
+    fetchSettingsFromAgent(true);
   };
   const updateMeasurements = async () => {
     if (syncStageWorkerWrapper === null) {

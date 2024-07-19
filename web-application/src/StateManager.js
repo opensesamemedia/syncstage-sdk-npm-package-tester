@@ -48,7 +48,6 @@ const getDownloadLink = (version) => {
       link = `https://public.sync-stage.com/agent/windows/prod/0.2.0/SyncStageAgent_0.2.0.exe`;
     }
   }
-  console.log('link: ', link);
   return link;
 };
 
