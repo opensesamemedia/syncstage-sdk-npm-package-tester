@@ -730,7 +730,7 @@ const Session = ({ inSession }) => {
                 Latency optimization Level
               </InputLabel>
               <Slider
-                defaultValue={latencyOptimizationLevel}
+                value={latencyOptimizationLevel}
                 step={1}
                 marks
                 min={0}
