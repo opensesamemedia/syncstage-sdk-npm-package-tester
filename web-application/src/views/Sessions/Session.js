@@ -247,7 +247,7 @@ const Session = ({ inSession }) => {
     setSelectedInputDevice(identifier);
 
     if (errorCode !== SyncStageSDKErrorCode.OK) {
-      enqueueSnackbar('Failed to set output device', { variant: 'error' });
+      enqueueSnackbar('Failed to set input device', { variant: 'error' });
       setSelectedInputDevice(stateBefore);
       fetchSettingsFromAgent(true);
     }
