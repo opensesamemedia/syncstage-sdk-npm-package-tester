@@ -17,6 +17,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import SettingsIcon from '@mui/icons-material/Settings';
 import RadioButtonChecked from '@mui/icons-material/RadioButtonChecked';
+import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import CheckIcon from '@mui/icons-material/Check';
 import { Mic } from '@mui/icons-material';
 import Menu from '@mui/material/Menu';
@@ -763,7 +764,7 @@ const Session = ({ inSession }) => {
                 <Divider sx={{ bgcolor: 'secondary.light' }} />
 
                 <MenuItem style={{ color: theme.onSurfaceVariant }} disabled={true}>
-                  <Mic style={{ marginRight: '10px', color: theme.iconColor }} />
+                  <VolumeUpIcon style={{ marginRight: '10px', color: theme.iconColor }} />
                   Audio Output
                 </MenuItem>
                 {outputDevices.map((device) => (
