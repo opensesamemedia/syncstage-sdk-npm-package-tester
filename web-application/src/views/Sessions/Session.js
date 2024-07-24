@@ -3,7 +3,7 @@ import React, { useContext, useState, useEffect, useCallback } from 'react';
 import { useInterval } from 'react-timing-hooks';
 
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Grid, Box, Modal, Typography, InputLabel, Switch, FormControlLabel, Slider, MenuItem } from '@mui/material';
+import { Grid, Box, Modal, Typography, InputLabel, Switch, MenuItem } from '@mui/material';
 import Select from '../../components/StyledSelect';
 
 import AppContext from '../../AppContext';
@@ -13,7 +13,15 @@ import SessionWrapper from './Session.styled';
 import CallEndIcon from '@mui/icons-material/CallEnd';
 import MicOffIcon from '@mui/icons-material/MicOff';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import CloseIcon from '@mui/icons-material/Close';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import SettingsIcon from '@mui/icons-material/Settings';
+import RadioButtonChecked from '@mui/icons-material/RadioButtonChecked';
+import CheckIcon from '@mui/icons-material/Check';
 import { Mic } from '@mui/icons-material';
+import Menu from '@mui/material/Menu';
+import Divider from '@mui/material/Divider';
+
 import Button from '@mui/material/Button';
 import theme from '../../ui/theme';
 import InviteOthers from '../../components/UserCard/InviteOthers';
@@ -52,16 +60,52 @@ const Session = ({ inSession }) => {
   const [localSessionCode, setLocalSessionCode] = useState();
   const [sessionData, setSessionData] = useState(null);
 
-  const [settingsOpened, setSettingsOpened] = useState(false);
+  const [settingsModalOpened, setSettingsModalOpened] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [noiseCancellationEnabled, setNoiseCancellationEnabled] = useState(false);
   const [gainDisabled, setGainDisabled] = useState(false);
   const [directMonitorEnabled, setDirectMonitorEnabled] = useState(false);
-  const [latencyOptimizationLevel, setLatencyOptimizationLevel] = useState(LatencyOptimizationLevel.highQuality);
+  const [latencyOptimizationLevel, setLatencyOptimizationLevel] = useState(null);
   const [selectedInputDevice, setSelectedInputDevice] = useState('');
   const [selectedOutputDevice, setSelectedOutputDevice] = useState('');
   const [inputDevices, setInputDevices] = useState([]);
   const [outputDevices, setOutputDevices] = useState([]);
+  const latencyOptimizationLevels = [
+    {
+      name: 'High Quality',
+      value: LatencyOptimizationLevel.highQuality,
+    },
+    {
+      name: 'Optimized',
+      value: LatencyOptimizationLevel.optimized,
+    },
+    {
+      name: 'Best Performance',
+      value: LatencyOptimizationLevel.bestPerformance,
+    },
+    {
+      name: 'Ultra Fast',
+      value: LatencyOptimizationLevel.ultraFast,
+    },
+  ];
+
+  const [menuAnchorEl, setMenuAnchorEl] = useState(null);
+  const settingsMenuOpened = Boolean(menuAnchorEl);
+  const handleMenuSettingsOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setMenuAnchorEl(event.currentTarget);
+  };
+  const handleMenuSettingsClose = () => {
+    setMenuAnchorEl(null);
+  };
+
+  const [ioAnchorEl, setIoMenuAnchorEl] = useState(null);
+  const ioMenuOpened = Boolean(ioAnchorEl);
+  const handleMenuIoOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setIoMenuAnchorEl(event.currentTarget);
+  };
+  const handleMenuIoClose = () => {
+    setIoMenuAnchorEl(null);
+  };
 
   // Transmitter
   const [muted, setMuted] = useState(false);
@@ -120,9 +164,9 @@ const Session = ({ inSession }) => {
     }
   };
 
-  const handleOpenSettings = async (opened) => {
-    setSettingsOpened(opened);
-    await fetchSettingsFromAgent(true);
+  const handleOpenSettingsModal = async (opened) => {
+    setSettingsModalOpened(opened);
+    await fetchSettingsFromAgent(false);
   };
 
   const handleToggleRecording = async (enabled) => {
@@ -154,18 +198,18 @@ const Session = ({ inSession }) => {
     endBackdropRequest(requestId);
   };
 
-  const handleDisableGainChange = async (disabled) => {
-    const requestId = startBackdropRequest();
+  // const handleDisableGainChange = async (disabled) => {
+  //   const requestId = startBackdropRequest();
 
-    const stateBefore = gainDisabled;
-    setGainDisabled(disabled);
-    const errorCode = await syncStageWorkerWrapper.setDisableGain(disabled);
-    if (errorCode !== SyncStageSDKErrorCode.OK) {
-      setGainDisabled(stateBefore);
-      enqueueSnackbar('Failed to set gain', { variant: 'error' });
-    }
-    endBackdropRequest(requestId);
-  };
+  //   const stateBefore = gainDisabled;
+  //   setGainDisabled(disabled);
+  //   const errorCode = await syncStageWorkerWrapper.setDisableGain(disabled);
+  //   if (errorCode !== SyncStageSDKErrorCode.OK) {
+  //     setGainDisabled(stateBefore);
+  //     enqueueSnackbar('Failed to set gain', { variant: 'error' });
+  //   }
+  //   endBackdropRequest(requestId);
+  // };
 
   const handleDirectMonitorChange = async (enabled) => {
     const requestId = startBackdropRequest();
@@ -180,11 +224,11 @@ const Session = ({ inSession }) => {
     endBackdropRequest(requestId);
   };
 
-  const handleLatencyLevelChange = async (newLevel) => {
+  const handleLatencyLevelChange = async (event) => {
     const requestId = startBackdropRequest();
     const stateBefore = latencyOptimizationLevel;
-    setLatencyOptimizationLevel(newLevel);
-    const errorCode = await syncStageWorkerWrapper.setLatencyOptimizationLevel(newLevel);
+    setLatencyOptimizationLevel(event.target.value);
+    const errorCode = await syncStageWorkerWrapper.setLatencyOptimizationLevel(event.target.value);
 
     if (errorCode !== SyncStageSDKErrorCode.OK) {
       setLatencyOptimizationLevel(stateBefore);
@@ -564,6 +608,7 @@ const Session = ({ inSession }) => {
           setMuted(mutedState);
         }
         await buildViewSessionState(sessionData, setConnectedMap, syncStageWorkerWrapper, setVolumeMap);
+        await fetchSettingsFromAgent(true);
       }
     }
     executeAsync();
@@ -675,70 +720,131 @@ const Session = ({ inSession }) => {
                   <CallEndIcon />
                 </Button>
               </Grid>
-              <Grid item style={{ paddingRight: '32px' }}>
+              <Grid item>
                 <Button style={{ color: theme.onSurfaceVariant }} onClick={onMutedToggle}>
                   {muted ? <MicOffIcon /> : <Mic />}
                 </Button>
               </Grid>
+              <Grid item style={{ marginLeft: '-24px', paddingRight: '20px' }}>
+                <Button style={{ color: theme.onSurfaceVariant }} onClick={handleMenuIoOpen}>
+                  <ArrowDropDownIcon />
+                </Button>
+              </Grid>
+              <Menu
+                id="settings-menu"
+                anchorEl={ioAnchorEl}
+                open={ioMenuOpened}
+                onClose={handleMenuIoClose}
+                MenuListProps={{
+                  'aria-labelledby': 'basic-button',
+                }}
+                sx={{ mt: '1px', '& .MuiMenu-paper': { backgroundColor: theme.dark } }}
+              >
+                <MenuItem style={{ color: theme.onSurfaceVariant }} disabled={true}>
+                  <Mic style={{ marginRight: '10px', color: theme.iconColor }} />
+                  Audio Input
+                </MenuItem>
+                {inputDevices.map((device) => (
+                  <MenuItem
+                    key={device.identifier}
+                    value={device.identifier}
+                    style={{ color: theme.onSurfaceVariant }}
+                    onClick={handleInputDeviceChange}
+                  >
+                    {device.identifier === selectedInputDevice ? (
+                      <CheckIcon style={{ marginRight: '10px', color: theme.iconColor }} />
+                    ) : (
+                      <CheckIcon style={{ marginRight: '10px', color: 'transparent' }} />
+                    )}
+                    {device.name}
+                  </MenuItem>
+                ))}
+
+                <Divider sx={{ bgcolor: 'secondary.light' }} />
+
+                <MenuItem style={{ color: theme.onSurfaceVariant }} disabled={true}>
+                  <Mic style={{ marginRight: '10px', color: theme.iconColor }} />
+                  Audio Output
+                </MenuItem>
+                {outputDevices.map((device) => (
+                  <MenuItem
+                    key={device.identifier}
+                    value={device.identifier}
+                    style={{ color: theme.onSurfaceVariant }}
+                    onClick={handleOutputDeviceChange}
+                  >
+                    {device.identifier === selectedOutputDevice ? (
+                      <CheckIcon style={{ marginRight: '10px', color: theme.iconColor }} />
+                    ) : (
+                      <CheckIcon style={{ marginRight: '10px', color: 'transparent' }} />
+                    )}
+                    {device.name}
+                  </MenuItem>
+                ))}
+
+                <Divider sx={{ bgcolor: 'secondary.light' }} />
+
+                <MenuItem
+                  onClick={() => {
+                    handleMenuIoClose();
+                    handleOpenSettingsModal(true);
+                  }}
+                  style={{ color: theme.onSurfaceVariant }}
+                >
+                  <SettingsIcon style={{ marginRight: '10px', color: theme.iconColor }} />
+                  Audio Settings
+                </MenuItem>
+              </Menu>
               <Grid item>
-                <Button style={{ color: theme.onSurfaceVariant }} onClick={() => handleOpenSettings(true)}>
+                <Button style={{ color: theme.onSurfaceVariant }} onClick={handleMenuSettingsOpen}>
                   <MoreVertIcon />
                 </Button>
+                <Menu
+                  id="settings-menu"
+                  anchorEl={menuAnchorEl}
+                  open={settingsMenuOpened}
+                  onClose={handleMenuSettingsClose}
+                  MenuListProps={{
+                    'aria-labelledby': 'basic-button',
+                  }}
+                  sx={{ mt: '1px', '& .MuiMenu-paper': { backgroundColor: theme.dark } }}
+                >
+                  <MenuItem
+                    onClick={() => {
+                      handleMenuSettingsClose();
+                      handleToggleRecording(!isRecording);
+                    }}
+                    style={{ color: theme.onSurfaceVariant }}
+                  >
+                    <RadioButtonChecked style={{ marginRight: '10px', color: theme.iconColor }} />
+                    {isRecording ? <>Stop recording</> : <>Start recording</>}
+                  </MenuItem>
+                  <MenuItem
+                    onClick={() => {
+                      handleMenuSettingsClose();
+                      handleOpenSettingsModal(true);
+                    }}
+                    style={{ color: theme.onSurfaceVariant }}
+                  >
+                    <SettingsIcon style={{ marginRight: '10px', color: theme.iconColor }} />
+                    Settings
+                  </MenuItem>
+                </Menu>
               </Grid>
             </Grid>
           </Grid>
         </div>
       </SessionWrapper>
-      <Modal id="settings-modal" open={settingsOpened} onClose={() => setSettingsOpened(false)}>
+      <Modal id="settings-modal" open={settingsModalOpened} onClose={() => setSettingsModalOpened(false)}>
         <Box sx={modalStyle}>
           <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <Typography variant="h6">Settings</Typography>
-            </Grid>
-            <Grid item xs={12}>
-              <FormControlLabel
-                control={<Switch checked={isRecording} onChange={() => handleToggleRecording(!isRecording)} />}
-                label="Recording"
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <FormControlLabel
-                control={
-                  <Switch checked={noiseCancellationEnabled} onChange={() => handleNoiseCancellationChange(!noiseCancellationEnabled)} />
-                }
-                label="Noise Cancellation"
-              />
-            </Grid>
-            {!isWindowsPlatform && (
-              <>
-                <Grid item xs={12}>
-                  <FormControlLabel
-                    control={<Switch checked={gainDisabled} onChange={() => handleDisableGainChange(!gainDisabled)} />}
-                    label="Disable Gain"
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <FormControlLabel
-                    control={<Switch checked={directMonitorEnabled} onChange={() => handleDirectMonitorChange(!directMonitorEnabled)} />}
-                    label="Direct Monitor"
-                  />
-                </Grid>
-              </>
-            )}
-            <Grid item xs={12}>
-              <InputLabel htmlFor="latency-slider" style={{ paddingBottom: '40px', color: 'rgb(197, 199, 200)' }}>
-                Latency optimization Level
-              </InputLabel>
-              <Slider
-                value={latencyOptimizationLevel}
-                step={1}
-                marks
-                min={0}
-                max={3}
-                valueLabelDisplay="on"
-                onChangeCommitted={(_, newValue) => handleLatencyLevelChange(newValue)}
-                valueLabelFormat={(value) => ['High quality', 'Optimized', 'Best Performance', 'Ultra Fast'][value]}
-              />
+            <Grid container alignItems="start" xs={12}>
+              <Button onClick={() => setSettingsModalOpened(false)} style={{ color: theme.onSurfaceVariant }}>
+                <CloseIcon />
+              </Button>{' '}
+              <Typography variant="h6" style={{ marginTop: 2 }}>
+                Settings
+              </Typography>
             </Grid>
             <Grid item xs={12}>
               <InputLabel id="input-device-label" style={{ color: 'rgb(197, 199, 200)' }}>
@@ -755,9 +861,10 @@ const Session = ({ inSession }) => {
                   <MenuItem key={device.identifier} value={device.identifier}>
                     {device.name}
                   </MenuItem>
-                ))}{' '}
+                ))}
               </Select>
             </Grid>
+            <Grid item xs={12} style={{ height: '30px' }} />
             <Grid item xs={12}>
               <InputLabel id="output-device-label" style={{ color: 'rgb(197, 199, 200)' }}>
                 Audio Output
@@ -776,6 +883,62 @@ const Session = ({ inSession }) => {
                 ))}
               </Select>
             </Grid>
+            <Grid item xs={12} style={{ height: '30px' }} />
+            <Grid item xs={12}>
+              <InputLabel id="latency-optimization-label" style={{ color: 'rgb(197, 199, 200)' }}>
+                Latency Optimization Level
+              </InputLabel>
+              <Select
+                labelId="latency-optimization-label"
+                id="latency-optimization-select"
+                value={latencyOptimizationLevel}
+                onChange={handleLatencyLevelChange}
+                fullWidth
+              >
+                {latencyOptimizationLevels.map((levelItem) => (
+                  <MenuItem key={levelItem.value} value={levelItem.value}>
+                    {levelItem.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </Grid>
+            <Grid item xs={12} style={{ height: '30px' }} />
+            <Grid container direction="row" alignItems="center" style={{ padding: 14 }}>
+              <Grid container direction="column" alignItems="start" xs={8}>
+                <Typography variant="h6">Noise Cancellation</Typography>
+                <p style={{ marginTop: 6 }}>Suppress the background noise</p>
+                <p style={{ color: '#FFB4AB' }}>Avoid this option in music applications</p>
+              </Grid>
+              <Grid item xs={4}>
+                <Switch checked={noiseCancellationEnabled} onChange={() => handleNoiseCancellationChange(!noiseCancellationEnabled)} />
+              </Grid>
+            </Grid>
+
+            {!isWindowsPlatform && (
+              <>
+                <Grid container direction="row" alignItems="center" style={{ padding: 14 }}>
+                  <Grid container direction="column" alignItems="start" xs={8}>
+                    <Typography variant="h6">Direct Monitor</Typography>
+                    <p style={{ marginTop: 6 }}>Allows for listening to the input signal with low latency.</p>
+                    <p style={{ color: '#FFB4AB' }}>
+                      Make sure you have connected headphones before enabling this option as it can cause acoustic echo.
+                    </p>
+                  </Grid>
+                  <Grid item xs={4}>
+                    <Switch checked={directMonitorEnabled} onChange={() => handleDirectMonitorChange(!directMonitorEnabled)} />
+                  </Grid>
+                </Grid>
+
+                {/* <Grid item xs={12} style={{ height: '30px' }} />
+                <Grid item xs={12}>
+                  <FormControlLabel
+                    labelPlacement="start"
+                    control={<Switch checked={gainDisabled} onChange={() => handleDisableGainChange(!gainDisabled)} />}
+                    label="Disable Gain"
+                  />
+                </Grid> */}
+              </>
+            )}
           </Grid>
         </Box>
       </Modal>
