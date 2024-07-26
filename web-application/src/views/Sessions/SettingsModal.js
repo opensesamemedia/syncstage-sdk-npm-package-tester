@@ -219,15 +219,28 @@ const SettingsModal = ({ open, onClose, showServerList }) => {
                   />
                 </Grid>
               </Grid>
-
-              {/* <Grid item xs={12} style={{ height: '20px' }} />
-                <Grid item xs={12}>
-                  <FormControlLabel
-                    labelPlacement="start"
-                    control={<Switch checked={gainDisabled} onChange={() => handleDisableGainChange(!gainDisabled)} />}
-                    label="Disable Gain"
-                  />
-                </Grid> */}
+              {/* 
+              <Grid item xs={12} style={{ height: '20px' }} />
+              <Grid item xs={12}>
+                <FormControlLabel
+                  labelPlacement="start"
+                  control={
+                    <Switch
+                      checked={gainDisabled}
+                      onChange={() => handleDisableGainChange(!gainDisabled)}
+                      sx={{
+                        '& .MuiSwitch-switchBase.Mui-checked': {
+                          color: theme.primary,
+                        },
+                        '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                          backgroundColor: theme.primary,
+                        },
+                      }}
+                    />
+                  }
+                  label="Disable Gain"
+                />
+              </Grid> */}
             </>
           )}
           {showServerList && (
