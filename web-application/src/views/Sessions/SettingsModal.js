@@ -123,7 +123,7 @@ const SettingsModal = ({ open, onClose, showServerList }) => {
               labelId="input-device-label"
               id="input-device-select"
               value={selectedInputDevice}
-              onClick={(event) => handleInputDeviceChange(event, () => fetchSettingsFromAgent(true))}
+              onChange={(event) => handleInputDeviceChange(event, () => fetchSettingsFromAgent(true))}
               fullWidth
             >
               {inputDevices.map((device) => (
@@ -142,7 +142,7 @@ const SettingsModal = ({ open, onClose, showServerList }) => {
               labelId="output-device-label"
               id="output-device-select"
               value={selectedOutputDevice}
-              onClick={(event) => handleOutputDeviceChange(event, () => fetchSettingsFromAgent(true))}
+              onChange={(event) => handleOutputDeviceChange(event, () => fetchSettingsFromAgent(true))}
               fullWidth
             >
               {outputDevices.map((device) => (
