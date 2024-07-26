@@ -14,7 +14,7 @@ import CallEndIcon from '@mui/icons-material/CallEnd';
 import MicOffIcon from '@mui/icons-material/MicOff';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import CloseIcon from '@mui/icons-material/Close';
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import SettingsIcon from '@mui/icons-material/Settings';
 import RadioButtonChecked from '@mui/icons-material/RadioButtonChecked';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
@@ -727,8 +727,14 @@ const Session = ({ inSession }) => {
                 </Button>
               </Grid>
               <Grid item style={{ marginLeft: '-24px', paddingRight: '20px' }}>
-                <Button style={{ color: theme.onSurfaceVariant }} onClick={handleMenuIoOpen}>
-                  <ArrowDropDownIcon />
+                <Button
+                  style={{ color: theme.onSurfaceVariant }}
+                  onClick={async (event) => {
+                    handleMenuIoOpen(event);
+                    await fetchSettingsFromAgent(false);
+                  }}
+                >
+                  <ExpandLessIcon />
                 </Button>
               </Grid>
               <Menu
@@ -739,7 +745,7 @@ const Session = ({ inSession }) => {
                 MenuListProps={{
                   'aria-labelledby': 'basic-button',
                 }}
-                sx={{ mt: '1px', '& .MuiMenu-paper': { backgroundColor: theme.dark } }}
+                sx={{ mt: '1px', '& .MuiMenu-paper': { backgroundColor: theme.footterColor } }}
               >
                 <MenuItem style={{ color: theme.onSurfaceVariant }} disabled={true}>
                   <Mic style={{ marginRight: '10px', color: theme.iconColor }} />
@@ -808,7 +814,7 @@ const Session = ({ inSession }) => {
                   MenuListProps={{
                     'aria-labelledby': 'basic-button',
                   }}
-                  sx={{ mt: '1px', '& .MuiMenu-paper': { backgroundColor: theme.dark } }}
+                  sx={{ mt: '1px', '& .MuiMenu-paper': { backgroundColor: theme.footterColor } }}
                 >
                   <MenuItem
                     onClick={() => {

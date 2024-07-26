@@ -6,8 +6,9 @@ const theme = {
   onSurfaceVariant: '#D3C2C9',
   onPrimaryDark: '#003640',
   recordingBackground: '#322e3a',
-  modalBackground: '#201A1B',
+  modalBackground: '#2f2d37',
   dark: '#1d262f',
+  footterColor: '#2a2830',
 };
 
 export default theme;

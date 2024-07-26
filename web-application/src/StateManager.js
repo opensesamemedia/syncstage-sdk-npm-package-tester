@@ -527,8 +527,9 @@ const StateManager = () => {
     <AppContext.Provider value={sharedState}>
       <AppWrapper inSession={inSession}>
         <div className="bg" />
-        <div className="gradient2" />
         <div className="gradient1" />
+        <div className="gradient2" />
+        <div className="black-transparent-bg" />
         <div
           style={{
             position: 'fixed',
