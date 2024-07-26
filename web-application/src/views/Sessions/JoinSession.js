@@ -1,16 +1,10 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-package-development';
-import { errorCodeToSnackbar } from '../../utils';
-import IconButton from '@mui/material/IconButton';
-import RefreshIcon from '@mui/icons-material/Refresh';
+
 import { Grid } from '@mui/material';
 import ButtonContained from '../../components/StyledButtonContained';
 import Button from '../../components/StyledButton';
 import TextField from '../../components/StyledTextField';
-import MenuItem from '@mui/material/MenuItem';
-import FormControl from '@mui/material/FormControl';
-import Select from '../../components/StyledSelect';
 import AppContext from '../../AppContext';
 import { PathEnum } from '../../router/PathEnum';
 import SettingsModal from './SettingsModal';
@@ -26,39 +20,13 @@ const JoinSession = ({ onJoinSession, onCreateSession }) => {
     serverInstancesList,
     manuallySelectedInstance,
     setManuallySelectedInstance,
-    syncStageWorkerWrapper,
-    autoServerInstance,
-    setServerInstancesList,
-    startBackdropRequest,
-    endBackdropRequest,
   } = useContext(AppContext);
 
   const [settingsModalOpened, setSettingsModalOpened] = useState(false);
 
-  const fetchServerInstancesList = async () => {
-    console.log('Fetching server instances list.');
-    const requestId = startBackdropRequest();
-    const [data, errorCode] = await syncStageWorkerWrapper.getServerInstances();
-    console.log(`Available server instances: ${JSON.stringify(data)}.`);
-    if (errorCode === SyncStageSDKErrorCode.OK) {
-      console.log([autoServerInstance, ...data]);
-      setManuallySelectedInstance(autoServerInstance);
-      setServerInstancesList([autoServerInstance, ...data]);
-    } else {
-      errorCodeToSnackbar(errorCode);
-    }
-    endBackdropRequest(requestId);
-  };
-
-  useEffect(() => {
-    if (syncStageWorkerWrapper && serverInstancesList.length === 1) {
-      fetchServerInstancesList();
-    }
-  }, [syncStageWorkerWrapper, desktopAgentProvisioned]);
-
   return (
     <>
-      <SettingsModal open={settingsModalOpened} onClose={() => setSettingsModalOpened(false)} />
+      <SettingsModal open={settingsModalOpened} onClose={() => setSettingsModalOpened(false)} showServerList />
 
       <Grid container direction="column" spacing={2}>
         <Grid item>
@@ -115,33 +83,6 @@ const JoinSession = ({ onJoinSession, onCreateSession }) => {
               <SettingsOutlinedIcon style={{ width: 30, paddingBottom: 2, paddingRight: 10 }} />
               Settings
             </Button>
-          </Grid>
-        </Grid>
-        <Grid item style={{ height: '20px' }} />
-
-        <Grid item>
-          <Grid container direction="row" alignItems="center" spacing={2}>
-            <Grid item>
-              <FormControl>
-                <span style={{ fontSize: 12 }}>Studio Server location</span>
-                <Select
-                  labelId="region-select-label"
-                  value={manuallySelectedInstance}
-                  onChange={(e) => setManuallySelectedInstance(e.target.value)}
-                >
-                  {serverInstancesList.map((server) => (
-                    <MenuItem value={server} key={server.studioServerId}>
-                      {server.zoneName}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item>
-              <IconButton onClick={fetchServerInstancesList} style={{ color: 'white', paddingTop: '22px' }}>
-                <RefreshIcon />
-              </IconButton>
-            </Grid>
           </Grid>
         </Grid>
       </Grid>

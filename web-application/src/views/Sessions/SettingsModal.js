@@ -3,15 +3,19 @@ import React, { useContext, useState, useEffect } from 'react';
 import { Grid, Box, Modal, Typography, InputLabel, Switch, MenuItem } from '@mui/material';
 import Select from '../../components/StyledSelect';
 import CloseIcon from '@mui/icons-material/Close';
+import IconButton from '@mui/material/IconButton';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import Button from '@mui/material/Button';
 import theme from '../../ui/theme';
-
+import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-package-development';
+import { errorCodeToSnackbar } from '../../utils';
 import { LatencyOptimizationLevel } from '@opensesamemedia/syncstage-sdk-npm-package-development';
 import modalStyle from '../../ui/ModalStyle';
 import AppContext from '../../AppContext';
 
-const SettingsModal = ({ open, onClose }) => {
+const SettingsModal = ({ open, onClose, showServerList }) => {
   const {
+    syncStageWorkerWrapper,
     noiseCancellationEnabled,
     directMonitorEnabled,
     latencyOptimizationLevel,
@@ -25,6 +29,13 @@ const SettingsModal = ({ open, onClose }) => {
     handleDirectMonitorChange,
     handleNoiseCancellationChange,
     fetchSettingsFromAgent,
+    autoServerInstance,
+    setServerInstancesList,
+    startBackdropRequest,
+    endBackdropRequest,
+    serverInstancesList,
+    manuallySelectedInstance,
+    setManuallySelectedInstance,
   } = useContext(AppContext);
 
   console.log(`SettingsModal opened: ${open}`);
@@ -49,6 +60,21 @@ const SettingsModal = ({ open, onClose }) => {
     },
   ];
 
+  const fetchServerInstancesList = async () => {
+    console.log('Fetching server instances list.');
+    const requestId = startBackdropRequest();
+    const [data, errorCode] = await syncStageWorkerWrapper.getServerInstances();
+    console.log(`Available server instances: ${JSON.stringify(data)}.`);
+    if (errorCode === SyncStageSDKErrorCode.OK) {
+      console.log([autoServerInstance, ...data]);
+      setManuallySelectedInstance(autoServerInstance);
+      setServerInstancesList([autoServerInstance, ...data]);
+    } else {
+      errorCodeToSnackbar(errorCode);
+    }
+    endBackdropRequest(requestId);
+  };
+
   useEffect(() => {
     const checkPlatform = async () => {
       let platform;
@@ -64,6 +90,12 @@ const SettingsModal = ({ open, onClose }) => {
     };
 
     checkPlatform();
+  }, []);
+
+  useEffect(() => {
+    if (serverInstancesList.length === 1) {
+      fetchServerInstancesList();
+    }
   }, []);
 
   useEffect(() => {
@@ -101,7 +133,7 @@ const SettingsModal = ({ open, onClose }) => {
               ))}
             </Select>
           </Grid>
-          <Grid item xs={12} style={{ height: '30px' }} />
+          <Grid item xs={12} style={{ height: '20px' }} />
           <Grid item xs={12}>
             <InputLabel id="output-device-label" style={{ color: 'rgb(197, 199, 200)' }}>
               Audio Output
@@ -120,7 +152,7 @@ const SettingsModal = ({ open, onClose }) => {
               ))}
             </Select>
           </Grid>
-          <Grid item xs={12} style={{ height: '30px' }} />
+          <Grid item xs={12} style={{ height: '20px' }} />
           <Grid item xs={12}>
             <InputLabel id="latency-optimization-label" style={{ color: 'rgb(197, 199, 200)' }}>
               Latency Optimization Level
@@ -139,7 +171,7 @@ const SettingsModal = ({ open, onClose }) => {
               ))}
             </Select>
           </Grid>
-          <Grid item xs={12} style={{ height: '30px' }} />
+          <Grid item xs={12} style={{ height: '20px' }} />
           <Grid container direction="row" alignItems="center" style={{ padding: 14 }}>
             <Grid container direction="column" alignItems="start" xs={8}>
               <Typography variant="h6">Noise Cancellation</Typography>
@@ -166,7 +198,7 @@ const SettingsModal = ({ open, onClose }) => {
                 </Grid>
               </Grid>
 
-              {/* <Grid item xs={12} style={{ height: '30px' }} />
+              {/* <Grid item xs={12} style={{ height: '20px' }} />
                 <Grid item xs={12}>
                   <FormControlLabel
                     labelPlacement="start"
@@ -175,6 +207,35 @@ const SettingsModal = ({ open, onClose }) => {
                   />
                 </Grid> */}
             </>
+          )}
+          {showServerList && (
+            <Grid item xs={12}>
+              <Grid container direction="row" spacing={2}>
+                <Grid item>
+                  <InputLabel id="studio-server-label" style={{ color: 'rgb(197, 199, 200)' }}>
+                    Studio Server Location
+                  </InputLabel>
+                </Grid>
+                <Grid>
+                  <IconButton onClick={fetchServerInstancesList} style={{ color: theme.onSurfaceVariant, paddingTop: '14px' }}>
+                    <RefreshIcon />
+                  </IconButton>
+                </Grid>
+              </Grid>
+              <Select
+                labelId="studio-server-label"
+                id="studio-server-select"
+                value={manuallySelectedInstance}
+                onChange={(e) => setManuallySelectedInstance(e.target.value)}
+                fullWidth
+              >
+                {serverInstancesList.map((server) => (
+                  <MenuItem value={server} key={server.studioServerId}>
+                    {server.zoneName}
+                  </MenuItem>
+                ))}
+              </Select>
+            </Grid>
           )}
         </Grid>
       </Box>
