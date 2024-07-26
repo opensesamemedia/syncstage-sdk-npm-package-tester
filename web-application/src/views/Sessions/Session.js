@@ -34,6 +34,14 @@ import { PathEnum } from '../../router/PathEnum';
 import produce from 'immer';
 import modalStyle from '../../ui/ModalStyle';
 import { enqueueSnackbar } from 'notistack';
+import styled from 'styled-components';
+
+const CustomMenuItem = styled(MenuItem)`
+  color: ${({ theme }) => theme.onSurfaceVariant};
+  &:hover {
+    background-color: ${({ theme }) => theme.surfaceVariant2} !important; // Replace with your desired hover color
+  }
+`;
 
 const MEASUREMENTS_INTERVAL_MS = 5000;
 
@@ -738,7 +746,7 @@ const Session = ({ inSession }) => {
                 </Button>
               </Grid>
               <Menu
-                id="settings-menu"
+                id="audio-menu"
                 anchorEl={ioAnchorEl}
                 open={ioMenuOpened}
                 onClose={handleMenuIoClose}
@@ -747,12 +755,12 @@ const Session = ({ inSession }) => {
                 }}
                 sx={{ mt: '1px', '& .MuiMenu-paper': { backgroundColor: theme.footterColor } }}
               >
-                <MenuItem style={{ color: theme.onSurfaceVariant }} disabled={true}>
+                <CustomMenuItem style={{ color: theme.onSurfaceVariant }} disabled={true}>
                   <Mic style={{ marginRight: '10px', color: theme.iconColor }} />
                   Audio Input
-                </MenuItem>
+                </CustomMenuItem>
                 {inputDevices.map((device) => (
-                  <MenuItem
+                  <CustomMenuItem
                     key={device.identifier}
                     value={device.identifier}
                     style={{ color: theme.onSurfaceVariant }}
@@ -764,17 +772,17 @@ const Session = ({ inSession }) => {
                       <CheckIcon style={{ marginRight: '10px', color: 'transparent' }} />
                     )}
                     {device.name}
-                  </MenuItem>
+                  </CustomMenuItem>
                 ))}
 
                 <Divider sx={{ bgcolor: 'secondary.light' }} />
 
-                <MenuItem style={{ color: theme.onSurfaceVariant }} disabled={true}>
+                <CustomMenuItem style={{ color: theme.onSurfaceVariant }} disabled={true}>
                   <VolumeUpIcon style={{ marginRight: '10px', color: theme.iconColor }} />
                   Audio Output
-                </MenuItem>
+                </CustomMenuItem>
                 {outputDevices.map((device) => (
-                  <MenuItem
+                  <CustomMenuItem
                     key={device.identifier}
                     value={device.identifier}
                     style={{ color: theme.onSurfaceVariant }}
@@ -786,12 +794,12 @@ const Session = ({ inSession }) => {
                       <CheckIcon style={{ marginRight: '10px', color: 'transparent' }} />
                     )}
                     {device.name}
-                  </MenuItem>
+                  </CustomMenuItem>
                 ))}
 
                 <Divider sx={{ bgcolor: 'secondary.light' }} />
 
-                <MenuItem
+                <CustomMenuItem
                   onClick={() => {
                     handleMenuIoClose();
                     handleOpenSettingsModal(true);
@@ -800,7 +808,7 @@ const Session = ({ inSession }) => {
                 >
                   <SettingsIcon style={{ marginRight: '10px', color: theme.iconColor }} />
                   Audio Settings
-                </MenuItem>
+                </CustomMenuItem>
               </Menu>
               <Grid item>
                 <Button style={{ color: theme.onSurfaceVariant }} onClick={handleMenuSettingsOpen}>
