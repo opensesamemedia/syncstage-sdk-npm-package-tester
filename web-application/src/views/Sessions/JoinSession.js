@@ -13,16 +13,13 @@ import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 const JoinSession = ({ onJoinSession, onCreateSession }) => {
   const navigate = useNavigate();
 
-  const {
-    sessionCode,
-    desktopAgentProvisioned,
-    persistSessionCode,
-    serverInstancesList,
-    manuallySelectedInstance,
-    setManuallySelectedInstance,
-  } = useContext(AppContext);
+  const { sessionCode, desktopAgentProvisioned, persistSessionCode, fetchSettingsFromAgent } = useContext(AppContext);
 
   const [settingsModalOpened, setSettingsModalOpened] = useState(false);
+
+  useEffect(() => {
+    fetchSettingsFromAgent();
+  }, []);
 
   return (
     <>
