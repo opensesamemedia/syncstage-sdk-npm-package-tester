@@ -13,6 +13,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { errorCodeToSnackbar, willJwtBeExpiredIn, SESSION_PATH_REGEX } from './utils';
 import Box from '@mui/material/Box';
 import Modal from '@mui/material/Modal';
+import { enqueueSnackbar } from 'notistack';
 
 import Typography from '@mui/material/Typography';
 import { Online } from 'react-detect-offline';
@@ -93,6 +94,16 @@ const StateManager = () => {
   const autoServerInstance = { zoneId: null, zoneName: 'auto', studioServerId: null };
   const [serverInstancesList, setServerInstancesList] = useState([autoServerInstance]);
   const [manuallySelectedInstance, setManuallySelectedInstance] = useState(autoServerInstance);
+
+  const [isRecording, setIsRecording] = useState(false);
+  const [noiseCancellationEnabled, setNoiseCancellationEnabled] = useState(false);
+  const [gainDisabled, setGainDisabled] = useState(false);
+  const [directMonitorEnabled, setDirectMonitorEnabled] = useState(false);
+  const [latencyOptimizationLevel, setLatencyOptimizationLevel] = useState(null);
+  const [selectedInputDevice, setSelectedInputDevice] = useState('');
+  const [selectedOutputDevice, setSelectedOutputDevice] = useState('');
+  const [inputDevices, setInputDevices] = useState([]);
+  const [outputDevices, setOutputDevices] = useState([]);
 
   // Function to start a request
   const startBackdropRequest = () => {
@@ -313,6 +324,140 @@ const StateManager = () => {
     }
   };
 
+  const fetchSettingsFromAgent = async (showBackdrop) => {
+    let requestId;
+    if (showBackdrop) {
+      requestId = startBackdropRequest();
+    }
+    const [settings, errorCode] = await syncStageWorkerWrapper.getSessionSettings();
+    if (errorCode !== SyncStageSDKErrorCode.OK) {
+      enqueueSnackbar('Failed to get session settings', { variant: 'error' });
+    } else {
+      setDirectMonitorEnabled(settings.directMonitorEnabled);
+      setGainDisabled(settings.disableGain);
+      setNoiseCancellationEnabled(settings.noiseCancellationEnabled);
+      setLatencyOptimizationLevel(settings.latencyOptimizationLevel);
+      setInputDevices(settings.inputDevices);
+      setOutputDevices(settings.outputDevices);
+
+      // Find and set the selected input device
+      const selectedInput = settings.inputDevices.find((device) => device.selected);
+      if (selectedInput) {
+        setSelectedInputDevice(selectedInput.identifier);
+      }
+
+      // Find and set the selected output device
+      const selectedOutput = settings.outputDevices.find((device) => device.selected);
+      if (selectedOutput) {
+        setSelectedOutputDevice(selectedOutput.identifier);
+      }
+    }
+
+    if (showBackdrop) {
+      endBackdropRequest(requestId);
+    }
+  };
+
+  const handleToggleRecording = async (enabled) => {
+    const requestId = startBackdropRequest();
+    let errorCode;
+    if (enabled) {
+      errorCode = await syncStageWorkerWrapper.startRecording();
+    } else {
+      errorCode = await syncStageWorkerWrapper.stopRecording();
+    }
+    errorCodeToSnackbar(errorCode);
+    endBackdropRequest(requestId);
+
+    if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
+      return goToSetupPageOnUnauthorized();
+    }
+  };
+
+  const handleNoiseCancellationChange = async (enabled) => {
+    const requestId = startBackdropRequest();
+
+    const stateBefore = noiseCancellationEnabled;
+    setNoiseCancellationEnabled(enabled);
+    const errorCode = await syncStageWorkerWrapper.setNoiseCancellation(enabled);
+    if (errorCode !== SyncStageSDKErrorCode.OK) {
+      setNoiseCancellationEnabled(stateBefore);
+      enqueueSnackbar('Failed to set noise cancellation', { variant: 'error' });
+    }
+    endBackdropRequest(requestId);
+  };
+
+  // const handleDisableGainChange = async (disabled) => {
+  //   const requestId = startBackdropRequest();
+
+  //   const stateBefore = gainDisabled;
+  //   setGainDisabled(disabled);
+  //   const errorCode = await syncStageWorkerWrapper.setDisableGain(disabled);
+  //   if (errorCode !== SyncStageSDKErrorCode.OK) {
+  //     setGainDisabled(stateBefore);
+  //     enqueueSnackbar('Failed to set gain', { variant: 'error' });
+  //   }
+  //   endBackdropRequest(requestId);
+  // };
+
+  const handleDirectMonitorChange = async (enabled) => {
+    const requestId = startBackdropRequest();
+
+    const stateBefore = directMonitorEnabled;
+    setDirectMonitorEnabled(enabled);
+    const errorCode = await syncStageWorkerWrapper.setDirectMonitor(enabled);
+    if (errorCode !== SyncStageSDKErrorCode.OK) {
+      setDirectMonitorEnabled(stateBefore);
+      enqueueSnackbar('Failed to set direct monitor', { variant: 'error' });
+    }
+    endBackdropRequest(requestId);
+  };
+
+  const handleLatencyLevelChange = async (event) => {
+    const requestId = startBackdropRequest();
+    const stateBefore = latencyOptimizationLevel;
+    setLatencyOptimizationLevel(event.target.value);
+    const errorCode = await syncStageWorkerWrapper.setLatencyOptimizationLevel(event.target.value);
+
+    if (errorCode !== SyncStageSDKErrorCode.OK) {
+      setLatencyOptimizationLevel(stateBefore);
+      enqueueSnackbar('Failed to update latency optimization level', { variant: 'error' });
+    }
+    endBackdropRequest(requestId);
+  };
+
+  const handleInputDeviceChange = async (event, onError) => {
+    const requestId = startBackdropRequest();
+    const stateBefore = selectedInputDevice;
+
+    const identifier = event.target.value;
+    const errorCode = await syncStageWorkerWrapper.setInputDevice(identifier);
+    setSelectedInputDevice(identifier);
+
+    if (errorCode !== SyncStageSDKErrorCode.OK) {
+      enqueueSnackbar('Failed to set input device', { variant: 'error' });
+      setSelectedInputDevice(stateBefore);
+      onError();
+    }
+    endBackdropRequest(requestId);
+  };
+
+  const handleOutputDeviceChange = async (event, onError) => {
+    const stateBefore = selectedOutputDevice;
+    const requestId = startBackdropRequest();
+
+    const identifier = event.target.value;
+    const errorCode = await syncStageWorkerWrapper.setOutputDevice(identifier);
+    setSelectedOutputDevice(identifier);
+
+    if (errorCode !== SyncStageSDKErrorCode.OK) {
+      enqueueSnackbar('Failed to set output device', { variant: 'error' });
+      setSelectedOutputDevice(stateBefore);
+      onError();
+    }
+    endBackdropRequest(requestId);
+  };
+
   useEffect(() => {
     // Update appLoadTime when the component mounts
     setAppLoadTime(new Date());
@@ -521,6 +666,31 @@ const StateManager = () => {
     setManuallySelectedInstance,
     goToSetupPageOnUnauthorized,
     downloadLink,
+    noiseCancellationEnabled,
+    setNoiseCancellationEnabled,
+    gainDisabled,
+    setGainDisabled,
+    fetchSettingsFromAgent,
+    directMonitorEnabled,
+    setDirectMonitorEnabled,
+    latencyOptimizationLevel,
+    setLatencyOptimizationLevel,
+    selectedInputDevice,
+    setSelectedInputDevice,
+    selectedOutputDevice,
+    setSelectedOutputDevice,
+    inputDevices,
+    setInputDevices,
+    outputDevices,
+    setOutputDevices,
+    isRecording,
+    setIsRecording,
+    handleToggleRecording,
+    handleNoiseCancellationChange,
+    handleDirectMonitorChange,
+    handleLatencyLevelChange,
+    handleInputDeviceChange,
+    handleOutputDeviceChange,
   };
 
   return (

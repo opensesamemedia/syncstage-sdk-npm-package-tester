@@ -3,8 +3,7 @@ import React, { useContext, useState, useEffect, useCallback } from 'react';
 import { useInterval } from 'react-timing-hooks';
 
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Grid, Box, Modal, Typography, InputLabel, Switch, MenuItem } from '@mui/material';
-import Select from '../../components/StyledSelect';
+import { Grid, MenuItem } from '@mui/material';
 
 import AppContext from '../../AppContext';
 import { mountedStyle, unmountedStyle } from '../../ui/AnimationStyles';
@@ -13,7 +12,6 @@ import SessionWrapper from './Session.styled';
 import CallEndIcon from '@mui/icons-material/CallEnd';
 import MicOffIcon from '@mui/icons-material/MicOff';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import CloseIcon from '@mui/icons-material/Close';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import SettingsIcon from '@mui/icons-material/Settings';
 import RadioButtonChecked from '@mui/icons-material/RadioButtonChecked';
@@ -27,14 +25,13 @@ import Button from '@mui/material/Button';
 import theme from '../../ui/theme';
 import InviteOthers from '../../components/UserCard/InviteOthers';
 import { errorCodeToSnackbar, extractSessionCode } from '../../utils';
-import { SyncStageSDKErrorCode, LatencyOptimizationLevel } from '@opensesamemedia/syncstage-sdk-npm-package-development';
+import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-package-development';
 import SyncStageUserDelegate from '../../SyncStageUserDelegate';
 import SyncStageConnectivityDelegate from '../../SyncStageConnectivityDelegate';
 import { PathEnum } from '../../router/PathEnum';
 import produce from 'immer';
-import modalStyle from '../../ui/ModalStyle';
-import { enqueueSnackbar } from 'notistack';
 import styled from 'styled-components';
+import SettingsModal from './SettingsModal';
 
 const CustomMenuItem = styled(MenuItem)`
   color: ${({ theme }) => theme.onSurfaceVariant};
@@ -60,9 +57,17 @@ const Session = ({ inSession }) => {
     endBackdropRequest,
     manuallySelectedInstance,
     goToSetupPageOnUnauthorized,
+    selectedInputDevice,
+    selectedOutputDevice,
+    inputDevices,
+    outputDevices,
+    isRecording,
+    setIsRecording,
+    fetchSettingsFromAgent,
+    handleInputDeviceChange,
+    handleOutputDeviceChange,
+    handleToggleRecording,
   } = useContext(AppContext);
-
-  const [isWindowsPlatform, setIsWindowsPlatform] = useState(false);
 
   const [sessionLoadTime, setSessionLoadTime] = useState(new Date());
 
@@ -70,33 +75,6 @@ const Session = ({ inSession }) => {
   const [sessionData, setSessionData] = useState(null);
 
   const [settingsModalOpened, setSettingsModalOpened] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [noiseCancellationEnabled, setNoiseCancellationEnabled] = useState(false);
-  const [gainDisabled, setGainDisabled] = useState(false);
-  const [directMonitorEnabled, setDirectMonitorEnabled] = useState(false);
-  const [latencyOptimizationLevel, setLatencyOptimizationLevel] = useState(null);
-  const [selectedInputDevice, setSelectedInputDevice] = useState('');
-  const [selectedOutputDevice, setSelectedOutputDevice] = useState('');
-  const [inputDevices, setInputDevices] = useState([]);
-  const [outputDevices, setOutputDevices] = useState([]);
-  const latencyOptimizationLevels = [
-    {
-      name: 'High Quality',
-      value: LatencyOptimizationLevel.highQuality,
-    },
-    {
-      name: 'Optimized',
-      value: LatencyOptimizationLevel.optimized,
-    },
-    {
-      name: 'Best Performance',
-      value: LatencyOptimizationLevel.bestPerformance,
-    },
-    {
-      name: 'Ultra Fast',
-      value: LatencyOptimizationLevel.ultraFast,
-    },
-  ];
 
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const settingsMenuOpened = Boolean(menuAnchorEl);
@@ -139,144 +117,6 @@ const Session = ({ inSession }) => {
     navigate(PathEnum.SESSIONS_JOIN);
   };
 
-  const fetchSettingsFromAgent = async (showBackdrop) => {
-    let requestId;
-    if (showBackdrop) {
-      requestId = startBackdropRequest();
-    }
-    const [settings, errorCode] = await syncStageWorkerWrapper.getSessionSettings();
-    if (errorCode !== SyncStageSDKErrorCode.OK) {
-      enqueueSnackbar('Failed to get session settings', { variant: 'error' });
-    } else {
-      setDirectMonitorEnabled(settings.directMonitorEnabled);
-      setGainDisabled(settings.disableGain);
-      setNoiseCancellationEnabled(settings.noiseCancellationEnabled);
-      setLatencyOptimizationLevel(settings.latencyOptimizationLevel);
-      setInputDevices(settings.inputDevices);
-      setOutputDevices(settings.outputDevices);
-
-      // Find and set the selected input device
-      const selectedInput = settings.inputDevices.find((device) => device.selected);
-      if (selectedInput) {
-        setSelectedInputDevice(selectedInput.identifier);
-      }
-
-      // Find and set the selected output device
-      const selectedOutput = settings.outputDevices.find((device) => device.selected);
-      if (selectedOutput) {
-        setSelectedOutputDevice(selectedOutput.identifier);
-      }
-    }
-
-    if (showBackdrop) {
-      endBackdropRequest(requestId);
-    }
-  };
-
-  const handleOpenSettingsModal = async (opened) => {
-    setSettingsModalOpened(opened);
-    await fetchSettingsFromAgent(false);
-  };
-
-  const handleToggleRecording = async (enabled) => {
-    const requestId = startBackdropRequest();
-    let errorCode;
-    if (enabled) {
-      errorCode = await syncStageWorkerWrapper.startRecording();
-    } else {
-      errorCode = await syncStageWorkerWrapper.stopRecording();
-    }
-    errorCodeToSnackbar(errorCode);
-    endBackdropRequest(requestId);
-
-    if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
-      return goToSetupPageOnUnauthorized();
-    }
-  };
-
-  const handleNoiseCancellationChange = async (enabled) => {
-    const requestId = startBackdropRequest();
-
-    const stateBefore = noiseCancellationEnabled;
-    setNoiseCancellationEnabled(enabled);
-    const errorCode = await syncStageWorkerWrapper.setNoiseCancellation(enabled);
-    if (errorCode !== SyncStageSDKErrorCode.OK) {
-      setNoiseCancellationEnabled(stateBefore);
-      enqueueSnackbar('Failed to set noise cancellation', { variant: 'error' });
-    }
-    endBackdropRequest(requestId);
-  };
-
-  // const handleDisableGainChange = async (disabled) => {
-  //   const requestId = startBackdropRequest();
-
-  //   const stateBefore = gainDisabled;
-  //   setGainDisabled(disabled);
-  //   const errorCode = await syncStageWorkerWrapper.setDisableGain(disabled);
-  //   if (errorCode !== SyncStageSDKErrorCode.OK) {
-  //     setGainDisabled(stateBefore);
-  //     enqueueSnackbar('Failed to set gain', { variant: 'error' });
-  //   }
-  //   endBackdropRequest(requestId);
-  // };
-
-  const handleDirectMonitorChange = async (enabled) => {
-    const requestId = startBackdropRequest();
-
-    const stateBefore = directMonitorEnabled;
-    setDirectMonitorEnabled(enabled);
-    const errorCode = await syncStageWorkerWrapper.setDirectMonitor(enabled);
-    if (errorCode !== SyncStageSDKErrorCode.OK) {
-      setDirectMonitorEnabled(stateBefore);
-      enqueueSnackbar('Failed to set direct monitor', { variant: 'error' });
-    }
-    endBackdropRequest(requestId);
-  };
-
-  const handleLatencyLevelChange = async (event) => {
-    const requestId = startBackdropRequest();
-    const stateBefore = latencyOptimizationLevel;
-    setLatencyOptimizationLevel(event.target.value);
-    const errorCode = await syncStageWorkerWrapper.setLatencyOptimizationLevel(event.target.value);
-
-    if (errorCode !== SyncStageSDKErrorCode.OK) {
-      setLatencyOptimizationLevel(stateBefore);
-      enqueueSnackbar('Failed to update latency optimization level', { variant: 'error' });
-    }
-    endBackdropRequest(requestId);
-  };
-
-  const handleInputDeviceChange = async (event) => {
-    const requestId = startBackdropRequest();
-    const stateBefore = selectedInputDevice;
-
-    const identifier = event.target.value;
-    const errorCode = await syncStageWorkerWrapper.setInputDevice(identifier);
-    setSelectedInputDevice(identifier);
-
-    if (errorCode !== SyncStageSDKErrorCode.OK) {
-      enqueueSnackbar('Failed to set input device', { variant: 'error' });
-      setSelectedInputDevice(stateBefore);
-      fetchSettingsFromAgent(true);
-    }
-    endBackdropRequest(requestId);
-  };
-
-  const handleOutputDeviceChange = async (event) => {
-    const stateBefore = selectedOutputDevice;
-    const requestId = startBackdropRequest();
-
-    const identifier = event.target.value;
-    const errorCode = await syncStageWorkerWrapper.setOutputDevice(identifier);
-    setSelectedOutputDevice(identifier);
-
-    if (errorCode !== SyncStageSDKErrorCode.OK) {
-      enqueueSnackbar('Failed to set output device', { variant: 'error' });
-      setSelectedOutputDevice(stateBefore);
-    }
-    endBackdropRequest(requestId);
-    fetchSettingsFromAgent(true);
-  };
   const updateMeasurements = async () => {
     if (syncStageWorkerWrapper === null) {
       return;
@@ -525,23 +365,6 @@ const Session = ({ inSession }) => {
   }, []); // Empty array ensures this runs on mount and unmount only
 
   useEffect(() => {
-    const checkPlatform = async () => {
-      let platform;
-
-      if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
-        const uaData = await navigator.userAgentData.getHighEntropyValues(['platform']);
-        platform = uaData.platform;
-      } else {
-        platform = navigator.userAgent;
-      }
-
-      setIsWindowsPlatform(/Win/i.test(platform));
-    };
-
-    checkPlatform();
-  }, []);
-
-  useEffect(() => {
     console.log('Session useEffect ', syncStageWorkerWrapper, desktopAgentProvisioned, location.pathname);
     const initializeSession = async () => {
       console.log('initializeSession');
@@ -640,6 +463,8 @@ const Session = ({ inSession }) => {
 
   return (
     <div style={inSession ? mountedStyle : unmountedStyle}>
+      <SettingsModal open={settingsModalOpened} onClose={() => setSettingsModalOpened(false)} />
+
       <SessionWrapper>
         <Grid item container flexDirection="row" rowGap={2} columnGap={8} alignItems="flex-start" style={{ marginBottom: '90px' }}>
           {!!sessionData && !!sessionData.transmitter && (
@@ -764,7 +589,7 @@ const Session = ({ inSession }) => {
                     key={device.identifier}
                     value={device.identifier}
                     style={{ color: theme.onSurfaceVariant }}
-                    onClick={handleInputDeviceChange}
+                    onClick={(event) => handleInputDeviceChange(event, () => fetchSettingsFromAgent(true))}
                   >
                     {device.identifier === selectedInputDevice ? (
                       <CheckIcon style={{ marginRight: '10px', color: theme.iconColor }} />
@@ -786,7 +611,7 @@ const Session = ({ inSession }) => {
                     key={device.identifier}
                     value={device.identifier}
                     style={{ color: theme.onSurfaceVariant }}
-                    onClick={handleOutputDeviceChange}
+                    onClick={(event) => handleOutputDeviceChange(event, () => fetchSettingsFromAgent(true))}
                   >
                     {device.identifier === selectedOutputDevice ? (
                       <CheckIcon style={{ marginRight: '10px', color: theme.iconColor }} />
@@ -802,7 +627,7 @@ const Session = ({ inSession }) => {
                 <CustomMenuItem
                   onClick={() => {
                     handleMenuIoClose();
-                    handleOpenSettingsModal(true);
+                    setSettingsModalOpened(true);
                   }}
                   style={{ color: theme.onSurfaceVariant }}
                 >
@@ -837,7 +662,7 @@ const Session = ({ inSession }) => {
                   <MenuItem
                     onClick={() => {
                       handleMenuSettingsClose();
-                      handleOpenSettingsModal(true);
+                      setSettingsModalOpened(true);
                     }}
                     style={{ color: theme.onSurfaceVariant }}
                   >
@@ -850,115 +675,7 @@ const Session = ({ inSession }) => {
           </Grid>
         </div>
       </SessionWrapper>
-      <Modal id="settings-modal" open={settingsModalOpened} onClose={() => setSettingsModalOpened(false)}>
-        <Box sx={modalStyle}>
-          <Grid container spacing={2}>
-            <Grid container alignItems="start" xs={12}>
-              <Button onClick={() => setSettingsModalOpened(false)} style={{ color: theme.onSurfaceVariant }}>
-                <CloseIcon />
-              </Button>{' '}
-              <Typography variant="h6" style={{ marginTop: 2 }}>
-                Settings
-              </Typography>
-            </Grid>
-            <Grid item xs={12}>
-              <InputLabel id="input-device-label" style={{ color: 'rgb(197, 199, 200)' }}>
-                Audio Input
-              </InputLabel>
-              <Select
-                labelId="input-device-label"
-                id="input-device-select"
-                value={selectedInputDevice}
-                onChange={handleInputDeviceChange}
-                fullWidth
-              >
-                {inputDevices.map((device) => (
-                  <MenuItem key={device.identifier} value={device.identifier}>
-                    {device.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </Grid>
-            <Grid item xs={12} style={{ height: '30px' }} />
-            <Grid item xs={12}>
-              <InputLabel id="output-device-label" style={{ color: 'rgb(197, 199, 200)' }}>
-                Audio Output
-              </InputLabel>
-              <Select
-                labelId="output-device-label"
-                id="output-device-select"
-                value={selectedOutputDevice}
-                onChange={handleOutputDeviceChange}
-                fullWidth
-              >
-                {outputDevices.map((device) => (
-                  <MenuItem key={device.identifier} value={device.identifier}>
-                    {device.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </Grid>
-            <Grid item xs={12} style={{ height: '30px' }} />
-            <Grid item xs={12}>
-              <InputLabel id="latency-optimization-label" style={{ color: 'rgb(197, 199, 200)' }}>
-                Latency Optimization Level
-              </InputLabel>
-              <Select
-                labelId="latency-optimization-label"
-                id="latency-optimization-select"
-                value={latencyOptimizationLevel}
-                onChange={handleLatencyLevelChange}
-                fullWidth
-              >
-                {latencyOptimizationLevels.map((levelItem) => (
-                  <MenuItem key={levelItem.value} value={levelItem.value}>
-                    {levelItem.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </Grid>
-            <Grid item xs={12} style={{ height: '30px' }} />
-            <Grid container direction="row" alignItems="center" style={{ padding: 14 }}>
-              <Grid container direction="column" alignItems="start" xs={8}>
-                <Typography variant="h6">Noise Cancellation</Typography>
-                <p style={{ marginTop: 6 }}>Suppress the background noise</p>
-                <p style={{ color: '#FFB4AB' }}>Avoid this option in music applications</p>
-              </Grid>
-              <Grid item xs={4}>
-                <Switch checked={noiseCancellationEnabled} onChange={() => handleNoiseCancellationChange(!noiseCancellationEnabled)} />
-              </Grid>
-            </Grid>
-
-            {!isWindowsPlatform && (
-              <>
-                <Grid container direction="row" alignItems="center" style={{ padding: 14 }}>
-                  <Grid container direction="column" alignItems="start" xs={8}>
-                    <Typography variant="h6">Direct Monitor</Typography>
-                    <p style={{ marginTop: 6 }}>Allows for listening to the input signal with low latency.</p>
-                    <p style={{ color: '#FFB4AB' }}>
-                      Make sure you have connected headphones before enabling this option as it can cause acoustic echo.
-                    </p>
-                  </Grid>
-                  <Grid item xs={4}>
-                    <Switch checked={directMonitorEnabled} onChange={() => handleDirectMonitorChange(!directMonitorEnabled)} />
-                  </Grid>
-                </Grid>
-
-                {/* <Grid item xs={12} style={{ height: '30px' }} />
-                <Grid item xs={12}>
-                  <FormControlLabel
-                    labelPlacement="start"
-                    control={<Switch checked={gainDisabled} onChange={() => handleDisableGainChange(!gainDisabled)} />}
-                    label="Disable Gain"
-                  />
-                </Grid> */}
-              </>
-            )}
-          </Grid>
-        </Box>
-      </Modal>
     </div>
   );
 };
-
 export default Session;
