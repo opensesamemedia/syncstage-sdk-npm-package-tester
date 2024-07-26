@@ -179,7 +179,18 @@ const SettingsModal = ({ open, onClose, showServerList }) => {
               <p style={{ color: '#FFB4AB' }}>Avoid this option in music applications</p>
             </Grid>
             <Grid item xs={4}>
-              <Switch checked={noiseCancellationEnabled} onChange={() => handleNoiseCancellationChange(!noiseCancellationEnabled)} />
+              <Switch
+                checked={noiseCancellationEnabled}
+                onChange={() => handleNoiseCancellationChange(!noiseCancellationEnabled)}
+                sx={{
+                  '& .MuiSwitch-switchBase.Mui-checked': {
+                    color: theme.primary,
+                  },
+                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                    backgroundColor: theme.primary,
+                  },
+                }}
+              />
             </Grid>
           </Grid>
 
@@ -194,7 +205,18 @@ const SettingsModal = ({ open, onClose, showServerList }) => {
                   </p>
                 </Grid>
                 <Grid item xs={4}>
-                  <Switch checked={directMonitorEnabled} onChange={() => handleDirectMonitorChange(!directMonitorEnabled)} />
+                  <Switch
+                    checked={directMonitorEnabled}
+                    onChange={() => handleDirectMonitorChange(!directMonitorEnabled)}
+                    sx={{
+                      '& .MuiSwitch-switchBase.Mui-checked': {
+                        color: theme.primary,
+                      },
+                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                        backgroundColor: theme.primary,
+                      },
+                    }}
+                  />
                 </Grid>
               </Grid>
 

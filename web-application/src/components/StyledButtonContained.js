@@ -16,6 +16,11 @@ const StyledButtonContained = styled(Button)`
       background-color: ${({ theme }) => theme.primary};
       opacity: 0.9;
     }
+
+    &:disabled {
+      background-color: ${({ theme }) => theme.onSurfaceTransparent};
+      cursor: not-allowed;
+    }
   }
 `;
 
