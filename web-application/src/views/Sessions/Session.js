@@ -429,9 +429,7 @@ const Session = ({ inSession }) => {
           console.log('Remaining on session Screen');
           setSessionData(data);
 
-          await attachDelegates();
-          await fetchSettingsFromAgent(false);
-          await buildState(data);
+          await Promise.all([attachDelegates(), fetchSettingsFromAgent(false), buildState(data)]);
 
           endBackdropRequest(requestId);
           return undefined;
