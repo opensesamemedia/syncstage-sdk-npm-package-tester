@@ -93,10 +93,10 @@ const SettingsModal = ({ open, onClose, showServerList }) => {
   }, []);
 
   useEffect(() => {
-    if (serverInstancesList.length === 1) {
+    if (syncStageWorkerWrapper && serverInstancesList.length === 1) {
       fetchServerInstancesList();
     }
-  }, []);
+  }, [syncStageWorkerWrapper]);
 
   useEffect(() => {
     if (open) {
@@ -107,7 +107,7 @@ const SettingsModal = ({ open, onClose, showServerList }) => {
     <Modal id="settings-modal" open={open} onClose={onClose}>
       <Box sx={modalStyle}>
         <Grid container spacing={2}>
-          <Grid container alignItems="start" xs={12}>
+          <Grid container alignItems="start">
             <Button onClick={onClose} style={{ color: theme.onSurfaceVariant }}>
               <CloseIcon />
             </Button>{' '}

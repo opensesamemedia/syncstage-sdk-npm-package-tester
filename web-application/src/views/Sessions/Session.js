@@ -365,7 +365,39 @@ const Session = ({ inSession }) => {
   }, []); // Empty array ensures this runs on mount and unmount only
 
   useEffect(() => {
+    const attachDelegates = async () => {
+      if (syncStageWorkerWrapper !== null) {
+        console.log('Updating delegates');
+        syncStageWorkerWrapper.userDelegate = new SyncStageUserDelegate(
+          onUserJoined,
+          onUserLeft,
+          onUserMuted,
+          onUserUnmuted,
+          onRecordingStarted,
+          onRecordingStopped,
+          onSessionOut,
+        );
+        syncStageWorkerWrapper.connectivityDelegate = new SyncStageConnectivityDelegate(
+          onTransmitterConnectivityChanged,
+          onReceiverConnectivityChanged,
+        );
+        syncStageWorkerWrapper.updateOnDesktopAgentReconnected(onDesktopAgentReconnected.bind(this));
+      }
+    };
+
+    const buildState = async (data) => {
+      if (syncStageWorkerWrapper !== null) {
+        const [mutedState, errorCode] = await syncStageWorkerWrapper.isMicrophoneMuted();
+        errorCodeToSnackbar(errorCode);
+        if (errorCode === SyncStageSDKErrorCode.OK) {
+          setMuted(mutedState);
+        }
+        await buildViewSessionState(data, setConnectedMap, syncStageWorkerWrapper, setVolumeMap);
+      }
+    };
+
     console.log('Session useEffect ', syncStageWorkerWrapper, desktopAgentProvisioned, location.pathname);
+
     const initializeSession = async () => {
       console.log('initializeSession');
       console.log(`Manually selected instance: ${JSON.stringify(manuallySelectedInstance)}`);
@@ -381,9 +413,10 @@ const Session = ({ inSession }) => {
 
         setLocalSessionCode(sessionCodeFromPath);
         persistSessionCode(sessionCodeFromPath);
-        const requestId = startBackdropRequest();
 
         console.log('Joining the session from the path');
+        const requestId = startBackdropRequest();
+
         const [data, errorCode] = await syncStageWorkerWrapper.join(
           sessionCodeFromPath,
           userId,
@@ -395,6 +428,11 @@ const Session = ({ inSession }) => {
         if (errorCode === SyncStageSDKErrorCode.OK) {
           console.log('Remaining on session Screen');
           setSessionData(data);
+
+          await attachDelegates();
+          await fetchSettingsFromAgent(false);
+          await buildState(data);
+
           endBackdropRequest(requestId);
           return undefined;
         }
@@ -413,44 +451,13 @@ const Session = ({ inSession }) => {
     };
 
     initializeSession();
-  }, [syncStageWorkerWrapper, desktopAgentProvisioned, location.pathname]);
-
-  useEffect(() => {
-    async function executeAsync() {
-      if (syncStageWorkerWrapper !== null) {
-        console.log('Updating delegates');
-        syncStageWorkerWrapper.userDelegate = new SyncStageUserDelegate(
-          onUserJoined,
-          onUserLeft,
-          onUserMuted,
-          onUserUnmuted,
-          onRecordingStarted,
-          onRecordingStopped,
-          onSessionOut,
-        );
-        syncStageWorkerWrapper.connectivityDelegate = new SyncStageConnectivityDelegate(
-          onTransmitterConnectivityChanged,
-          onReceiverConnectivityChanged,
-        );
-        syncStageWorkerWrapper.updateOnDesktopAgentReconnected(onDesktopAgentReconnected.bind(this));
-
-        const [mutedState, errorCode] = await syncStageWorkerWrapper.isMicrophoneMuted();
-        errorCodeToSnackbar(errorCode);
-        if (errorCode === SyncStageSDKErrorCode.OK) {
-          setMuted(mutedState);
-        }
-        await buildViewSessionState(sessionData, setConnectedMap, syncStageWorkerWrapper, setVolumeMap);
-        await fetchSettingsFromAgent(true);
-      }
-    }
-    executeAsync();
     return () => {
       if (syncStageWorkerWrapper !== null) {
         syncStageWorkerWrapper.userDelegate = null;
         syncStageWorkerWrapper.connectivityDelegate = null;
       }
     };
-  }, [syncStageWorkerWrapper, sessionData]);
+  }, [syncStageWorkerWrapper, desktopAgentProvisioned, location.pathname]);
 
   useEffect(() => {
     //on component unmount.
@@ -498,7 +505,7 @@ const Session = ({ inSession }) => {
               key={identifier}
             />
           ))}
-          <InviteOthers sessionCode={sessionCode} />
+          {sessionData && sessionData.transmitter ? <InviteOthers sessionCode={sessionCode} /> : <></>}
         </Grid>
         <div id="footer">
           <Grid container direction="column" justifyContent="center" alignItems="center" style={{ margin: 0, padding: 0 }}>

@@ -297,7 +297,7 @@ const StateManager = () => {
   }
   const onJwtExpired = async () => {
     console.log('onJwtExpired in StateManager.js');
-    const requestId = startBackdropRequest();
+
     let jwt;
     // use local docke-compose backend
     if (process.env.REACT_APP_BACKEND_BASE_PATH !== undefined) {
@@ -308,7 +308,6 @@ const StateManager = () => {
     else {
       jwt = await amplifyFetchSyncStageToken();
     }
-    endBackdropRequest(requestId);
 
     return jwt;
   };
