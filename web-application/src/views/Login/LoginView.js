@@ -25,10 +25,10 @@ const LoginView = () => {
       try {
         const data = await login(username, password);
         const { token } = data;
-        enqueueSnackbar('Login successful');
         setUserJwt(token);
         setIsSignedIn(true);
         await fetchSyncStageToken();
+        enqueueSnackbar('Login successful');
         navigate(PathEnum.SETUP);
       } catch (error) {
         console.error('Login failed:', error);
