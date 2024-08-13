@@ -280,12 +280,10 @@ const StateManager = () => {
   const onJwtExpired = async () => {
     console.log('onJwtExpired in StateManager.js');
 
-    let jwt;
-    // use local docke-compose backend
     const tokenResponse = await apiFetchSyncStageToken(userJwt);
-    jwt = tokenResponse.jwt;
+    const syncStageToken = tokenResponse.syncStageToken;
 
-    return jwt;
+    return syncStageToken;
   };
 
   const setDesktopAgentConnectedTimeoutIfNotConnected = () => {

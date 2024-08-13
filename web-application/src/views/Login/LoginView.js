@@ -17,6 +17,8 @@ const LoginView = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
   const handleSubmit = async () => {
     const requestId = startBackdropRequest();
     // use local docke-compose backend
@@ -25,6 +27,10 @@ const LoginView = () => {
       const data = await login(username, password);
       const { token } = data;
       setUserJwt(token);
+
+      // Sleep for 2 seconds TODO NASTY WORKAROUND
+      await sleep(2000);
+
       setIsSignedIn(true);
       await fetchSyncStageToken();
       enqueueSnackbar('Login successful');

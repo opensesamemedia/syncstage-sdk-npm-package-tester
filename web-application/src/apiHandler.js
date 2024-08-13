@@ -1,11 +1,11 @@
 // apiHandler.js
 import axios from 'axios';
 
-const BASE_API_PATH = process.env.REACT_APP_BACKEND_BASE_PATH || 'http://localhost:3000/api';
+const BASE_API_PATH = '/api';
 
 export const login = async (username, password) => {
   try {
-    const response = await axios.post(`${BASE_API_PATH}/login`, {
+    const response = await axios.post(`${BASE_API_PATH}/sign-in`, {
       username,
       password,
     });
@@ -18,7 +18,7 @@ export const login = async (username, password) => {
 
 export const apiFetchSyncStageToken = async (userToken) => {
   try {
-    const response = await axios.get(`${BASE_API_PATH}/fetch-token`, {
+    const response = await axios.get(`${BASE_API_PATH}/fetch-syncstage-token`, {
       headers: { Authorization: `Bearer ${userToken}` },
     });
     return response.data;
