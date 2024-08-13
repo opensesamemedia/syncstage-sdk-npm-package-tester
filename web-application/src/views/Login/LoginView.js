@@ -8,7 +8,6 @@ import ButtonContained from '../../components/StyledButtonContained';
 import AppContext from '../../AppContext';
 import { PathEnum } from '../../router/PathEnum';
 import { enqueueSnackbar } from 'notistack';
-import { signIn } from 'aws-amplify/auth';
 
 const LoginView = () => {
   const navigate = useNavigate();
@@ -21,33 +20,20 @@ const LoginView = () => {
   const handleSubmit = async () => {
     const requestId = startBackdropRequest();
     // use local docke-compose backend
-    if (process.env.REACT_APP_BACKEND_BASE_PATH !== undefined) {
-      try {
-        const data = await login(username, password);
-        const { token } = data;
-        setUserJwt(token);
-        setIsSignedIn(true);
-        await fetchSyncStageToken();
-        enqueueSnackbar('Login successful');
-        navigate(PathEnum.SETUP);
-      } catch (error) {
-        console.error('Login failed:', error);
-        enqueueSnackbar('Unauthorized');
-      }
+
+    try {
+      const data = await login(username, password);
+      const { token } = data;
+      setUserJwt(token);
+      setIsSignedIn(true);
+      await fetchSyncStageToken();
+      enqueueSnackbar('Login successful');
+      navigate(PathEnum.SETUP);
+    } catch (error) {
+      console.error('Login failed:', error);
+      enqueueSnackbar('Unauthorized');
     }
-    // use local docke-compose backend
-    else {
-      try {
-        const { isSignedIn, nextStep } = await signIn({ username, password });
-        console.log(`isSignedIn: ${isSignedIn}, nexstStep: ${JSON.stringify(nextStep)}`);
-        await fetchSyncStageToken();
-        navigate(PathEnum.SETUP);
-        setIsSignedIn(true);
-      } catch (error) {
-        console.error('Login failed:', error);
-        enqueueSnackbar('Unauthorized');
-      }
-    }
+
     endBackdropRequest(requestId);
   };
 

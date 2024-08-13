@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@aws-amplify/auth": "^6.0.7",
     "@emotion/react": "^11.10.6",
     "@emotion/styled": "^11.10.6",
     "@mui/icons-material": "^5.11.11",
@@ -14,7 +13,6 @@
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
-    "aws-amplify": "^6.0.6",
     "axios": "^1.6.2",
     "bootstrap": "^5.2.3",
     "http-proxy-middleware": "^2.0.6",
@@ -34,7 +32,7 @@
   "scripts": {
     "start": "cross-env PORT=3001 react-app-rewired start",
     "watch-local": "nodemon --watch ../../syncstage-sdk-npm-package/lib -e js,json --exec 'cross-env PORT=3001 react-app-rewired start'",
-    "prebuild": "echo REACT_APP_GIT_HASH=$(git rev-parse --short HEAD) > .env",
+    "prebuild": "sed -i '' \"s/^REACT_APP_GIT_HASH=.*/REACT_APP_GIT_HASH=$(git rev-parse --short HEAD)/\" .env",
     "build": "react-app-rewired build",
     "test": "react-app-rewired test",
     "eject": "react-app-rewired eject",

@@ -1,9 +1,5 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 import { v4 as uuidv4 } from 'uuid';
-import { Amplify } from 'aws-amplify';
-import { signOut as amplifySignOut, getCurrentUser } from 'aws-amplify/auth';
-
-import { get } from 'aws-amplify/api';
 
 import React, { useState, useEffect, useRef } from 'react';
 import AppContext from './AppContext';
@@ -281,33 +277,13 @@ const StateManager = () => {
     setSelectedServerName(serverSelected.zoneName);
   };
 
-  async function amplifyFetchSyncStageToken() {
-    try {
-      const restOperation = get({
-        apiName: 'syncstagewebapi',
-        path: '/fetch-token',
-      });
-      const { body } = await restOperation.response;
-      const bodyText = await body.text();
-      console.log('GET call succeeded: ', bodyText);
-      return bodyText;
-    } catch (error) {
-      console.log('GET call failed: ', error);
-    }
-  }
   const onJwtExpired = async () => {
     console.log('onJwtExpired in StateManager.js');
 
     let jwt;
     // use local docke-compose backend
-    if (process.env.REACT_APP_BACKEND_BASE_PATH !== undefined) {
-      const tokenResponse = await apiFetchSyncStageToken(userJwt);
-      jwt = tokenResponse.jwt;
-    }
-    // use amplify backend
-    else {
-      jwt = await amplifyFetchSyncStageToken();
-    }
+    const tokenResponse = await apiFetchSyncStageToken(userJwt);
+    jwt = tokenResponse.jwt;
 
     return jwt;
   };
@@ -485,39 +461,11 @@ const StateManager = () => {
   }, []);
 
   useEffect(() => {
-    const confirmAmplifyUserSignedIn = async () => {
-      if (process.env.REACT_APP_BACKEND_BASE_PATH === undefined) {
-        try {
-          console.log('Reading amplify config');
-          const amplifyconfig = await import('./amplifyconfiguration.json');
-          Amplify.configure(amplifyconfig.default);
-
-          let currentUser = null;
-
-          try {
-            currentUser = await getCurrentUser();
-          } catch (error) {
-            console.log('Could not fetch current user: ', error);
-          }
-
-          return !!currentUser;
-        } catch (error) {
-          console.error('Error importing amplifyconfiguration.json:', error);
-        }
-      }
-      return false; // Default value if REACT_APP_BACKEND_BASE_PATH is defined
-    };
-
     console.log(`REACT_APP_BACKEND_BASE_PATH: ${process.env.REACT_APP_BACKEND_BASE_PATH}`);
 
     const initializeSignIn = async () => {
-      let amplifySignedIn = false;
-      if (process.env.REACT_APP_BACKEND_BASE_PATH === undefined) {
-        amplifySignedIn = await confirmAmplifyUserSignedIn();
-        setIsSignedIn(amplifySignedIn);
-      }
-      if (!isSignedIn && !amplifySignedIn) {
-        // Not signed in neither in amplify nor in docker-compose backend
+      if (!isSignedIn) {
+        // Not signed in
         navigate(PathEnum.LOGIN);
         console.log('User needs to be authenticated.');
       }
@@ -576,12 +524,6 @@ const StateManager = () => {
   }, [syncStageWorkerWrapper, desktopAgentConnected, desktopAgentConnectedTimeout, isSignedIn]);
 
   const signOut = async () => {
-    try {
-      await amplifySignOut();
-    } catch (error) {
-      console.log('error signing out from aplify backend: ', error);
-    }
-
     setUserJwt(null);
     setIsSignedIn(false);
     persistSyncStageJwt('');
