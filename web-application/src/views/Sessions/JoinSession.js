@@ -65,7 +65,7 @@ const JoinSession = ({ onJoinSession, onCreateSession }) => {
           <Grid item>
             <Button
               onClick={() => {
-                navigate(PathEnum.SESSION_NICKNAME);
+                navigate(PathEnum.SETUP);
               }}
             >
               Previous

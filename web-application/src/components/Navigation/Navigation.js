@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 import Menu from '../Menu/Menu';
 import Logo from './Logo.styled';
 
-function Navigation({ inSession, isSignedIn, hidden, nicknameSetAndProvisioned }) {
+function Navigation({ inSession, isSignedIn, hidden }) {
   const muiTheme = useTheme();
   const lgScreenMatches = useMediaQuery(muiTheme.breakpoints.up('lg'));
   const [openedMobileDrawer, setOpenedMobileDrawer] = useState(false);
@@ -21,14 +21,7 @@ function Navigation({ inSession, isSignedIn, hidden, nicknameSetAndProvisioned }
 
   return (
     <>
-      {!hidden && (
-        <Menu
-          nicknameSetAndProvisioned={nicknameSetAndProvisioned}
-          drawerOpened={isDrawerOpened}
-          onCloseDrawer={handleDrawerClose}
-          isMobile={!lgScreenMatches}
-        />
-      )}
+      {!hidden && <Menu drawerOpened={isDrawerOpened} onCloseDrawer={handleDrawerClose} isMobile={!lgScreenMatches} />}
       <NavigationWrapper inSession={inSession}>
         {!lgScreenMatches && !inSession && isSignedIn && (
           <IconButton color="inherit" aria-label="open drawer" edge="start" size="large" onClick={handleDrawerOpen}>

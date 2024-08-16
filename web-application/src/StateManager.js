@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 import { v4 as uuidv4 } from 'uuid';
+import { jwtDecode } from 'jwt-decode';
 
 import React, { useState, useEffect, useRef } from 'react';
 import AppContext from './AppContext';
@@ -26,6 +27,7 @@ import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-packag
 import modalStyle from './ui/ModalStyle';
 import Navigation from './components/Navigation/Navigation';
 import SyncStageWorkerWrapper from './syncStageWorkerWrapper';
+import { sleep } from './utils';
 
 const getDownloadLink = (version) => {
   const userAgent = window.navigator.userAgent;
@@ -59,8 +61,7 @@ const StateManager = () => {
   const [syncStageJwt, setSyncStageJwt] = useState(localStorage.getItem('syncStageJwt') ?? '');
   const [syncStageWorkerWrapper, setSyncStageWorkerWrapper] = useState(null);
   const [syncStageSDKVersion, setSyncStageSDKVersion] = useState();
-  const [userId, setUserId] = useState(localStorage.getItem('userId') ?? '');
-  const [nickname, setNickname] = useState(localStorage.getItem('nickname') ?? '');
+  const [user, setUser] = useState(null);
   const [selectedServerName, setSelectedServerName] = useState(undefined);
   const [sessionCode, setSessionCode] = useState(localStorage.getItem('sessionCode') ?? '');
 
@@ -85,7 +86,6 @@ const StateManager = () => {
   const [activeRequestIds, setActiveRequestIds] = useState(new Set());
   const [backdropOpen, setBackdropOpen] = useState(false);
 
-  const nicknameSetAndProvisioned = nickname && syncStageJwt;
   const inSession = SESSION_PATH_REGEX.test(location.pathname);
   const autoServerInstance = { zoneId: null, zoneName: 'auto', studioServerId: null };
   const [serverInstancesList, setServerInstancesList] = useState([autoServerInstance]);
@@ -100,6 +100,16 @@ const StateManager = () => {
   const [selectedOutputDevice, setSelectedOutputDevice] = useState('');
   const [inputDevices, setInputDevices] = useState([]);
   const [outputDevices, setOutputDevices] = useState([]);
+
+  const getUserInfo = () => {
+    try {
+      const decoded = jwtDecode(userJwt);
+      const { sub, name } = decoded;
+      return { id: sub, name };
+    } catch (error) {
+      return { id: '', name: '' };
+    }
+  };
 
   // Function to start a request
   const startBackdropRequest = () => {
@@ -131,17 +141,6 @@ const StateManager = () => {
     setSessionCode(sessionCode);
   };
 
-  const generateAndPersistUserId = () => {
-    const storedUserId = localStorage.getItem('userId');
-    if (storedUserId) {
-      return storedUserId;
-    }
-    const userId = uuidv4();
-    localStorage.setItem('userId', userId);
-    setUserId(userId);
-    return userId;
-  };
-
   const fetchSyncStageToken = async () => {
     console.log('fetchSyncStageToken in StateManager.js');
     let jwt = syncStageJwt;
@@ -161,7 +160,7 @@ const StateManager = () => {
   const initializeSyncStage = async () => {
     const requestId = startBackdropRequest();
 
-    if (userId)
+    if (user)
       console.log(
         // eslint-disable-next-line max-len
         `initializeSyncStage desktopAgentConnected: ${desktopAgentConnected} isSignedIn: ${isSignedIn} desktopAgentConnectedTimeout: ${desktopAgentConnectedTimeout} syncStageWorkerWrapper: `,
@@ -189,11 +188,7 @@ const StateManager = () => {
         if (initErrorCode == SyncStageSDKErrorCode.OK) {
           if (location.pathname === `${PathEnum.LOADING}` && !inSession) {
             console.log(`In session: ${inSession}`);
-            if (nickname) {
-              navigate(PathEnum.SESSIONS_JOIN);
-            } else {
-              navigate(PathEnum.SESSION_NICKNAME);
-            }
+            navigate(PathEnum.SESSIONS_JOIN);
           }
         } else {
           console.log('Could not init SyncStage, invalid jwt');
@@ -207,11 +202,8 @@ const StateManager = () => {
         if (updateErrorCode == SyncStageSDKErrorCode.OK) {
           if (location.pathname === `${PathEnum.LOADING}` && !inSession) {
             console.log(`In session: ${inSession}`);
-            if (nickname) {
-              navigate(PathEnum.SESSIONS_JOIN);
-            } else {
-              navigate(PathEnum.SESSION_NICKNAME);
-            }
+
+            navigate(PathEnum.SESSIONS_JOIN);
           }
         } else {
           console.log('Could not update SyncStage token');
@@ -279,6 +271,16 @@ const StateManager = () => {
 
   const onJwtExpired = async () => {
     console.log('onJwtExpired in StateManager.js');
+    let attempts = 0;
+    const maxAttempts = 100; // 5 seconds / 50ms = 100 attempts
+
+    while (!userJwt && attempts < maxAttempts) {
+      await sleep(50);
+      attempts++;
+    }
+    if (!userJwt) {
+      throw new Error('userJwt is not available after 5 seconds');
+    }
 
     const tokenResponse = await apiFetchSyncStageToken(userJwt);
     const syncStageToken = tokenResponse.syncStageToken;
@@ -430,11 +432,15 @@ const StateManager = () => {
     }
     endBackdropRequest(requestId);
   };
+  useEffect(() => {
+    if (userJwt) {
+      setUser(getUserInfo(userJwt));
+    }
+  }, [userJwt]);
 
   useEffect(() => {
     // Update appLoadTime when the component mounts
     setAppLoadTime(new Date());
-    generateAndPersistUserId();
   }, []);
 
   useEffect(() => {
@@ -518,8 +524,10 @@ const StateManager = () => {
   }, [location.pathname]);
 
   useEffect(() => {
-    initializeSyncStage();
-  }, [syncStageWorkerWrapper, desktopAgentConnected, desktopAgentConnectedTimeout, isSignedIn]);
+    if (userJwt) {
+      initializeSyncStage();
+    }
+  }, [syncStageWorkerWrapper, desktopAgentConnected, desktopAgentConnectedTimeout, isSignedIn, userJwt]);
 
   const signOut = async () => {
     setUserJwt(null);
@@ -528,11 +536,6 @@ const StateManager = () => {
     navigate(PathEnum.LOGIN);
     setDesktopAgentProvisioned(false);
     await syncStageWorkerWrapper.leave();
-  };
-
-  const persistNickname = (nickname) => {
-    localStorage.setItem('nickname', nickname);
-    setNickname(nickname);
   };
 
   const goToSetupPageOnUnauthorized = () => {
@@ -552,7 +555,7 @@ const StateManager = () => {
   const onCreateSession = async () => {
     const requestId = startBackdropRequest();
     const [createData, errorCode] = await syncStageWorkerWrapper.createSession(
-      userId,
+      user.id,
       manuallySelectedInstance.zoneId,
       manuallySelectedInstance.studioServerId,
     );
@@ -576,9 +579,7 @@ const StateManager = () => {
     fetchSyncStageToken,
     initializeSyncStage,
     syncStageSDKVersion,
-    userId,
-    nickname,
-    persistNickname,
+    user,
     sessionCode,
     persistSessionCode,
     startBackdropRequest,
@@ -594,6 +595,7 @@ const StateManager = () => {
     setDesktopAgentProtocolHandler,
     userJwt,
     setUserJwt,
+    getUserInfo,
     signOut,
     isSignedIn,
     setIsSignedIn,
@@ -659,11 +661,24 @@ const StateManager = () => {
           )}
           <span className="dot" style={{ backgroundColor: desktopAgentConnected ? '#2ECC71' : '#C0392B' }}></span>
         </div>
+        <div
+          style={{
+            position: 'fixed',
+            top: 20,
+            left: 20,
+            transform: 'translateY(-50%)',
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+          }}
+        >
+          <span style={{ fontSize: 10 }}> {getUserInfo() ? getUserInfo().name : ''} </span>
+        </div>
         <Navigation
           hidden={!isSignedIn || inSession || location.pathname == `${PathEnum.LOADING}`}
           inSession={inSession}
           isSignedIn={isSignedIn}
-          nicknameSetAndProvisioned={nicknameSetAndProvisioned}
+          provisioned={syncStageJwt}
         />
 
         <Backdrop

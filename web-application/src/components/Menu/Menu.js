@@ -4,7 +4,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import MenuWrapper from './Menu.styled';
 import { List, ListItemText, ListItemIcon, Drawer } from '@mui/material';
 import ListItemButton from '../StyledListItemButton';
-import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
 import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
 import GroupsIcon from '@mui/icons-material/Groups';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -61,18 +60,6 @@ const Menu = ({ drawerOpened, onCloseDrawer, isMobile }) => {
                 <MenuBookOutlinedIcon />
               </ListItemIcon>
               <ListItemText primary="Setup" />
-            </ListItemButton>
-            <ListItemButton
-              selected={location.pathname === `${PathEnum.SESSION_NICKNAME}`}
-              sx={selectedStyle}
-              onClick={() => {
-                navigate(PathEnum.SESSION_NICKNAME);
-              }}
-            >
-              <ListItemIcon sx={{ color: 'inherit' }}>
-                <AccountCircleOutlinedIcon />
-              </ListItemIcon>
-              <ListItemText primary="Session Nickname" />
             </ListItemButton>
 
             <ListItemButton

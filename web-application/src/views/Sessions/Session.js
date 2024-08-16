@@ -51,8 +51,8 @@ const Session = ({ inSession }) => {
     persistSessionCode,
     syncStageWorkerWrapper,
     desktopAgentProvisioned,
-    userId,
-    nickname,
+    user,
+
     startBackdropRequest,
     endBackdropRequest,
     manuallySelectedInstance,
@@ -419,8 +419,8 @@ const Session = ({ inSession }) => {
 
         const [data, errorCode] = await syncStageWorkerWrapper.join(
           sessionCodeFromPath,
-          userId,
-          nickname,
+          user.id,
+          user.name,
           manuallySelectedInstance.zoneId,
           manuallySelectedInstance.studioServerId,
         );
@@ -436,15 +436,10 @@ const Session = ({ inSession }) => {
         }
 
         console.log('Could not join session from the path. errorCode: ', errorCode);
-        if (nickname) {
-          navigate(PathEnum.SESSIONS_JOIN);
-          endBackdropRequest(requestId);
-          return undefined;
-        } else {
-          navigate(PathEnum.SESSION_NICKNAME);
-          endBackdropRequest(requestId);
-          return undefined;
-        }
+
+        navigate(PathEnum.SESSIONS_JOIN);
+        endBackdropRequest(requestId);
+        return undefined;
       }
     };
 

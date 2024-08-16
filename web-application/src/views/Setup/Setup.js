@@ -62,7 +62,7 @@ const Setup = () => {
           <ButtonContained
             onClick={async () => {
               console.log('initializeSyncStage in next acition on setup', initializeSyncStage);
-              navigate(PathEnum.SESSION_NICKNAME);
+              navigate(PathEnum.SESSIONS_JOIN);
             }}
             disabled={!desktopAgentConnected}
           >
