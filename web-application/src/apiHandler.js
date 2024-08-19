@@ -35,7 +35,12 @@ export const apiFetchSyncStageToken = async (userToken) => {
     });
     return response.data;
   } catch (error) {
-    console.error('Error fetching token:', error);
-    throw error;
+    if (error.response && error.response.status === 403) {
+      console.error('Access expired:', error);
+      throw new Error('AccessExpired');
+    } else {
+      console.error('Error fetching token:', error);
+      throw error;
+    }
   }
 };

@@ -62,6 +62,7 @@ const StateManager = () => {
   const [syncStageWorkerWrapper, setSyncStageWorkerWrapper] = useState(null);
   const [syncStageSDKVersion, setSyncStageSDKVersion] = useState();
   const [user, setUser] = useState(null);
+  const [accessExpired, setAccessExpired] = useState(false);
   const [selectedServerName, setSelectedServerName] = useState(undefined);
   const [sessionCode, setSessionCode] = useState(localStorage.getItem('sessionCode') ?? '');
 
@@ -281,11 +282,20 @@ const StateManager = () => {
     if (!userJwt) {
       throw new Error('userJwt is not available after 5 seconds');
     }
-
-    const tokenResponse = await apiFetchSyncStageToken(userJwt);
-    const syncStageToken = tokenResponse.syncStageToken;
-
-    return syncStageToken;
+    try {
+      const tokenResponse = await apiFetchSyncStageToken(userJwt);
+      const syncStageToken = tokenResponse.syncStageToken;
+      return syncStageToken;
+    } catch (error) {
+      if (error.message === 'AccessExpired') {
+        setAccessExpired(true);
+        console.error('Access expired:', error);
+        enqueueSnackbar('Access expired', { variant: 'error' });
+      } else {
+        console.error('Error fetching token:', error);
+        throw error;
+      }
+    }
   };
 
   const setDesktopAgentConnectedTimeoutIfNotConnected = () => {
@@ -702,6 +712,16 @@ const StateManager = () => {
             </Box>
           </Modal>
         </Online>
+        <Modal keepMounted open={accessExpired}>
+          <Box sx={modalStyle}>
+            <Typography variant="h6" component="h2">
+              Your access to SyncStage has expired
+            </Typography>
+            <Typography sx={{ mt: 2 }}>
+              To extend the access, please contact us at <a href="mailto:contact@example.com">contact@example.com</a>
+            </Typography>{' '}
+          </Box>
+        </Modal>
         <Modal
           open={desktopAgentCompatible === false && !desktopAgentCompatibleModalClosed}
           onClose={() => setDesktopAgentCompatibleModalClosed(true)}
