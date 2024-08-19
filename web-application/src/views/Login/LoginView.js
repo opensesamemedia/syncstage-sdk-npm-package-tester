@@ -5,11 +5,12 @@ import { PathEnum } from '../../router/PathEnum';
 import { enqueueSnackbar } from 'notistack';
 
 import { GoogleLogin } from '@react-oauth/google';
-import { Button, Box, Tabs, Tab, Grid } from '@mui/material';
+import { Box, Tabs, Tab, Grid } from '@mui/material';
 import { login, signInWithGoogle, signUp } from '../../apiHandler';
 import TextField from '../../components/StyledTextField';
 import theme from '../../ui/theme';
 import { makeStyles } from '@mui/styles';
+import ButtonContained from '../../components/StyledButtonContained';
 
 const useStyles = makeStyles(() => ({
   tabRoot: {
@@ -64,8 +65,9 @@ const LoginView = () => {
       enqueueSnackbar('Please check you inbox and verify your email before signing in', { variant: 'info' });
       setTabIndex(0);
     } catch (error) {
+      console.log(error);
       console.error('Sign up failed:', error);
-      enqueueSnackbar('Sign up failed');
+      enqueueSnackbar(`Sign up failed, ${error.response.data.error}`, { variant: 'error' });
     }
 
     endBackdropRequest(requestId);
@@ -112,9 +114,9 @@ const LoginView = () => {
               />
             </Grid>
             <Grid item>
-              <Button variant="contained" type="submit" onClick={handleSubmitLogin}>
-                Login
-              </Button>
+              <ButtonContained variant="contained" type="submit" onClick={handleSubmitLogin}>
+                Sign In
+              </ButtonContained>
             </Grid>
             <Grid item>
               <GoogleLogin
@@ -144,9 +146,9 @@ const LoginView = () => {
               <TextField label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} fullWidth />
             </Grid>
             <Grid item>
-              <Button variant="contained" type="submit" onClick={handleSignUp}>
+              <ButtonContained variant="contained" type="submit" onClick={handleSignUp}>
                 Sign Up
-              </Button>
+              </ButtonContained>
             </Grid>
           </Grid>
         </form>
