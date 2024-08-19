@@ -1,32 +1,43 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-import { login, signInWithGoogle } from '../../apiHandler';
-import { Grid, Button } from '@mui/material';
-import TextField from '../../components/StyledTextField';
-import ButtonContained from '../../components/StyledButtonContained';
 import AppContext from '../../AppContext';
 import { PathEnum } from '../../router/PathEnum';
 import { enqueueSnackbar } from 'notistack';
-import GoogleIcon from '@mui/icons-material/Google'; // Import Google icon
+
 import { GoogleLogin } from '@react-oauth/google';
+import { Button, Box, Tabs, Tab, Grid } from '@mui/material';
+import { login, signInWithGoogle, signUp } from '../../apiHandler';
+import TextField from '../../components/StyledTextField';
+import theme from '../../ui/theme';
+import { makeStyles } from '@mui/styles';
+
+const useStyles = makeStyles(() => ({
+  tabRoot: {
+    color: theme.text,
+    '&.Mui-selected': {
+      color: theme.primary,
+    },
+  },
+}));
 
 const LoginView = () => {
+  const classes = useStyles();
   const navigate = useNavigate();
 
-  const { setUserJwt, setIsSignedIn, fetchSyncStageToken, startBackdropRequest, endBackdropRequest } = useContext(AppContext);
+  const { setUserJwt, setIsSignedIn, startBackdropRequest, endBackdropRequest } = useContext(AppContext);
 
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [tabIndex, setTabIndex] = useState(0);
 
-  const handleSubmit = async (standardLogin, credential) => {
+  const handleSubmitLogin = async (standardLogin, credential) => {
     const requestId = startBackdropRequest();
-    // use local docke-compose backend
 
     try {
       let data;
       if (standardLogin) {
-        data = await login(username, password);
+        data = await login(email, password);
       } else {
         data = await signInWithGoogle(credential);
       }
@@ -44,50 +55,103 @@ const LoginView = () => {
     endBackdropRequest(requestId);
   };
 
+  const handleSignUp = async () => {
+    const requestId = startBackdropRequest();
+
+    try {
+      await signUp(name, email, password);
+      enqueueSnackbar('Sign up successful', { variant: 'success' });
+      enqueueSnackbar('Please check you inbox and verify your email before signing in', { variant: 'info' });
+      setTabIndex(0);
+    } catch (error) {
+      console.error('Sign up failed:', error);
+      enqueueSnackbar('Sign up failed');
+    }
+
+    endBackdropRequest(requestId);
+  };
+
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
-      handleSubmit();
+      handleSubmitLogin(true);
     }
   };
 
+  const handleTabChange = (event, newValue) => {
+    setTabIndex(newValue);
+  };
+
   return (
-    <form onSubmit={() => handleSubmit(true, undefined)}>
-      <Grid container direction="column" justifyContent="center" alignItems="center" spacing={2}>
-        <Grid item>
-          <h2>Sign in</h2>
-        </Grid>
-        <Grid item>
-          <TextField label="Username" type="text" value={username} onKeyUp={handleKeyPress} onChange={(e) => setUsername(e.target.value)} />
-        </Grid>
-        <Grid item>
-          <TextField
-            label="Password"
-            type="password"
-            value={password}
-            onKeyUp={handleKeyPress}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </Grid>
-        <Grid item>
-          <ButtonContained type="submit" onClick={handleSubmit}>
-            Login
-          </ButtonContained>
-        </Grid>
-        <Grid item>
-          <GoogleLogin
-            onSuccess={(credentialResponse) => {
-              console.log(credentialResponse);
-              handleSubmit(false, credentialResponse.credential);
-            }}
-            onError={() => {
-              console.log('Login Failed');
-            }}
-            locale="en"
-          />
-        </Grid>
-      </Grid>
-    </form>
+    <Box>
+      <Tabs value={tabIndex} onChange={handleTabChange} centered>
+        <Tab label="Sign In" classes={{ root: classes.tabRoot }} />
+        <Tab label="Sign Up" classes={{ root: classes.tabRoot }} />
+      </Tabs>
+      <br />
+      {tabIndex === 0 && (
+        <form onSubmit={() => handleSubmitLogin(true, undefined)}>
+          <Grid container direction="column" justifyContent="center" alignItems="center" spacing={2}>
+            <Grid item>
+              <TextField
+                label="Email"
+                type="text"
+                value={email}
+                onKeyUp={handleKeyPress}
+                onChange={(e) => setEmail(e.target.value)}
+                fullWidth
+              />
+            </Grid>
+            <Grid item>
+              <TextField
+                label="Password"
+                type="password"
+                value={password}
+                onKeyUp={handleKeyPress}
+                onChange={(e) => setPassword(e.target.value)}
+                fullWidth
+              />
+            </Grid>
+            <Grid item>
+              <Button variant="contained" type="submit" onClick={handleSubmitLogin}>
+                Login
+              </Button>
+            </Grid>
+            <Grid item>
+              <GoogleLogin
+                onSuccess={(credentialResponse) => {
+                  console.log(credentialResponse);
+                  handleSubmitLogin(false, credentialResponse.credential);
+                }}
+                onError={() => {
+                  console.log('Login Failed');
+                }}
+                locale="en"
+              />
+            </Grid>
+          </Grid>
+        </form>
+      )}
+      {tabIndex === 1 && (
+        <form onSubmit={handleSignUp}>
+          <Grid container direction="column" justifyContent="center" alignItems="center" spacing={2}>
+            <Grid item>
+              <TextField label="Name" value={name} onChange={(e) => setName(e.target.value)} fullWidth />
+            </Grid>
+            <Grid item>
+              <TextField label="Email" value={email} onChange={(e) => setEmail(e.target.value)} fullWidth />
+            </Grid>
+            <Grid item>
+              <TextField label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} fullWidth />
+            </Grid>
+            <Grid item>
+              <Button variant="contained" type="submit" onClick={handleSignUp}>
+                Sign Up
+              </Button>
+            </Grid>
+          </Grid>
+        </form>
+      )}
+    </Box>
   );
 };
-
 export default LoginView;

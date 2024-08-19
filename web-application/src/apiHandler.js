@@ -44,3 +44,17 @@ export const apiFetchSyncStageToken = async (userToken) => {
     }
   }
 };
+
+export const signUp = async (name, email, password) => {
+  try {
+    const response = await axios.post(`${BASE_API_PATH}/sign-up`, {
+      name,
+      email,
+      password,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error signing up:', error);
+    throw error;
+  }
+};
