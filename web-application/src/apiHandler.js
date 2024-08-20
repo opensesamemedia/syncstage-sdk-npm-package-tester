@@ -8,6 +8,7 @@ export const login = async (username, password) => {
     const response = await axios.post(`${BASE_API_PATH}/sign-in`, {
       username,
       password,
+      origin: 'webpage',
     });
     return response.data;
   } catch (error) {
@@ -20,6 +21,7 @@ export const signInWithGoogle = async (credential) => {
   try {
     const response = await axios.post(`${BASE_API_PATH}/sign-in-google`, {
       credential,
+      origin: 'webpage',
     });
     return response.data;
   } catch (error) {
@@ -51,6 +53,7 @@ export const signUp = async (name, email, password) => {
       name,
       email,
       password,
+      origin: 'webpage',
     });
     return response.data;
   } catch (error) {
