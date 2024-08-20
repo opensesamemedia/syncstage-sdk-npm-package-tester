@@ -71,55 +71,5 @@
       "service": "amplifyhosting",
       "type": "manual"
     }
-  },
-  "parameters": {
-    "AMPLIFY_function_syncStageWebFetchSyncStageToken_baseApiPath": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "syncStageWebFetchSyncStageToken"
-        }
-      ]
-    },
-    "AMPLIFY_function_syncStageWebFetchSyncStageToken_deploymentBucketName": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "syncStageWebFetchSyncStageToken"
-        }
-      ]
-    },
-    "AMPLIFY_function_syncStageWebFetchSyncStageToken_s3Key": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "syncStageWebFetchSyncStageToken"
-        }
-      ]
-    },
-    "AMPLIFY_function_syncStageWebFetchSyncStageToken_secretsPathAmplifyAppId": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "syncStageWebFetchSyncStageToken"
-        }
-      ]
-    },
-    "AMPLIFY_hosting_amplifyhosting_appId": {
-      "usedBy": [
-        {
-          "category": "hosting",
-          "resourceName": "amplifyhosting"
-        }
-      ]
-    },
-    "AMPLIFY_hosting_amplifyhosting_type": {
-      "usedBy": [
-        {
-          "category": "hosting",
-          "resourceName": "amplifyhosting"
-        }
-      ]
-    }
   }
 }

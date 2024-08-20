@@ -106,15 +106,14 @@ const SettingsModal = ({ open, onClose, showServerList }) => {
   return (
     <Modal id="settings-modal" open={open} onClose={onClose}>
       <Box sx={modalStyle}>
+        <Button onClick={onClose} style={{ color: theme.onSurfaceVariant, position: 'absolute', top: '10px', right: '10px' }}>
+          <CloseIcon />
+        </Button>{' '}
         <Grid container spacing={2}>
-          <Grid container alignItems="start">
-            <Button onClick={onClose} style={{ color: theme.onSurfaceVariant }}>
-              <CloseIcon />
-            </Button>{' '}
-            <Typography variant="h6" style={{ marginTop: 2 }}>
-              Settings
-            </Typography>
-          </Grid>
+          <Typography variant="h6" style={{ marginTop: 2, marginLeft: 16 }}>
+            Settings
+          </Typography>
+
           <Grid item xs={12}>
             <InputLabel id="input-device-label" style={{ color: 'rgb(197, 199, 200)' }}>
               Audio Input
@@ -161,7 +160,12 @@ const SettingsModal = ({ open, onClose, showServerList }) => {
               labelId="latency-optimization-label"
               id="latency-optimization-select"
               value={latencyOptimizationLevel}
-              onChange={handleLatencyLevelChange}
+              onChange={(event) => {
+                if (event.target.value === LatencyOptimizationLevel.ultraFast) {
+                  handleNoiseCancellationChange(false);
+                }
+                handleLatencyLevelChange(event);
+              }}
               fullWidth
             >
               {latencyOptimizationLevels.map((levelItem) => (
@@ -177,9 +181,13 @@ const SettingsModal = ({ open, onClose, showServerList }) => {
               <Typography variant="h6">Noise Cancellation</Typography>
               <p style={{ marginTop: 6 }}>Suppress the background noise</p>
               <p style={{ color: '#FFB4AB' }}>Avoid this option in music applications</p>
+              {latencyOptimizationLevel === LatencyOptimizationLevel.ultraFast && (
+                <p>Noise cancellation is not available in Ultra Fast latency optimization level mode.</p>
+              )}
             </Grid>
             <Grid item xs={4}>
               <Switch
+                disabled={latencyOptimizationLevel === LatencyOptimizationLevel.ultraFast}
                 checked={noiseCancellationEnabled}
                 onChange={() => handleNoiseCancellationChange(!noiseCancellationEnabled)}
                 sx={{
