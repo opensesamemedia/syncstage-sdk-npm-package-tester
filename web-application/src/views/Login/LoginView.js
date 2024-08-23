@@ -42,8 +42,8 @@ const LoginView = () => {
       } else {
         data = await signInWithGoogle(credential);
       }
-      const { token } = data;
-      setUserJwt(token);
+      const { idToken, refreshToken, name, expirationDate } = data;
+      setUserJwt(idToken);
 
       setIsSignedIn(true);
       enqueueSnackbar('Login successful');
