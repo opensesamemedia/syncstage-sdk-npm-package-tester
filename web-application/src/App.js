@@ -46,7 +46,6 @@ const App = () => {
           <SnackbarProvider preventDuplicate maxSnack={2} />
           <HashRouter>
             <TokenHandler />
-
             <StateManager />
           </HashRouter>
         </GoogleOAuthProvider>

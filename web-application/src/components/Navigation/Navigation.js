@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 import Menu from '../Menu/Menu';
 import Logo from './Logo.styled';
 
-function Navigation({ inSession, isSignedIn, hidden }) {
+function Navigation({ inSession, hidden }) {
   const muiTheme = useTheme();
   const lgScreenMatches = useMediaQuery(muiTheme.breakpoints.up('lg'));
   const [openedMobileDrawer, setOpenedMobileDrawer] = useState(false);
@@ -23,7 +23,7 @@ function Navigation({ inSession, isSignedIn, hidden }) {
     <>
       {!hidden && <Menu drawerOpened={isDrawerOpened} onCloseDrawer={handleDrawerClose} isMobile={!lgScreenMatches} />}
       <NavigationWrapper inSession={inSession}>
-        {!lgScreenMatches && !inSession && isSignedIn && (
+        {!lgScreenMatches && !inSession && !hidden && (
           <IconButton color="inherit" aria-label="open drawer" edge="start" size="large" onClick={handleDrawerOpen}>
             <MenuIcon fontSize="36px" />
           </IconButton>

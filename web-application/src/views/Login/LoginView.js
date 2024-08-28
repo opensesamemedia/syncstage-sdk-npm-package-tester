@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import AppContext from '../../AppContext';
 import { PathEnum } from '../../router/PathEnum';
 import { enqueueSnackbar } from 'notistack';
+import { setToken, setRefreshToken } from '../../auth';
 
 import { GoogleLogin } from '@react-oauth/google';
 import { Box, Tabs, Tab, Grid } from '@mui/material';
@@ -25,7 +26,7 @@ const LoginView = () => {
   const classes = useStyles();
   const navigate = useNavigate();
 
-  const { setUserJwt, setIsSignedIn, startBackdropRequest, endBackdropRequest } = useContext(AppContext);
+  const { setUserJwt, startBackdropRequest, endBackdropRequest } = useContext(AppContext);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -43,9 +44,10 @@ const LoginView = () => {
         data = await signInWithGoogle(credential);
       }
       const { idToken, refreshToken, name, expirationDate } = data;
+      setToken(idToken);
+      setRefreshToken(refreshToken);
       setUserJwt(idToken);
 
-      setIsSignedIn(true);
       enqueueSnackbar('Login successful');
       navigate(PathEnum.SETUP);
     } catch (error) {

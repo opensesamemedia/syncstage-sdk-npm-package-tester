@@ -28,6 +28,8 @@ import modalStyle from './ui/ModalStyle';
 import Navigation from './components/Navigation/Navigation';
 import SyncStageWorkerWrapper from './syncStageWorkerWrapper';
 import { sleep } from './utils';
+import { refreshToken } from './apiHandler';
+import { getToken, clearTokens } from './auth';
 
 const getDownloadLink = (version) => {
   const userAgent = window.navigator.userAgent;
@@ -56,7 +58,6 @@ const StateManager = () => {
 
   const [appLoadTime, setAppLoadTime] = useState(new Date());
   const [previousLocation, setPreviousLocation] = useState(null);
-  const [isSignedIn, setIsSignedIn] = useState(false);
   const [userJwt, setUserJwt] = useState(null);
   const [syncStageJwt, setSyncStageJwt] = useState(localStorage.getItem('syncStageJwt') ?? '');
   const [syncStageWorkerWrapper, setSyncStageWorkerWrapper] = useState(null);
@@ -142,6 +143,40 @@ const StateManager = () => {
     setSessionCode(sessionCode);
   };
 
+  const checkIsSignedIn = async () => {
+    let token = getToken();
+    if (token) {
+      const decodedToken = jwtDecode(token);
+      const currentTime = Date.now() / 1000; // Current time in seconds
+      if (decodedToken.exp > currentTime) {
+        setUserJwt(token);
+        return true;
+      }
+    }
+
+    try {
+      token = await refreshToken();
+      setUserJwt(token);
+      return true;
+    } catch (error) {
+      clearTokens();
+      navigate(PathEnum.Login);
+      return false;
+    }
+  };
+
+  useEffect(() => {
+    const verifySignIn = async () => {
+      const taskId = startBackdropRequest();
+      const signedIn = await checkIsSignedIn();
+      if (!signedIn) {
+        navigate(PathEnum.Login);
+      }
+      endBackdropRequest(taskId);
+    };
+    verifySignIn();
+  }, [location.pathname]);
+
   const fetchSyncStageToken = async () => {
     console.log('fetchSyncStageToken in StateManager.js');
     let jwt = syncStageJwt;
@@ -160,7 +195,7 @@ const StateManager = () => {
 
   const initializeSyncStage = async () => {
     const requestId = startBackdropRequest();
-
+    const isSignedIn = await checkIsSignedIn();
     if (user)
       console.log(
         // eslint-disable-next-line max-len
@@ -283,7 +318,7 @@ const StateManager = () => {
       throw new Error('userJwt is not available after 5 seconds');
     }
     try {
-      const tokenResponse = await apiFetchSyncStageToken(userJwt);
+      const tokenResponse = await apiFetchSyncStageToken();
       const syncStageToken = tokenResponse.syncStageToken;
       return syncStageToken;
     } catch (error) {
@@ -310,10 +345,14 @@ const StateManager = () => {
   };
 
   const fetchSettingsFromAgent = async (showBackdrop) => {
+    if (syncStageWorkerWrapper === null) {
+      return;
+    }
     let requestId;
     if (showBackdrop) {
       requestId = startBackdropRequest();
     }
+
     const [settings, errorCode] = await syncStageWorkerWrapper.getSessionSettings();
     if (errorCode !== SyncStageSDKErrorCode.OK) {
       enqueueSnackbar('Failed to get session settings', { variant: 'error' });
@@ -478,7 +517,7 @@ const StateManager = () => {
     console.log(`REACT_APP_BACKEND_BASE_PATH: ${process.env.REACT_APP_BACKEND_BASE_PATH}`);
 
     const initializeSignIn = async () => {
-      if (!isSignedIn) {
+      if (!checkIsSignedIn()) {
         // Not signed in
         navigate(PathEnum.LOGIN);
         console.log('User needs to be authenticated.');
@@ -537,12 +576,12 @@ const StateManager = () => {
     if (userJwt) {
       initializeSyncStage();
     }
-  }, [syncStageWorkerWrapper, desktopAgentConnected, desktopAgentConnectedTimeout, isSignedIn, userJwt]);
+  }, [syncStageWorkerWrapper, desktopAgentConnected, desktopAgentConnectedTimeout, userJwt]);
 
   const signOut = async () => {
     setUserJwt(null);
-    setIsSignedIn(false);
     persistSyncStageJwt('');
+    clearTokens();
     navigate(PathEnum.LOGIN);
     setDesktopAgentProvisioned(false);
     await syncStageWorkerWrapper.leave();
@@ -607,8 +646,6 @@ const StateManager = () => {
     setUserJwt,
     getUserInfo,
     signOut,
-    isSignedIn,
-    setIsSignedIn,
     selectedServerName,
     autoServerInstance,
     serverInstancesList,
@@ -685,9 +722,8 @@ const StateManager = () => {
           <span style={{ fontSize: 10 }}> {getUserInfo() ? getUserInfo().name : ''} </span>
         </div>
         <Navigation
-          hidden={!isSignedIn || inSession || location.pathname == `${PathEnum.LOADING}`}
+          hidden={inSession || location.pathname == `${PathEnum.LOADING}` || location.pathname == `${PathEnum.LOGIN}`}
           inSession={inSession}
-          isSignedIn={isSignedIn}
           provisioned={syncStageJwt}
         />
 
