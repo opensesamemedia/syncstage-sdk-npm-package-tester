@@ -51,8 +51,7 @@ const Session = ({ inSession }) => {
     persistSessionCode,
     syncStageWorkerWrapper,
     desktopAgentProvisioned,
-    user,
-
+    getUserInfo,
     startBackdropRequest,
     endBackdropRequest,
     manuallySelectedInstance,
@@ -67,6 +66,7 @@ const Session = ({ inSession }) => {
     handleInputDeviceChange,
     handleOutputDeviceChange,
     handleToggleRecording,
+    get,
   } = useContext(AppContext);
 
   const [sessionLoadTime, setSessionLoadTime] = useState(new Date());
@@ -417,6 +417,8 @@ const Session = ({ inSession }) => {
         console.log('Joining the session from the path');
         const requestId = startBackdropRequest();
 
+        const user = await getUserInfo();
+        console.log('Joining the session with the user: ', user);
         const [data, errorCode] = await syncStageWorkerWrapper.join(
           sessionCodeFromPath,
           user.id,

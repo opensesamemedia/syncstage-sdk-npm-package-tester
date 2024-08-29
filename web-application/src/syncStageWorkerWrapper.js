@@ -1,6 +1,13 @@
 class SyncStageWorkerWrapper {
   constructor(userDelegate, connectivityDelegate, discoveryDelegate, desktopAgentDelegate, onTokenExpired) {
-    console.log('SyncStageWorkerWrapper constructor');
+    console.log(
+      'SyncStageWorkerWrapper constructor',
+      userDelegate,
+      connectivityDelegate,
+      discoveryDelegate,
+      desktopAgentDelegate,
+      onTokenExpired,
+    );
 
     this.userDelegate = userDelegate;
     this.connectivityDelegate = connectivityDelegate;
@@ -148,7 +155,7 @@ class SyncStageWorkerWrapper {
   }
 
   async updateToken(token) {
-    console.log('SyncStageWorkerWrapper updateToken');
+    console.log(`SyncStageWorkerWrapper updateToken ${token}`);
     return this.callWorker('updateToken', token);
   }
 

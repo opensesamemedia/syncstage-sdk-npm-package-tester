@@ -26,7 +26,7 @@ const LoginView = () => {
   const classes = useStyles();
   const navigate = useNavigate();
 
-  const { setUserJwt, startBackdropRequest, endBackdropRequest } = useContext(AppContext);
+  const { setUserJwt, startBackdropRequest, endBackdropRequest, setIsSignedIn, setUser, getUserInfo } = useContext(AppContext);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -43,12 +43,12 @@ const LoginView = () => {
       } else {
         data = await signInWithGoogle(credential);
       }
-      const { idToken, refreshToken, name, expirationDate } = data;
-      setToken(idToken);
-      setRefreshToken(refreshToken);
-      setUserJwt(idToken);
+      const { idToken, name, expirationDate } = data;
 
-      enqueueSnackbar('Login successful');
+      setUserJwt(idToken);
+      setUser(getUserInfo(idToken));
+      setIsSignedIn(true);
+      enqueueSnackbar(`Hello: ${name}, your access expires on ${expirationDate}`);
       navigate(PathEnum.SETUP);
     } catch (error) {
       console.error('Login failed:', error);

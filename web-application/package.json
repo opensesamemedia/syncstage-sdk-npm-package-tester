@@ -41,7 +41,9 @@
     "test": "react-app-rewired test",
     "eject": "react-app-rewired eject",
     "lint": "eslint --ext .js,.ts,.jsx,.tsx src",
-    "format": "npm run lint --fix & yarn prettier --write \"src/**/*.{js,jsx,ts,tsx}\""
+    "format": "npm run lint --fix & yarn prettier --write \"src/**/*.{js,jsx,ts,tsx}\"",
+    "deploy": "terraform -chdir=./../../terraform apply -var-file=\"backend-dev.tfvars\" -auto-approve",
+    "build-and-deploy": "yarn build && yarn deploy"
   },
   "eslintConfig": {
     "extends": [

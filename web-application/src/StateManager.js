@@ -27,9 +27,9 @@ import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-packag
 import modalStyle from './ui/ModalStyle';
 import Navigation from './components/Navigation/Navigation';
 import SyncStageWorkerWrapper from './syncStageWorkerWrapper';
-import { sleep } from './utils';
 import { refreshToken } from './apiHandler';
 import { getToken, clearTokens } from './auth';
+import ButtonContained from './components/StyledButtonContained';
 
 const getDownloadLink = (version) => {
   const userAgent = window.navigator.userAgent;
@@ -59,6 +59,7 @@ const StateManager = () => {
   const [appLoadTime, setAppLoadTime] = useState(new Date());
   const [previousLocation, setPreviousLocation] = useState(null);
   const [userJwt, setUserJwt] = useState(null);
+  const [isSignedIn, setIsSignedIn] = useState(false);
   const [syncStageJwt, setSyncStageJwt] = useState(localStorage.getItem('syncStageJwt') ?? '');
   const [syncStageWorkerWrapper, setSyncStageWorkerWrapper] = useState(null);
   const [syncStageSDKVersion, setSyncStageSDKVersion] = useState();
@@ -103,11 +104,14 @@ const StateManager = () => {
   const [inputDevices, setInputDevices] = useState([]);
   const [outputDevices, setOutputDevices] = useState([]);
 
-  const getUserInfo = () => {
+  const getUserInfo = async () => {
     try {
-      const decoded = jwtDecode(userJwt);
+      const idToken = await getToken();
+      const decoded = jwtDecode(idToken);
       const { sub, name } = decoded;
-      return { id: sub, name };
+      const tempUser = { id: sub, name };
+      setUser(tempUser);
+      return tempUser;
     } catch (error) {
       return { id: '', name: '' };
     }
@@ -144,38 +148,35 @@ const StateManager = () => {
   };
 
   const checkIsSignedIn = async () => {
-    let token = getToken();
-    if (token) {
-      const decodedToken = jwtDecode(token);
-      const currentTime = Date.now() / 1000; // Current time in seconds
-      if (decodedToken.exp > currentTime) {
-        setUserJwt(token);
-        return true;
-      }
-    }
-
+    console.log('checkIsSignedIn in StateManager.js');
     try {
+      let token = getToken();
+      if (token) {
+        console.log('Token found: ', token);
+        const decodedToken = jwtDecode(token);
+        const currentTime = Date.now() / 1000; // Current time in seconds
+        if (decodedToken.exp > currentTime) {
+          setUserJwt(token);
+          setUser(getUserInfo(token));
+          console.log('User signed in');
+          setIsSignedIn(true);
+          return true;
+        }
+      }
+
+      console.log('Token not found or expired');
       token = await refreshToken();
       setUserJwt(token);
+      setUser(getUserInfo(token));
+      setIsSignedIn(true);
+
       return true;
     } catch (error) {
-      clearTokens();
-      navigate(PathEnum.Login);
+      console.log('Error checking if signed in:', error);
+      setIsSignedIn(false);
       return false;
     }
   };
-
-  useEffect(() => {
-    const verifySignIn = async () => {
-      const taskId = startBackdropRequest();
-      const signedIn = await checkIsSignedIn();
-      if (!signedIn) {
-        navigate(PathEnum.Login);
-      }
-      endBackdropRequest(taskId);
-    };
-    verifySignIn();
-  }, [location.pathname]);
 
   const fetchSyncStageToken = async () => {
     console.log('fetchSyncStageToken in StateManager.js');
@@ -195,13 +196,11 @@ const StateManager = () => {
 
   const initializeSyncStage = async () => {
     const requestId = startBackdropRequest();
-    const isSignedIn = await checkIsSignedIn();
-    if (user)
-      console.log(
-        // eslint-disable-next-line max-len
-        `initializeSyncStage desktopAgentConnected: ${desktopAgentConnected} isSignedIn: ${isSignedIn} desktopAgentConnectedTimeout: ${desktopAgentConnectedTimeout} syncStageWorkerWrapper: `,
-        syncStageWorkerWrapper,
-      );
+    console.log(
+      // eslint-disable-next-line max-len
+      `initializeSyncStage desktopAgentConnected: ${desktopAgentConnected} isSignedIn: ${isSignedIn} desktopAgentConnectedTimeout: ${desktopAgentConnectedTimeout} syncStageWorkerWrapper: `,
+      syncStageWorkerWrapper,
+    );
     if (
       syncStageWorkerWrapper !== null &&
       desktopAgentConnected &&
@@ -307,17 +306,8 @@ const StateManager = () => {
 
   const onJwtExpired = async () => {
     console.log('onJwtExpired in StateManager.js');
-    let attempts = 0;
-    const maxAttempts = 100; // 5 seconds / 50ms = 100 attempts
-
-    while (!userJwt && attempts < maxAttempts) {
-      await sleep(50);
-      attempts++;
-    }
-    if (!userJwt) {
-      throw new Error('userJwt is not available after 5 seconds');
-    }
     try {
+      console.log('Refreshing SyncStage token');
       const tokenResponse = await apiFetchSyncStageToken();
       const syncStageToken = tokenResponse.syncStageToken;
       return syncStageToken;
@@ -345,7 +335,7 @@ const StateManager = () => {
   };
 
   const fetchSettingsFromAgent = async (showBackdrop) => {
-    if (syncStageWorkerWrapper === null) {
+    if (syncStageWorkerWrapper === null || userJwt === null) {
       return;
     }
     let requestId;
@@ -481,11 +471,6 @@ const StateManager = () => {
     }
     endBackdropRequest(requestId);
   };
-  useEffect(() => {
-    if (userJwt) {
-      setUser(getUserInfo(userJwt));
-    }
-  }, [userJwt]);
 
   useEffect(() => {
     // Update appLoadTime when the component mounts
@@ -513,20 +498,23 @@ const StateManager = () => {
     return () => clearTimeout(desktopAgentConnectedTimeoutId);
   }, []);
 
-  useEffect(() => {
+  useEffect(async () => {
     console.log(`REACT_APP_BACKEND_BASE_PATH: ${process.env.REACT_APP_BACKEND_BASE_PATH}`);
 
     const initializeSignIn = async () => {
-      if (!checkIsSignedIn()) {
+      console.log('initializeSignIn in StateManager.js');
+      const signedIn = await checkIsSignedIn();
+      if (!signedIn) {
         // Not signed in
         navigate(PathEnum.LOGIN);
         console.log('User needs to be authenticated.');
       }
     };
     if (!inSession) {
+      console.log('Not in session, navigating to loading screen');
       navigate(PathEnum.LOADING);
     }
-    initializeSignIn();
+    await initializeSignIn();
   }, []);
 
   useEffect(() => {
@@ -573,15 +561,14 @@ const StateManager = () => {
   }, [location.pathname]);
 
   useEffect(() => {
-    if (userJwt) {
-      initializeSyncStage();
-    }
-  }, [syncStageWorkerWrapper, desktopAgentConnected, desktopAgentConnectedTimeout, userJwt]);
+    initializeSyncStage();
+  }, [syncStageWorkerWrapper, desktopAgentConnected, desktopAgentConnectedTimeout, userJwt, isSignedIn]);
 
   const signOut = async () => {
     setUserJwt(null);
     persistSyncStageJwt('');
     clearTokens();
+    setIsSignedIn(false);
     navigate(PathEnum.LOGIN);
     setDesktopAgentProvisioned(false);
     await syncStageWorkerWrapper.leave();
@@ -603,6 +590,8 @@ const StateManager = () => {
 
   const onCreateSession = async () => {
     const requestId = startBackdropRequest();
+    const user = await getUserInfo();
+    console.log('Creating session for user:', user);
     const [createData, errorCode] = await syncStageWorkerWrapper.createSession(
       user.id,
       manuallySelectedInstance.zoneId,
@@ -629,6 +618,7 @@ const StateManager = () => {
     initializeSyncStage,
     syncStageSDKVersion,
     user,
+    setUser,
     sessionCode,
     persistSessionCode,
     startBackdropRequest,
@@ -645,6 +635,7 @@ const StateManager = () => {
     userJwt,
     setUserJwt,
     getUserInfo,
+    setIsSignedIn,
     signOut,
     selectedServerName,
     autoServerInstance,
@@ -719,7 +710,7 @@ const StateManager = () => {
             alignItems: 'center',
           }}
         >
-          <span style={{ fontSize: 10 }}> {getUserInfo() ? getUserInfo().name : ''} </span>
+          <span style={{ fontSize: 10 }}> {user ? user.name : ''} </span>
         </div>
         <Navigation
           hidden={inSession || location.pathname == `${PathEnum.LOADING}` || location.pathname == `${PathEnum.LOGIN}`}
@@ -756,6 +747,14 @@ const StateManager = () => {
             <Typography sx={{ mt: 2 }}>
               To extend the access, please contact us at <a href="mailto:contact@example.com">contact@example.com</a>
             </Typography>{' '}
+            <ButtonContained
+              onClick={() => {
+                setAccessExpired(false);
+                signOut();
+              }}
+            >
+              Sign out
+            </ButtonContained>
           </Box>
         </Modal>
         <Modal

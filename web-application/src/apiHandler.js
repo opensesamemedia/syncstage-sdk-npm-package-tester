@@ -1,9 +1,9 @@
 // apiHandler.js
 import axios from 'axios';
 
-import { getRefreshToken, getToken, setToken, setRefreshToken, clearTokens } from './auth';
+import { getRefreshToken, getToken, setToken, setRefreshToken } from './auth';
 
-const BASE_API_PATH = '/api';
+const BASE_API_PATH = process.env.REACT_APP_BACKEND_BASE_PATH;
 
 // Region: API calls for authentication
 export const refreshToken = async () => {
@@ -15,23 +15,28 @@ export const refreshToken = async () => {
   try {
     const response = await axios.post(`${BASE_API_PATH}/refresh-token`, { refreshToken });
     const { idToken, refreshToken: newRefreshToken } = response.data;
-    setToken(idToken);
-    setRefreshToken(newRefreshToken);
+    await setToken(idToken);
+    await setRefreshToken(newRefreshToken);
     return idToken;
   } catch (error) {
     console.error('Error refreshing token:', error);
-    clearTokens();
     throw error;
   }
 };
 
 export const login = async (username, password) => {
+  console.log('login called');
   try {
     const response = await axios.post(`${BASE_API_PATH}/sign-in`, {
       username,
       password,
       origin: 'webpage',
     });
+    console.log('response data: ', response.data);
+    const { idToken, refreshToken: newRefreshToken } = response.data;
+    await setToken(idToken);
+    await setRefreshToken(newRefreshToken);
+
     return response.data;
   } catch (error) {
     console.error('Error logging in:', error);
@@ -40,11 +45,17 @@ export const login = async (username, password) => {
 };
 
 export const signInWithGoogle = async (credential) => {
+  console.log('signInWithGoogle called');
   try {
     const response = await axios.post(`${BASE_API_PATH}/sign-in-google`, {
       credential,
       origin: 'webpage',
     });
+    const { idToken, refreshToken: newRefreshToken } = response.data;
+    console.log('response data: ', response.data);
+    await setToken(idToken);
+    await setRefreshToken(newRefreshToken);
+
     return response.data;
   } catch (error) {
     console.error('Error signing in with Google:', error);
@@ -100,7 +111,6 @@ apiClient.interceptors.response.use(
         setRefreshToken(newToken);
         return apiClient(originalRequest);
       } catch (refreshError) {
-        clearTokens();
         return Promise.reject(refreshError);
       }
     }
@@ -119,8 +129,7 @@ export const apiFetchSyncStageToken = async () => {
       console.error('Access expired:', error);
       throw new Error('AccessExpired');
     } else {
-      console.error('Error fetching token:', error);
-      throw error;
+      console.log('Error fetching token:', error);
     }
   }
 };
