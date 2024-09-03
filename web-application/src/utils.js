@@ -1,4 +1,4 @@
-import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-package-development';
+import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
 import { enqueueSnackbar } from 'notistack';
 
 const syncStageErrorToMessageMap = new Map();

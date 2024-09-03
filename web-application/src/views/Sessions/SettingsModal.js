@@ -7,9 +7,9 @@ import IconButton from '@mui/material/IconButton';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import Button from '@mui/material/Button';
 import theme from '../../ui/theme';
-import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-package-development';
+import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
 import { errorCodeToSnackbar } from '../../utils';
-import { LatencyOptimizationLevel } from '@opensesamemedia/syncstage-sdk-npm-package-development';
+import { LatencyOptimizationLevel } from '@opensesamemedia/syncstage';
 import modalStyle from '../../ui/ModalStyle';
 import AppContext from '../../AppContext';
 

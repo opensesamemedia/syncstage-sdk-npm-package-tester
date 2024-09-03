@@ -26,7 +26,7 @@ import './ui/animationStyles.css';
 import SyncStageDesktopAgentDelegate from './SyncStageDesktopAgentDelegate';
 import SyncStageDiscoveryDelegate from './SyncStageDiscoveryDelegate';
 
-import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-package-development';
+import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
 import modalStyle from './ui/ModalStyle';
 import Navigation from './components/Navigation/Navigation';
 import SyncStageWorkerWrapper from './syncStageWorkerWrapper';
@@ -39,7 +39,7 @@ const getDownloadLink = (version) => {
     if (version) {
       link = `https://public.sync-stage.com/agent/macos/prod/${version}/SyncStageAgent_${version}.dmg`;
     } else {
-      link = `https://public.sync-stage.com/agent/macos/prod/0.5.0/SyncStageAgent_0.5.0.dmg`;
+      link = `https://public.sync-stage.com/agent/macos/prod/0.6.0/SyncStageAgent_0.6.0.dmg`;
     }
   } else if (userAgent.indexOf('Win') !== -1) {
     if (version) {
