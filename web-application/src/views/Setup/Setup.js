@@ -7,10 +7,8 @@ import ButtonContained from '../../components/StyledButtonContained';
 import { PathEnum } from '../../router/PathEnum';
 
 const Setup = () => {
-  const { desktopAgentProtocolHandler, desktopAgentConnected, initializeSyncStage, getDownloadLink } = useContext(AppContext);
+  const { desktopAgentProtocolHandler, desktopAgentConnected, initializeSyncStage, downloadLink } = useContext(AppContext);
   const navigate = useNavigate();
-
-  const downloadLink = getDownloadLink();
 
   return (
     <Grid container direction="column" spacing={2}>

@@ -13,13 +13,13 @@ import { signIn } from 'aws-amplify/auth';
 const LoginView = () => {
   const navigate = useNavigate();
 
-  const { setUserJwt, setIsSignedIn, fetchSyncStageToken, setBackdropOpen } = useContext(AppContext);
+  const { setUserJwt, setIsSignedIn, fetchSyncStageToken, startBackdropRequest, endBackdropRequest } = useContext(AppContext);
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
   const handleSubmit = async () => {
-    setBackdropOpen(true);
+    const requestId = startBackdropRequest();
     // use local docke-compose backend
     if (process.env.REACT_APP_BACKEND_BASE_PATH !== undefined) {
       try {
@@ -40,15 +40,15 @@ const LoginView = () => {
       try {
         const { isSignedIn, nextStep } = await signIn({ username, password });
         console.log(`isSignedIn: ${isSignedIn}, nexstStep: ${JSON.stringify(nextStep)}`);
-        setIsSignedIn(true);
         await fetchSyncStageToken();
         navigate(PathEnum.SETUP);
+        setIsSignedIn(true);
       } catch (error) {
         console.error('Login failed:', error);
         enqueueSnackbar('Unauthorized');
       }
     }
-    setBackdropOpen(false);
+    endBackdropRequest(requestId);
   };
 
   const handleKeyPress = (e) => {

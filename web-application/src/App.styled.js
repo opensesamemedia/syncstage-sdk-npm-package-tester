@@ -19,7 +19,7 @@ const AppWrapper = styled.div`
     height: 100vh;
     width: 100vw;
     z-index: -100;
-    background: linear-gradient(168.94deg, rgba(255, 255, 255, 0) 25.52%, #000000 100%);
+    background: linear-gradient(185deg, #780097 15%, #191c1d 72%);
   }
 
   .gradient2 {
@@ -29,8 +29,17 @@ const AppWrapper = styled.div`
     height: 100vh;
     width: 100vw;
     z-index: -100;
-    background: linear-gradient(168.94deg, #000000 0%, rgba(255, 255, 255, 0) 72.4%);
-    opacity: 0.48;
+    background: linear-gradient(188deg, #780097 15%, #191c1d 72%);
+  }
+
+  .black-transparent-bg {
+    position: fixed;
+    left: 0;
+    right: 0;
+    height: 100vh;
+    width: 100vw;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: -100;
   }
 
   .app-container {

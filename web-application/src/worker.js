@@ -1,4 +1,5 @@
 /* eslint-disable no-restricted-globals */
+
 import SyncStage from '@opensesamemedia/syncstage';
 import SyncStageUserDelegate from './SyncStageUserDelegate';
 import SyncStageConnectivityDelegate from './SyncStageConnectivityDelegate';

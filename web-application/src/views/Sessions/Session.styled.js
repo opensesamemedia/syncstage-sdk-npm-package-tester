@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import theme from '../../ui/theme';
 
 const SessionWrapper = styled.div`
   #footer {
@@ -8,7 +9,7 @@ const SessionWrapper = styled.div`
     width: 100vw;
     height: ${(props) => (props.isRecording ? '108px' : '72px')};
     z-index: 100;
-    background: linear-gradient(0deg, rgba(208, 188, 255, 0.08), rgba(208, 188, 255, 0.08)), #1c1b1f;
+    background: ${theme.footterColor};
   }
 
   #redcircle {

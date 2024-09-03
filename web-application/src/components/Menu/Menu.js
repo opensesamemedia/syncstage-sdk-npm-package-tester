@@ -76,7 +76,7 @@ const Menu = ({ drawerOpened, onCloseDrawer, isMobile }) => {
             </ListItemButton>
 
             <ListItemButton
-              selected={location.pathname === `${PathEnum.SESSIONS_SESSION_PREFIX}`}
+              selected={location.pathname === `${PathEnum.SESSIONS_JOIN}`}
               sx={selectedStyle}
               onClick={() => navigate(PathEnum.SESSIONS_JOIN)}
             >

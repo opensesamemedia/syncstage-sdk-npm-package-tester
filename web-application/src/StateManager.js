@@ -13,6 +13,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { errorCodeToSnackbar, willJwtBeExpiredIn, SESSION_PATH_REGEX } from './utils';
 import Box from '@mui/material/Box';
 import Modal from '@mui/material/Modal';
+import { enqueueSnackbar } from 'notistack';
 
 import Typography from '@mui/material/Typography';
 import { Online } from 'react-detect-offline';
@@ -29,6 +30,27 @@ import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
 import modalStyle from './ui/ModalStyle';
 import Navigation from './components/Navigation/Navigation';
 import SyncStageWorkerWrapper from './syncStageWorkerWrapper';
+
+const getDownloadLink = (version) => {
+  const userAgent = window.navigator.userAgent;
+  let link = null;
+  if (userAgent.indexOf('Mac') !== -1) {
+    // eslint-disable-next-line max-len
+    if (version) {
+      link = `https://public.sync-stage.com/agent/macos/prod/${version}/SyncStageAgent_${version}.dmg`;
+    } else {
+      link = `https://public.sync-stage.com/agent/macos/prod/0.6.0/SyncStageAgent_0.6.0.dmg`;
+    }
+  } else if (userAgent.indexOf('Win') !== -1) {
+    if (version) {
+      // eslint-disable-next-line max-len
+      link = `https://public.sync-stage.com/agent/windows/prod/${version}/SyncStageAgent_${version}.exe`;
+    } else {
+      link = `https://public.sync-stage.com/agent/windows/prod/0.2.0/SyncStageAgent_0.2.0.exe`;
+    }
+  }
+  return link;
+};
 
 const StateManager = () => {
   const navigate = useNavigate();
@@ -48,6 +70,7 @@ const StateManager = () => {
 
   const [desktopAgentCompatible, setDesktopAgentCompatible] = useState(null);
   const [desktopAgentLatestCompatibleVersion, setDesktopAgentLatestCompatibleVersion] = useState(null);
+  const [downloadLink, setDownloadLink] = useState(getDownloadLink(null));
   const [desktopAgentCompatibleModalClosed, setDesktopAgentCompatibleModalClosed] = useState(false);
 
   const desktopAgentConnectedRef = useRef(false);
@@ -63,6 +86,7 @@ const StateManager = () => {
   const [desktopAgentAquired, setDesktopAgentAquired] = useState(false);
 
   const [desktopAgentProtocolHandler, setDesktopAgentProtocolHandler] = useState('');
+  const [activeRequestIds, setActiveRequestIds] = useState(new Set());
   const [backdropOpen, setBackdropOpen] = useState(false);
 
   const nicknameSetAndProvisioned = nickname && syncStageJwt;
@@ -70,6 +94,41 @@ const StateManager = () => {
   const autoServerInstance = { zoneId: null, zoneName: 'auto', studioServerId: null };
   const [serverInstancesList, setServerInstancesList] = useState([autoServerInstance]);
   const [manuallySelectedInstance, setManuallySelectedInstance] = useState(autoServerInstance);
+
+  const [isRecording, setIsRecording] = useState(false);
+  const [noiseCancellationEnabled, setNoiseCancellationEnabled] = useState(false);
+  const [gainDisabled, setGainDisabled] = useState(false);
+  const [directMonitorEnabled, setDirectMonitorEnabled] = useState(false);
+  const [latencyOptimizationLevel, setLatencyOptimizationLevel] = useState(null);
+  const [selectedInputDevice, setSelectedInputDevice] = useState('');
+  const [selectedOutputDevice, setSelectedOutputDevice] = useState('');
+  const [inputDevices, setInputDevices] = useState([]);
+  const [outputDevices, setOutputDevices] = useState([]);
+
+  // Function to start a request
+  const startBackdropRequest = () => {
+    const requestId = uuidv4();
+    const updatedIds = new Set(activeRequestIds).add(requestId);
+    console.log('startBackdropRequest', requestId);
+    console.log('updatedIds', updatedIds);
+    setActiveRequestIds(updatedIds);
+    setBackdropOpen(true);
+    return requestId;
+  };
+
+  // Function to end a request
+  const endBackdropRequest = (requestId) => {
+    setActiveRequestIds((prevIds) => {
+      const updatedIds = new Set(prevIds);
+      updatedIds.delete(requestId);
+      console.log('endBackdropRequest', requestId);
+      console.log('updatedIds', updatedIds);
+      if (updatedIds.size === 0) {
+        setBackdropOpen(false);
+      }
+      return updatedIds;
+    });
+  };
 
   const persistSessionCode = (sessionCode) => {
     localStorage.setItem('sessionCode', sessionCode);
@@ -104,18 +163,25 @@ const StateManager = () => {
   };
 
   const initializeSyncStage = async () => {
+    const requestId = startBackdropRequest();
+
     if (userId)
       console.log(
         // eslint-disable-next-line max-len
         `initializeSyncStage desktopAgentConnected: ${desktopAgentConnected} isSignedIn: ${isSignedIn} desktopAgentConnectedTimeout: ${desktopAgentConnectedTimeout} syncStageWorkerWrapper: `,
         syncStageWorkerWrapper,
       );
-    if (syncStageWorkerWrapper !== null && desktopAgentConnected && isSignedIn === true && desktopAgentConnectedTimeout === null) {
-      setBackdropOpen(true);
-
+    if (
+      syncStageWorkerWrapper !== null &&
+      desktopAgentConnected &&
+      isSignedIn === true &&
+      (desktopAgentConnectedTimeout === null || desktopAgentConnectedTimeout === false)
+    ) {
       console.log('initializeSyncStage useEffect syncStage init');
       setDesktopAgentCompatible(await syncStageWorkerWrapper.isCompatible());
-      setDesktopAgentLatestCompatibleVersion(await syncStageWorkerWrapper.getLatestCompatibleDesktopAgentVersion());
+      const tempVer = await syncStageWorkerWrapper.getLatestCompatibleDesktopAgentVersion();
+      setDesktopAgentLatestCompatibleVersion(tempVer);
+      setDownloadLink(getDownloadLink(tempVer));
 
       const syncStageProvisioned = await syncStageWorkerWrapper.checkProvisionedStatus();
       console.log(`SyncStage provisioned: ${syncStageProvisioned}`);
@@ -136,7 +202,7 @@ const StateManager = () => {
         } else {
           console.log('Could not init SyncStage, invalid jwt');
           signOut();
-          setBackdropOpen(false);
+          endBackdropRequest(requestId);
           return undefined;
         }
       };
@@ -154,12 +220,12 @@ const StateManager = () => {
         } else {
           console.log('Could not update SyncStage token');
           await provision();
-          setBackdropOpen(false);
+          endBackdropRequest(requestId);
           return undefined;
         }
       } else {
         await provision();
-        setBackdropOpen(false);
+        endBackdropRequest(requestId);
         return undefined;
       }
     }
@@ -177,11 +243,11 @@ const StateManager = () => {
         console.log('initializeSyncStage useEffect desktopAgentConnectedTimeout');
         console.log('Desktop connected timeout, going to setup screen');
         navigate(PathEnum.SETUP);
-        setBackdropOpen(false);
+        endBackdropRequest(requestId);
         return undefined;
       }
     }
-    setBackdropOpen(false);
+    endBackdropRequest(requestId);
   };
 
   const onDesktopAgentAquired = () => {
@@ -231,6 +297,7 @@ const StateManager = () => {
   }
   const onJwtExpired = async () => {
     console.log('onJwtExpired in StateManager.js');
+
     let jwt;
     // use local docke-compose backend
     if (process.env.REACT_APP_BACKEND_BASE_PATH !== undefined) {
@@ -254,6 +321,140 @@ const StateManager = () => {
     } else {
       setDesktopAgentConnectedTimeout(false);
     }
+  };
+
+  const fetchSettingsFromAgent = async (showBackdrop) => {
+    let requestId;
+    if (showBackdrop) {
+      requestId = startBackdropRequest();
+    }
+    const [settings, errorCode] = await syncStageWorkerWrapper.getSessionSettings();
+    if (errorCode !== SyncStageSDKErrorCode.OK) {
+      enqueueSnackbar('Failed to get session settings', { variant: 'error' });
+    } else {
+      setDirectMonitorEnabled(settings.directMonitorEnabled);
+      setGainDisabled(settings.disableGain);
+      setNoiseCancellationEnabled(settings.noiseCancellationEnabled);
+      setLatencyOptimizationLevel(settings.latencyOptimizationLevel);
+      setInputDevices(settings.inputDevices);
+      setOutputDevices(settings.outputDevices);
+
+      // Find and set the selected input device
+      const selectedInput = settings.inputDevices.find((device) => device.selected);
+      if (selectedInput) {
+        setSelectedInputDevice(selectedInput.identifier);
+      }
+
+      // Find and set the selected output device
+      const selectedOutput = settings.outputDevices.find((device) => device.selected);
+      if (selectedOutput) {
+        setSelectedOutputDevice(selectedOutput.identifier);
+      }
+    }
+
+    if (showBackdrop) {
+      endBackdropRequest(requestId);
+    }
+  };
+
+  const handleToggleRecording = async (enabled) => {
+    const requestId = startBackdropRequest();
+    let errorCode;
+    if (enabled) {
+      errorCode = await syncStageWorkerWrapper.startRecording();
+    } else {
+      errorCode = await syncStageWorkerWrapper.stopRecording();
+    }
+    errorCodeToSnackbar(errorCode);
+    endBackdropRequest(requestId);
+
+    if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
+      return goToSetupPageOnUnauthorized();
+    }
+  };
+
+  const handleNoiseCancellationChange = async (enabled) => {
+    const requestId = startBackdropRequest();
+
+    const stateBefore = noiseCancellationEnabled;
+    setNoiseCancellationEnabled(enabled);
+    const errorCode = await syncStageWorkerWrapper.setNoiseCancellation(enabled);
+    if (errorCode !== SyncStageSDKErrorCode.OK) {
+      setNoiseCancellationEnabled(stateBefore);
+      enqueueSnackbar('Failed to set noise cancellation', { variant: 'error' });
+    }
+    endBackdropRequest(requestId);
+  };
+
+  // const handleDisableGainChange = async (disabled) => {
+  //   const requestId = startBackdropRequest();
+
+  //   const stateBefore = gainDisabled;
+  //   setGainDisabled(disabled);
+  //   const errorCode = await syncStageWorkerWrapper.setDisableGain(disabled);
+  //   if (errorCode !== SyncStageSDKErrorCode.OK) {
+  //     setGainDisabled(stateBefore);
+  //     enqueueSnackbar('Failed to set gain', { variant: 'error' });
+  //   }
+  //   endBackdropRequest(requestId);
+  // };
+
+  const handleDirectMonitorChange = async (enabled) => {
+    const requestId = startBackdropRequest();
+
+    const stateBefore = directMonitorEnabled;
+    setDirectMonitorEnabled(enabled);
+    const errorCode = await syncStageWorkerWrapper.setDirectMonitor(enabled);
+    if (errorCode !== SyncStageSDKErrorCode.OK) {
+      setDirectMonitorEnabled(stateBefore);
+      enqueueSnackbar('Failed to set direct monitor', { variant: 'error' });
+    }
+    endBackdropRequest(requestId);
+  };
+
+  const handleLatencyLevelChange = async (event) => {
+    const requestId = startBackdropRequest();
+    const stateBefore = latencyOptimizationLevel;
+    setLatencyOptimizationLevel(event.target.value);
+    const errorCode = await syncStageWorkerWrapper.setLatencyOptimizationLevel(event.target.value);
+
+    if (errorCode !== SyncStageSDKErrorCode.OK) {
+      setLatencyOptimizationLevel(stateBefore);
+      enqueueSnackbar('Failed to update latency optimization level', { variant: 'error' });
+    }
+    endBackdropRequest(requestId);
+  };
+
+  const handleInputDeviceChange = async (event, onError) => {
+    const requestId = startBackdropRequest();
+    const stateBefore = selectedInputDevice;
+
+    const identifier = event.target.value;
+    const errorCode = await syncStageWorkerWrapper.setInputDevice(identifier);
+    setSelectedInputDevice(identifier);
+
+    if (errorCode !== SyncStageSDKErrorCode.OK) {
+      enqueueSnackbar('Failed to set input device', { variant: 'error' });
+      setSelectedInputDevice(stateBefore);
+      onError();
+    }
+    endBackdropRequest(requestId);
+  };
+
+  const handleOutputDeviceChange = async (event, onError) => {
+    const stateBefore = selectedOutputDevice;
+    const requestId = startBackdropRequest();
+
+    const identifier = event.target.value;
+    const errorCode = await syncStageWorkerWrapper.setOutputDevice(identifier);
+    setSelectedOutputDevice(identifier);
+
+    if (errorCode !== SyncStageSDKErrorCode.OK) {
+      enqueueSnackbar('Failed to set output device', { variant: 'error' });
+      setSelectedOutputDevice(stateBefore);
+      onError();
+    }
+    endBackdropRequest(requestId);
   };
 
   useEffect(() => {
@@ -386,7 +587,6 @@ const StateManager = () => {
     persistSyncStageJwt('');
     navigate(PathEnum.LOGIN);
     setDesktopAgentProvisioned(false);
-    setBackdropOpen(false);
     await syncStageWorkerWrapper.leave();
   };
 
@@ -398,7 +598,6 @@ const StateManager = () => {
   const goToSetupPageOnUnauthorized = () => {
     navigate(PathEnum.SETUP);
     setDesktopAgentProvisioned(false);
-    setBackdropOpen(false);
   };
 
   const persistSyncStageJwt = (jwt) => {
@@ -411,7 +610,7 @@ const StateManager = () => {
   };
 
   const onCreateSession = async () => {
-    setBackdropOpen(true);
+    const requestId = startBackdropRequest();
     const [createData, errorCode] = await syncStageWorkerWrapper.createSession(
       userId,
       manuallySelectedInstance.zoneId,
@@ -419,6 +618,7 @@ const StateManager = () => {
     );
 
     if (errorCode === SyncStageSDKErrorCode.API_UNAUTHORIZED) {
+      endBackdropRequest(requestId);
       return goToSetupPageOnUnauthorized();
     }
 
@@ -428,22 +628,7 @@ const StateManager = () => {
 
       navigate(`${PathEnum.SESSIONS_SESSION_PREFIX}${createData.sessionCode}`);
     }
-  };
-
-  const getDownloadLink = () => {
-    if (!desktopAgentLatestCompatibleVersion) {
-      return null;
-    }
-    const userAgent = window.navigator.userAgent;
-    if (userAgent.indexOf('Mac') !== -1) {
-      // eslint-disable-next-line max-len
-      return `https://public.sync-stage.com/agent/macos/prod/${desktopAgentLatestCompatibleVersion}/SyncStageAgent_${desktopAgentLatestCompatibleVersion}.dmg`;
-    } else if (userAgent.indexOf('Win') !== -1) {
-      // eslint-disable-next-line max-len
-      return `https://public.sync-stage.com/agent/windows/prod/${desktopAgentLatestCompatibleVersion}/SyncStageAgent_${desktopAgentLatestCompatibleVersion}.exe`;
-    } else {
-      return null;
-    }
+    endBackdropRequest(requestId);
   };
 
   const sharedState = {
@@ -456,7 +641,8 @@ const StateManager = () => {
     persistNickname,
     sessionCode,
     persistSessionCode,
-    setBackdropOpen,
+    startBackdropRequest,
+    endBackdropRequest,
     desktopAgentConnected,
     setDesktopAgentConnected,
     desktopAgentProvisioned,
@@ -478,15 +664,41 @@ const StateManager = () => {
     manuallySelectedInstance,
     setManuallySelectedInstance,
     goToSetupPageOnUnauthorized,
-    getDownloadLink,
+    downloadLink,
+    noiseCancellationEnabled,
+    setNoiseCancellationEnabled,
+    gainDisabled,
+    setGainDisabled,
+    fetchSettingsFromAgent,
+    directMonitorEnabled,
+    setDirectMonitorEnabled,
+    latencyOptimizationLevel,
+    setLatencyOptimizationLevel,
+    selectedInputDevice,
+    setSelectedInputDevice,
+    selectedOutputDevice,
+    setSelectedOutputDevice,
+    inputDevices,
+    setInputDevices,
+    outputDevices,
+    setOutputDevices,
+    isRecording,
+    setIsRecording,
+    handleToggleRecording,
+    handleNoiseCancellationChange,
+    handleDirectMonitorChange,
+    handleLatencyLevelChange,
+    handleInputDeviceChange,
+    handleOutputDeviceChange,
   };
 
   return (
     <AppContext.Provider value={sharedState}>
       <AppWrapper inSession={inSession}>
         <div className="bg" />
-        <div className="gradient2" />
         <div className="gradient1" />
+        <div className="gradient2" />
+        <div className="black-transparent-bg" />
         <div
           style={{
             position: 'fixed',
@@ -517,7 +729,7 @@ const StateManager = () => {
         <Backdrop
           sx={{
             color: '#fff',
-            zIndex: (theme) => theme.zIndex.drawer + 1,
+            zIndex: (theme) => theme.zIndex.drawer + 1000,
           }}
           open={backdropOpen}
         >
@@ -548,7 +760,7 @@ const StateManager = () => {
               experience, please update your Desktop Agent. <br />
               <br />
               {desktopAgentLatestCompatibleVersion ? (
-                <a href={getDownloadLink()} target="_blank">
+                <a href={downloadLink} target="_blank">
                   Click here to download the latest Desktop Agent version
                 </a>
               ) : (
