@@ -300,7 +300,7 @@ const StateManager = () => {
 
     let jwt;
     // use local docke-compose backend
-    if (process.env.REACT_APP_BACKEND_BASE_PATH !== undefined) {
+    if (process.env.REACT_APP_BACKEND_BASE_PATH !== undefined && userJwt) {
       const tokenResponse = await apiFetchSyncStageToken(userJwt);
       jwt = tokenResponse.jwt;
     }
