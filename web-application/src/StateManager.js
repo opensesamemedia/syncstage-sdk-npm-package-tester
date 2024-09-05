@@ -190,89 +190,96 @@ const StateManager = () => {
 
   const initializeSyncStage = async () => {
     const requestId = startBackdropRequest('initializeSyncStage');
-
-    if (userId)
-      console.log(
-        // eslint-disable-next-line max-len
-        `initializeSyncStage desktopAgentConnected: ${desktopAgentConnected} isSignedIn: ${isSignedIn} desktopAgentConnectedTimeout: ${desktopAgentConnectedTimeout} syncStageWorkerWrapper: `,
-        syncStageWorkerWrapper,
-      );
-    if (
-      syncStageWorkerWrapper !== null &&
-      desktopAgentConnected &&
-      isSignedIn === true &&
-      (desktopAgentConnectedTimeout === null || desktopAgentConnectedTimeout === false)
-    ) {
-      console.log('initializeSyncStage useEffect syncStage init');
-      setDesktopAgentCompatible(await syncStageWorkerWrapper.isCompatible());
-      const tempVer = await syncStageWorkerWrapper.getLatestCompatibleDesktopAgentVersion();
-      setDesktopAgentLatestCompatibleVersion(tempVer);
-      setDownloadLink(getDownloadLink(tempVer));
-
-      const syncStageProvisioned = await syncStageWorkerWrapper.checkProvisionedStatus();
-      console.log(`SyncStage provisioned: ${syncStageProvisioned}`);
-
-      const jwt = await fetchSyncStageToken();
-      const provision = async () => {
-        const initErrorCode = await syncStageWorkerWrapper.init(jwt);
-
-        if (initErrorCode == SyncStageSDKErrorCode.OK) {
-          if (location.pathname === `${PathEnum.LOADING}` && !inSession) {
-            console.log(`In session: ${inSession}`);
-            if (nickname) {
-              navigate(PathEnum.SESSIONS_JOIN);
-            } else {
-              navigate(PathEnum.SESSION_NICKNAME);
-            }
-          }
-        } else {
-          console.log('Could not init SyncStage, invalid jwt');
-          signOut();
-          endBackdropRequest(requestId);
-          return undefined;
+    try {
+      if (userId)
+        console.log(
+          // eslint-disable-next-line max-len
+          `initializeSyncStage desktopAgentConnected: ${desktopAgentConnected} isSignedIn: ${isSignedIn} desktopAgentConnectedTimeout: ${desktopAgentConnectedTimeout} syncStageWorkerWrapper: `,
+          syncStageWorkerWrapper,
+        );
+      if (
+        syncStageWorkerWrapper !== null &&
+        desktopAgentConnected &&
+        isSignedIn === true &&
+        (desktopAgentConnectedTimeout === null || desktopAgentConnectedTimeout === false)
+      ) {
+        console.log('initializeSyncStage useEffect syncStage init');
+        try {
+          setDesktopAgentCompatible(await syncStageWorkerWrapper.isCompatible());
+          const tempVer = await syncStageWorkerWrapper.getLatestCompatibleDesktopAgentVersion();
+          setDesktopAgentLatestCompatibleVersion(tempVer);
+          setDownloadLink(getDownloadLink(tempVer));
+        } catch (error) {
+          console.log('Error in checking compatibility and setting the version:', error);
         }
-      };
-      if (syncStageProvisioned) {
-        const updateErrorCode = await syncStageWorkerWrapper.updateToken(jwt);
-        if (updateErrorCode == SyncStageSDKErrorCode.OK) {
-          if (location.pathname === `${PathEnum.LOADING}` && !inSession) {
-            console.log(`In session: ${inSession}`);
-            if (nickname) {
-              navigate(PathEnum.SESSIONS_JOIN);
-            } else {
-              navigate(PathEnum.SESSION_NICKNAME);
+        const syncStageProvisioned = await syncStageWorkerWrapper.checkProvisionedStatus();
+        console.log(`SyncStage provisioned: ${syncStageProvisioned}`);
+
+        const jwt = await fetchSyncStageToken();
+        const provision = async () => {
+          const initErrorCode = await syncStageWorkerWrapper.init(jwt);
+
+          if (initErrorCode == SyncStageSDKErrorCode.OK) {
+            if (location.pathname === `${PathEnum.LOADING}` && !inSession) {
+              console.log(`In session: ${inSession}`);
+              if (nickname) {
+                navigate(PathEnum.SESSIONS_JOIN);
+              } else {
+                navigate(PathEnum.SESSION_NICKNAME);
+              }
             }
+          } else {
+            console.log('Could not init SyncStage, invalid jwt');
+            signOut();
+            endBackdropRequest(requestId);
+            return undefined;
+          }
+        };
+        if (syncStageProvisioned) {
+          const updateErrorCode = await syncStageWorkerWrapper.updateToken(jwt);
+          if (updateErrorCode == SyncStageSDKErrorCode.OK) {
+            if (location.pathname === `${PathEnum.LOADING}` && !inSession) {
+              console.log(`In session: ${inSession}`);
+              if (nickname) {
+                navigate(PathEnum.SESSIONS_JOIN);
+              } else {
+                navigate(PathEnum.SESSION_NICKNAME);
+              }
+            }
+          } else {
+            console.log('Could not update SyncStage token');
+            await provision();
+            endBackdropRequest(requestId);
+            return undefined;
           }
         } else {
-          console.log('Could not update SyncStage token');
           await provision();
           endBackdropRequest(requestId);
           return undefined;
         }
-      } else {
-        await provision();
-        endBackdropRequest(requestId);
-        return undefined;
       }
-    }
-    // to the next else if add another condition to check if from the application loaded elapsed no more than 10s
-    // if more than 10s, navigate to setup screen
-    else if (syncStageWorkerWrapper !== null && desktopAgentConnectedTimeout && isSignedIn) {
-      // Get the current time
-      let currentTime = new Date();
+      // to the next else if add another condition to check if from the application loaded elapsed no more than 10s
+      // if more than 10s, navigate to setup screen
+      else if (syncStageWorkerWrapper !== null && desktopAgentConnectedTimeout && isSignedIn) {
+        // Get the current time
+        let currentTime = new Date();
 
-      // Calculate the time difference in seconds
-      let timeDifference = (currentTime - appLoadTime) / 1000;
+        // Calculate the time difference in seconds
+        let timeDifference = (currentTime - appLoadTime) / 1000;
 
-      // If less than 10 seconds have elapsed, navigate to setup screen
-      if (timeDifference < 10) {
-        console.log('initializeSyncStage useEffect desktopAgentConnectedTimeout');
-        console.log('Desktop connected timeout, going to setup screen');
-        navigate(PathEnum.SETUP);
-        endBackdropRequest(requestId);
-        return undefined;
+        // If less than 10 seconds have elapsed, navigate to setup screen
+        if (timeDifference < 10) {
+          console.log('initializeSyncStage useEffect desktopAgentConnectedTimeout');
+          console.log('Desktop connected timeout, going to setup screen');
+          navigate(PathEnum.SETUP);
+          endBackdropRequest(requestId);
+          return undefined;
+        }
       }
+    } catch (error) {
+      console.log('Error in initializeSyncStage:', error);
     }
+
     endBackdropRequest(requestId);
   };
 
