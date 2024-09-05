@@ -13,15 +13,15 @@ import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 const JoinSession = ({ onJoinSession, onCreateSession }) => {
   const navigate = useNavigate();
 
-  const { sessionCode, desktopAgentProvisioned, persistSessionCode, fetchSettingsFromAgent, syncStageWorkerWrapper } = useContext(AppContext);
+  const { sessionCode, desktopAgentProvisioned, persistSessionCode, fetchSettingsFromAgent, syncStageWorkerWrapper } =
+    useContext(AppContext);
 
   const [settingsModalOpened, setSettingsModalOpened] = useState(false);
 
   useEffect(() => {
-    if (syncStageWorkerWrapper){
+    if (syncStageWorkerWrapper) {
       fetchSettingsFromAgent();
     }
-    
   }, []);
 
   return (

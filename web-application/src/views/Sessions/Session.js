@@ -106,7 +106,7 @@ const Session = ({ inSession }) => {
   const [receiversMap, setReceiversMap] = useState({});
 
   const onLeaveSession = async () => {
-    const requestId = startBackdropRequest();
+    const requestId = startBackdropRequest('onLeaveSession');
     const errorCode = await syncStageWorkerWrapper.leave();
     errorCodeToSnackbar(errorCode);
     endBackdropRequest(requestId);
@@ -415,7 +415,7 @@ const Session = ({ inSession }) => {
         persistSessionCode(sessionCodeFromPath);
 
         console.log('Joining the session from the path');
-        const requestId = startBackdropRequest();
+        const requestId = startBackdropRequest('joiningSessionFromThePath');
 
         const [data, errorCode] = await syncStageWorkerWrapper.join(
           sessionCodeFromPath,

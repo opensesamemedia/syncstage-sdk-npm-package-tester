@@ -19,7 +19,7 @@ const LoginView = () => {
   const [password, setPassword] = useState('');
 
   const handleSubmit = async () => {
-    const requestId = startBackdropRequest();
+    const requestId = startBackdropRequest('handleSubmitLogin');
     // use local docke-compose backend
     if (process.env.REACT_APP_BACKEND_BASE_PATH !== undefined) {
       try {

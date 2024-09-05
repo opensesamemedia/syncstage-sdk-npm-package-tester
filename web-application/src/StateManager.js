@@ -87,6 +87,7 @@ const StateManager = () => {
 
   const [desktopAgentProtocolHandler, setDesktopAgentProtocolHandler] = useState('');
   const [activeRequestIds, setActiveRequestIds] = useState(new Set());
+  const [activeRequestIdData, setActiveRequestIdData] = useState({});
   const [backdropOpen, setBackdropOpen] = useState(false);
 
   const nicknameSetAndProvisioned = nickname && syncStageJwt;
@@ -105,13 +106,31 @@ const StateManager = () => {
   const [inputDevices, setInputDevices] = useState([]);
   const [outputDevices, setOutputDevices] = useState([]);
 
+  // Console log activeRequestIdData every 10 seconds
+  useEffect(() => {
+    // Set up the interval to log activeRequestIdData every 10 seconds
+    const intervalId = setInterval(() => {
+      console.log('activeRequestIdData:', activeRequestIdData);
+    }, 10000);
+
+    // Clear the interval when the component unmounts
+    return () => clearInterval(intervalId);
+  }, [activeRequestIdData]);
+
   // Function to start a request
-  const startBackdropRequest = () => {
+  const startBackdropRequest = (name) => {
     const requestId = uuidv4();
-    const updatedIds = new Set(activeRequestIds).add(requestId);
     console.log('startBackdropRequest', requestId);
-    console.log('updatedIds', updatedIds);
+
+    const updatedIds = new Set(activeRequestIds).add(requestId);
     setActiveRequestIds(updatedIds);
+    console.log('updatedIds', updatedIds);
+
+    const updatedRequestIdsData = { ...activeRequestIdData };
+    updatedRequestIdsData[requestId] = { name, timestamp: new Date() };
+    setActiveRequestIdData(updatedRequestIdsData);
+    console.log('activeRequestIdData', updatedRequestIdsData);
+
     setBackdropOpen(true);
     return requestId;
   };
@@ -119,10 +138,17 @@ const StateManager = () => {
   // Function to end a request
   const endBackdropRequest = (requestId) => {
     setActiveRequestIds((prevIds) => {
+      console.log('endBackdropRequest', requestId);
+
       const updatedIds = new Set(prevIds);
       updatedIds.delete(requestId);
-      console.log('endBackdropRequest', requestId);
       console.log('updatedIds', updatedIds);
+
+      const updatedRequestIdsToName = { ...activeRequestIdData };
+      delete updatedRequestIdsToName[requestId];
+      setActiveRequestIdData(updatedRequestIdsToName);
+      console.log('activeRequestIdData', JSON.stringify(updatedRequestIdsToName));
+
       if (updatedIds.size === 0) {
         setBackdropOpen(false);
       }
@@ -163,7 +189,7 @@ const StateManager = () => {
   };
 
   const initializeSyncStage = async () => {
-    const requestId = startBackdropRequest();
+    const requestId = startBackdropRequest('initializeSyncStage');
 
     if (userId)
       console.log(
@@ -326,7 +352,7 @@ const StateManager = () => {
   const fetchSettingsFromAgent = async (showBackdrop) => {
     let requestId;
     if (showBackdrop) {
-      requestId = startBackdropRequest();
+      requestId = startBackdropRequest('fetchSettingsFromAgent');
     }
     const [settings, errorCode] = await syncStageWorkerWrapper.getSessionSettings();
     if (errorCode !== SyncStageSDKErrorCode.OK) {
@@ -358,7 +384,7 @@ const StateManager = () => {
   };
 
   const handleToggleRecording = async (enabled) => {
-    const requestId = startBackdropRequest();
+    const requestId = startBackdropRequest('handleToggleRecording');
     let errorCode;
     if (enabled) {
       errorCode = await syncStageWorkerWrapper.startRecording();
@@ -374,7 +400,7 @@ const StateManager = () => {
   };
 
   const handleNoiseCancellationChange = async (enabled) => {
-    const requestId = startBackdropRequest();
+    const requestId = startBackdropRequest('handleNoiseCancellationChange');
 
     const stateBefore = noiseCancellationEnabled;
     setNoiseCancellationEnabled(enabled);
@@ -400,7 +426,7 @@ const StateManager = () => {
   // };
 
   const handleDirectMonitorChange = async (enabled) => {
-    const requestId = startBackdropRequest();
+    const requestId = startBackdropRequest('handleDirectMonitorChange');
 
     const stateBefore = directMonitorEnabled;
     setDirectMonitorEnabled(enabled);
@@ -413,7 +439,7 @@ const StateManager = () => {
   };
 
   const handleLatencyLevelChange = async (event) => {
-    const requestId = startBackdropRequest();
+    const requestId = startBackdropRequest('handleLatencyLevelChange');
     const stateBefore = latencyOptimizationLevel;
     setLatencyOptimizationLevel(event.target.value);
     const errorCode = await syncStageWorkerWrapper.setLatencyOptimizationLevel(event.target.value);
@@ -426,7 +452,7 @@ const StateManager = () => {
   };
 
   const handleInputDeviceChange = async (event, onError) => {
-    const requestId = startBackdropRequest();
+    const requestId = startBackdropRequest('handleInputDeviceChange');
     const stateBefore = selectedInputDevice;
 
     const identifier = event.target.value;
@@ -443,7 +469,7 @@ const StateManager = () => {
 
   const handleOutputDeviceChange = async (event, onError) => {
     const stateBefore = selectedOutputDevice;
-    const requestId = startBackdropRequest();
+    const requestId = startBackdropRequest('handleOutputDeviceChange');
 
     const identifier = event.target.value;
     const errorCode = await syncStageWorkerWrapper.setOutputDevice(identifier);
@@ -610,7 +636,7 @@ const StateManager = () => {
   };
 
   const onCreateSession = async () => {
-    const requestId = startBackdropRequest();
+    const requestId = startBackdropRequest('onCreateSession');
     const [createData, errorCode] = await syncStageWorkerWrapper.createSession(
       userId,
       manuallySelectedInstance.zoneId,

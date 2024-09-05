@@ -62,7 +62,7 @@ const SettingsModal = ({ open, onClose, showServerList }) => {
 
   const fetchServerInstancesList = async () => {
     console.log('Fetching server instances list.');
-    const requestId = startBackdropRequest();
+    const requestId = startBackdropRequest('fetchServerInstancesList');
     const [data, errorCode] = await syncStageWorkerWrapper.getServerInstances();
     console.log(`Available server instances: ${JSON.stringify(data)}.`);
     if (errorCode === SyncStageSDKErrorCode.OK) {
