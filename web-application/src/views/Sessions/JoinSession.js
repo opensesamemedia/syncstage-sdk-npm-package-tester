@@ -19,10 +19,10 @@ const JoinSession = ({ onJoinSession, onCreateSession }) => {
   const [settingsModalOpened, setSettingsModalOpened] = useState(false);
 
   useEffect(() => {
-    if (syncStageWorkerWrapper) {
+    if (syncStageWorkerWrapper && desktopAgentProvisioned) {
       fetchSettingsFromAgent();
     }
-  }, []);
+  }, [syncStageWorkerWrapper, desktopAgentProvisioned]);
 
   return (
     <>
