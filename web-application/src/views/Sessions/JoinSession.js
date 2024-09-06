@@ -76,6 +76,7 @@ const JoinSession = ({ onJoinSession, onCreateSession }) => {
           </Grid>
           <Grid item>
             <Button
+              disabled={!desktopAgentProvisioned}
               onClick={() => {
                 setSettingsModalOpened(true);
               }}

@@ -1,6 +1,6 @@
 /* eslint-disable no-restricted-globals */
 
-import SyncStage from '@opensesamemedia/syncstage';
+import SyncStage from '@opensesamemedia/syncstage-sdk-npm-package-development';
 import SyncStageUserDelegate from './SyncStageUserDelegate';
 import SyncStageConnectivityDelegate from './SyncStageConnectivityDelegate';
 import SyncStageDiscoveryDelegate from './SyncStageDiscoveryDelegate';
@@ -74,6 +74,12 @@ self.onmessage = function (e) {
     () => {
       self.postMessage({ id: -1, result: { callback: 'onDesktopAgentProvisioned' } });
     }, //onDesktopAgentProvisioned
+    () => {
+      self.postMessage({ id: -1, result: { callback: 'onBrowserConnected' } });
+    }, //onBrowserConnected
+    () => {
+      self.postMessage({ id: -1, result: { callback: 'onBrowserDisconnected' } });
+    }, //onBrowserDisconnected
   );
 
   const onTokenExpired = () => {

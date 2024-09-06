@@ -79,6 +79,12 @@ class SyncStageWorkerWrapper {
           case 'onDesktopAgentProvisioned':
             this.desktopAgentDelegate?.onDesktopAgentProvisioned();
             break;
+          case 'onBrowserConnected':
+            this.desktopAgentDelegate?.onBrowserConnected();
+            break;
+          case 'onBrowserDisconnected':
+            this.desktopAgentDelegate?.onBrowserDisconnected();
+            break;
           case 'onTokenExpired':
             try {
               if (typeof this.onTokenExpired === 'function') {
@@ -132,15 +138,19 @@ class SyncStageWorkerWrapper {
   }
 
   getLatestCompatibleDesktopAgentVersion() {
-    let os;
+    try {
+      let os;
 
-    if (window.navigator.userAgent.indexOf('Mac') !== -1) {
-      os = 'macOS';
-    } else if (window.navigator.userAgent.indexOf('Win') !== -1) {
-      os = 'Windows';
+      if (window.navigator.userAgent.indexOf('Mac') !== -1) {
+        os = 'macOS';
+      } else if (window.navigator.userAgent.indexOf('Win') !== -1) {
+        os = 'Windows';
+      }
+
+      return this.callWorker('getLatestCompatibleDesktopAgentVersion', os);
+    } catch (error) {
+      console.error('An error occurred in getLatestCompatibleDesktopAgentVersion:', error);
     }
-
-    return this.callWorker('getLatestCompatibleDesktopAgentVersion', os);
   }
 
   init(jwt) {

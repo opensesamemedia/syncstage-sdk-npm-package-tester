@@ -33,6 +33,11 @@
     "@types/window-or-global" "^1.0.4"
     jest-environment-jsdom "^29.5.0"
 
+"@anephenix/sarus@^0.6.0":
+  version "0.6.0"
+  resolved "https://registry.yarnpkg.com/@anephenix/sarus/-/sarus-0.6.0.tgz#94e13610a4220849636eb8550d88e2a9524aaebd"
+  integrity sha512-+2Cj2Zqo/a+8pprL+RUCo4hgeYNYQwLmBluq54m6tRHtiV2LqpEC8DFY2vH4BsIuOlwUyK190TNSIcXMwFrnWQ==
+
 "@apideck/better-ajv-errors@^0.3.1":
   version "0.3.6"
   resolved "https://registry.yarnpkg.com/@apideck/better-ajv-errors/-/better-ajv-errors-0.3.6.tgz#957d4c28e886a64a8141f7522783be65733ff097"
@@ -2564,12 +2569,12 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@opensesamemedia/syncstage-sdk-npm-package-development@^0.6.3-rc5":
-  version "0.6.3-rc5"
-  resolved "https://registry.yarnpkg.com/@opensesamemedia/syncstage-sdk-npm-package-development/-/syncstage-sdk-npm-package-development-0.6.3-rc5.tgz#e274dff990ec6e4f1c84988b60a25c596a4cf591"
-  integrity sha512-uwVd3BhQ8P5NhuNF+rxfJBZTWLs7CxnMESCrA5Ohus5xKu7F0kD3CEk+I6XW4KFnfHj5XBCsJHQhlwLkSp4sbA==
+"@opensesamemedia/syncstage-sdk-npm-package-development@^0.7.1-rc18":
+  version "0.7.1-rc18"
+  resolved "https://registry.yarnpkg.com/@opensesamemedia/syncstage-sdk-npm-package-development/-/syncstage-sdk-npm-package-development-0.7.1-rc18.tgz#566c34e105b3fcba6d72a3700489886ce85bba36"
+  integrity sha512-1ydTyWnAyQfpZbQJnsv5K14KtvK/q2qzrMGXU8NUbUnfZCg7rpct3DRY2HgbgPFuIJCCwrIjbjJqBxO4Qg+beA==
   dependencies:
-    "@anephenix/sarus" "^0.4.6"
+    "@anephenix/sarus" "^0.6.0"
     async-mutex "^0.4.0"
     is-online "^10.0.0"
     uuid "^9.0.0"

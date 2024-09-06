@@ -26,7 +26,7 @@ import './ui/animationStyles.css';
 import SyncStageDesktopAgentDelegate from './SyncStageDesktopAgentDelegate';
 import SyncStageDiscoveryDelegate from './SyncStageDiscoveryDelegate';
 
-import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
+import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-package-development';
 import modalStyle from './ui/ModalStyle';
 import Navigation from './components/Navigation/Navigation';
 import SyncStageWorkerWrapper from './syncStageWorkerWrapper';
@@ -75,6 +75,8 @@ const StateManager = () => {
 
   const desktopAgentConnectedRef = useRef(false);
   const desktopAgentConnectedTimeoutRef = useRef(null);
+  const [browserConnected, setBrowserConnected] = useState(false);
+
   const [desktopAgentConnected, setDesktopAgentConnected] = useState(false);
   const [desktopAgentConnectedTimeoutId, setDesktopAgentConnectedTimeoutId] = useState(false);
   const [desktopAgentConnectedTimeout, setDesktopAgentConnectedTimeout] = useState(null);
@@ -110,7 +112,8 @@ const StateManager = () => {
   useEffect(() => {
     // Set up the interval to log activeRequestIdData every 10 seconds
     const intervalId = setInterval(() => {
-      console.log('activeRequestIdData:', activeRequestIdData);
+      console.log('activeRequestIdData:', JSON.stringify(activeRequestIdData));
+      console.log('activeRequestIds:', activeRequestIds);
     }, 10000);
 
     // Clear the interval when the component unmounts
@@ -129,7 +132,7 @@ const StateManager = () => {
     const updatedRequestIdsData = { ...activeRequestIdData };
     updatedRequestIdsData[requestId] = { name, timestamp: new Date() };
     setActiveRequestIdData(updatedRequestIdsData);
-    console.log('activeRequestIdData', updatedRequestIdsData);
+    console.log('activeRequestIdData', JSON.stringify(updatedRequestIdsData));
 
     setBackdropOpen(true);
     return requestId;
@@ -190,32 +193,36 @@ const StateManager = () => {
 
   const initializeSyncStage = async () => {
     const requestId = startBackdropRequest('initializeSyncStage');
+    console.log(
+      // eslint-disable-next-line max-len
+      `initializeSyncStage useEffect desktopAgentConnected: ${desktopAgentConnected} isSignedIn: ${isSignedIn} desktopAgentConnectedTimeout: ${desktopAgentConnectedTimeout} syncStageWorkerWrapper: ${syncStageWorkerWrapper} userId: ${userId}`,
+      syncStageWorkerWrapper,
+    );
     try {
-      if (userId)
-        console.log(
-          // eslint-disable-next-line max-len
-          `initializeSyncStage desktopAgentConnected: ${desktopAgentConnected} isSignedIn: ${isSignedIn} desktopAgentConnectedTimeout: ${desktopAgentConnectedTimeout} syncStageWorkerWrapper: `,
-          syncStageWorkerWrapper,
-        );
       if (
         syncStageWorkerWrapper !== null &&
         desktopAgentConnected &&
         isSignedIn === true &&
         (desktopAgentConnectedTimeout === null || desktopAgentConnectedTimeout === false)
       ) {
-        console.log('initializeSyncStage useEffect syncStage init');
+        console.log('initializeSyncStage conditions met to init / update');
         try {
-          setDesktopAgentCompatible(await syncStageWorkerWrapper.isCompatible());
+          const isCompatible = await syncStageWorkerWrapper.isCompatible();
+          setDesktopAgentCompatible(isCompatible);
           const tempVer = await syncStageWorkerWrapper.getLatestCompatibleDesktopAgentVersion();
           setDesktopAgentLatestCompatibleVersion(tempVer);
           setDownloadLink(getDownloadLink(tempVer));
+          console.log(`Download link set to: ${downloadLink}`);
         } catch (error) {
           console.log('Error in checking compatibility and setting the version:', error);
         }
+
+        console.log('check provisioned status');
         const syncStageProvisioned = await syncStageWorkerWrapper.checkProvisionedStatus();
         console.log(`SyncStage provisioned: ${syncStageProvisioned}`);
 
         const jwt = await fetchSyncStageToken();
+
         const provision = async () => {
           const initErrorCode = await syncStageWorkerWrapper.init(jwt);
 
@@ -235,7 +242,9 @@ const StateManager = () => {
             return undefined;
           }
         };
+
         if (syncStageProvisioned) {
+          console.log('SyncStage provisioned');
           const updateErrorCode = await syncStageWorkerWrapper.updateToken(jwt);
           if (updateErrorCode == SyncStageSDKErrorCode.OK) {
             if (location.pathname === `${PathEnum.LOADING}` && !inSession) {
@@ -253,6 +262,7 @@ const StateManager = () => {
             return undefined;
           }
         } else {
+          console.log('SyncStage not provisioned');
           await provision();
           endBackdropRequest(requestId);
           return undefined;
@@ -261,6 +271,7 @@ const StateManager = () => {
       // to the next else if add another condition to check if from the application loaded elapsed no more than 10s
       // if more than 10s, navigate to setup screen
       else if (syncStageWorkerWrapper !== null && desktopAgentConnectedTimeout && isSignedIn) {
+        console.log('initializeSyncStage useEffect desktopAgentConnectedTimeout calculating time difference');
         // Get the current time
         let currentTime = new Date();
 
@@ -279,6 +290,7 @@ const StateManager = () => {
     } catch (error) {
       console.log('Error in initializeSyncStage:', error);
     }
+    console.log('initializeSyncStage useEffect end');
 
     endBackdropRequest(requestId);
   };
@@ -299,6 +311,16 @@ const StateManager = () => {
   const onDesktopAgentDisconnected = () => {
     setDesktopAgentConnected(false);
     setDesktopAgentProvisioned(false);
+  };
+
+  const onBrowserConnected = () => {
+    console.log('Browser connected');
+    setBrowserConnected(true);
+  };
+
+  const onBrowserDisconnected = () => {
+    console.log('Browser disconnected');
+    setBrowserConnected(false);
   };
 
   const onDesktopAgentDeprovisioned = async () => {
@@ -580,6 +602,8 @@ const StateManager = () => {
         onDesktopAgentDisconnected,
         onDesktopAgentDeprovisioned,
         onDesktopAgentProvisioned,
+        onBrowserConnected,
+        onBrowserDisconnected,
       );
 
       const ssWorker = new SyncStageWorkerWrapper(null, null, syncStageDiscoveryDelegate, desktopAgentDelegate, onJwtExpired);
@@ -743,15 +767,32 @@ const StateManager = () => {
             alignItems: 'center',
           }}
         >
-          {desktopAgentConnected ? (
-            <span style={{ fontSize: 10 }}> Desktop Agent Link </span>
-          ) : (
-            <a target="_blank" href={desktopAgentProtocolHandler}>
-              <span style={{ fontSize: 10 }}> Desktop Agent Link </span>
-            </a>
-          )}
-          <span className="dot" style={{ backgroundColor: desktopAgentConnected ? '#2ECC71' : '#C0392B' }}></span>
+          <span style={{ fontSize: 10 }}> SyncStage Cloud Link </span>
+
+          <span className="dot" style={{ backgroundColor: browserConnected ? '#2ECC71' : '#C0392B' }}></span>
         </div>
+        {browserConnected && (
+          <div
+            style={{
+              position: 'fixed',
+              top: 40,
+              right: 10,
+              transform: 'translateY(-50%)',
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}
+          >
+            {desktopAgentConnected ? (
+              <span style={{ fontSize: 10 }}> Desktop Agent Link </span>
+            ) : (
+              <a target="_blank" href={desktopAgentProtocolHandler}>
+                <span style={{ fontSize: 10 }}> Desktop Agent Link </span>
+              </a>
+            )}
+            <span className="dot" style={{ backgroundColor: desktopAgentConnected ? '#2ECC71' : '#C0392B' }}></span>
+          </div>
+        )}
         <Navigation
           hidden={!isSignedIn || inSession || location.pathname == `${PathEnum.LOADING}`}
           inSession={inSession}

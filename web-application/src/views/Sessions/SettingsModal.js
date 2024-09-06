@@ -7,9 +7,9 @@ import IconButton from '@mui/material/IconButton';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import Button from '@mui/material/Button';
 import theme from '../../ui/theme';
-import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage';
+import { SyncStageSDKErrorCode } from '@opensesamemedia/syncstage-sdk-npm-package-development';
 import { errorCodeToSnackbar } from '../../utils';
-import { LatencyOptimizationLevel } from '@opensesamemedia/syncstage';
+import { LatencyOptimizationLevel } from '@opensesamemedia/syncstage-sdk-npm-package-development';
 import modalStyle from '../../ui/ModalStyle';
 import AppContext from '../../AppContext';
 
@@ -177,7 +177,7 @@ const SettingsModal = ({ open, onClose, showServerList }) => {
           </Grid>
           <Grid item xs={12} style={{ height: '20px' }} />
           <Grid container direction="row" alignItems="center" style={{ padding: 14 }}>
-            <Grid container direction="column" alignItems="start" xs={8}>
+            <Grid container direction="column" alignItems="start">
               <Typography variant="h6">Noise Cancellation</Typography>
               <p style={{ marginTop: 6 }}>Suppress the background noise</p>
               <p style={{ color: '#FFB4AB' }}>Avoid this option in music applications</p>
@@ -205,7 +205,7 @@ const SettingsModal = ({ open, onClose, showServerList }) => {
           {!isWindowsPlatform && (
             <>
               <Grid container direction="row" alignItems="center" style={{ padding: 14 }}>
-                <Grid container direction="column" alignItems="start" xs={8}>
+                <Grid container direction="column" alignItems="start">
                   <Typography variant="h6">Direct Monitor</Typography>
                   <p style={{ marginTop: 6 }}>Allows for listening to the input signal with low latency.</p>
                   <p style={{ color: '#FFB4AB' }}>

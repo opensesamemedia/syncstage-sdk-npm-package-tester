@@ -5,6 +5,8 @@ class SyncStageDesktopAgentDelegate {
   onDesktopAgentDisconnected;
   onDesktopAgentDeprovisioned;
   onDesktopAgentProvisioned;
+  onBrowserConnected;
+  onBrowserDisconnected;
 
   constructor(
     onDesktopAgentAquired,
@@ -13,6 +15,8 @@ class SyncStageDesktopAgentDelegate {
     onDesktopAgentDisconnected,
     onDesktopAgentDeprovisioned,
     onDesktopAgentProvisioned,
+    onBrowserConnected,
+    onBrowserDisconnected,
   ) {
     this.onDesktopAgentAquired = onDesktopAgentAquired;
     this.onDesktopAgentReleased = onDesktopAgentReleased;
@@ -20,6 +24,8 @@ class SyncStageDesktopAgentDelegate {
     this.onDesktopAgentDisconnected = onDesktopAgentDisconnected;
     this.onDesktopAgentDeprovisioned = onDesktopAgentDeprovisioned;
     this.onDesktopAgentProvisioned = onDesktopAgentProvisioned;
+    this.onBrowserConnected = onBrowserConnected;
+    this.onBrowserDisconnected = onBrowserDisconnected;
   }
 
   desktopAgentAquired() {
@@ -39,6 +45,13 @@ class SyncStageDesktopAgentDelegate {
   }
   desktopAgentProvisioned() {
     this.onDesktopAgentProvisioned();
+  }
+  browserConnected() {
+    this.onBrowserConnected();
+  }
+
+  browserDisconnected() {
+    this.onBrowserDisconnected();
   }
 }
 
