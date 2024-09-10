@@ -607,6 +607,13 @@ const StateManager = () => {
       );
 
       const ssWorker = new SyncStageWorkerWrapper(null, null, syncStageDiscoveryDelegate, desktopAgentDelegate, onJwtExpired);
+
+      // if (window) {
+      //   window.addEventListener('beforeunload', () => {
+      //     this.ssWorker.terminate();
+      //   });
+      // }
+
       ssWorker.updateToken(syncStageJwt);
       setDesktopAgentProtocolHandler(await ssWorker.getDesktopAgentProtocolHandler());
       setSyncStageSDKVersion(await ssWorker.getSDKVersion());

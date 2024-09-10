@@ -1,6 +1,15 @@
 class SyncStageWorkerWrapper {
+  static worker = null;
+
   constructor(userDelegate, connectivityDelegate, discoveryDelegate, desktopAgentDelegate, onTokenExpired) {
     console.log('SyncStageWorkerWrapper constructor');
+
+    // Check if there is an existing worker instance
+    if (SyncStageWorkerWrapper.worker) {
+      // Terminate the existing worker
+      this.terminateSyncStage();
+      console.log('Previous worker terminated.');
+    }
 
     this.userDelegate = userDelegate;
     this.connectivityDelegate = connectivityDelegate;
@@ -10,9 +19,21 @@ class SyncStageWorkerWrapper {
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     this.onDesktopAgentReconnected = () => {};
 
-    this.worker = new Worker(new URL('worker.js', import.meta.url)); //NEW SYNTAX
+    // Create a new worker instance if it doesn't exist
+    if (!SyncStageWorkerWrapper.worker) {
+      SyncStageWorkerWrapper.worker = new Worker(new URL('worker.js', import.meta.url)); // NEW SYNTAX
+      console.log('New worker created.');
+    }
 
-    this.worker.onmessage = async (event) => {
+    // Bind the terminate method to the current instance
+    this.terminateSyncStage = this.terminateSyncStage.bind(this);
+    this.callWorker = this.callWorker.bind(this);
+
+    // Add event listeners for tab/browser close
+    window.addEventListener('beforeunload', this.terminateSyncStage);
+    window.addEventListener('unload', this.terminateSyncStage);
+
+    SyncStageWorkerWrapper.worker.onmessage = async (event) => {
       const { id, result, error } = event.data;
 
       if (this.promises[id]) {
@@ -117,7 +138,7 @@ class SyncStageWorkerWrapper {
     return new Promise((resolve, reject) => {
       const id = this.nextId++;
       this.promises[id] = { resolve, reject, method };
-      this.worker.postMessage({ id, method, args });
+      SyncStageWorkerWrapper.worker.postMessage({ id, method, args });
     });
   }
 
@@ -263,6 +284,23 @@ class SyncStageWorkerWrapper {
 
   setLatencyOptimizationLevel(level) {
     return this.callWorker('setLatencyOptimizationLevel', level);
+  }
+
+  terminateSyncStage() {
+    console.log('SyncStageWorkerWrapper terminate');
+    this.callWorker('terminate');
+    // Terminate the worker
+    if (SyncStageWorkerWrapper.worker) {
+      SyncStageWorkerWrapper.worker.terminate();
+      SyncStageWorkerWrapper.worker = null;
+      console.log('Worker terminated.');
+    }
+  }
+
+  // Clean up event listeners when the instance is no longer needed
+  cleanup() {
+    window.removeEventListener('beforeunload', this.terminateSyncStage);
+    window.removeEventListener('unload', this.terminateSyncStage);
   }
 }
 
